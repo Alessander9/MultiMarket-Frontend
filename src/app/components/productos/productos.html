@@ -1,0 +1,180 @@
+<!-- Subtle Background Atmospheric Blurs -->
+<div class="glow-container">
+  <div class="glow-circle bg-purple-blur"></div>
+  <div class="glow-circle bg-emerald-blur"></div>
+</div>
+
+<!-- Main Canvas -->
+<main class="dashboard-main animate-fade-in">
+  <div class="dashboard-container">
+    
+    <!-- Top Header -->
+    <header class="dashboard-header">
+      <div class="header-brand">
+        <span class="material-symbols-outlined brand-icon">diamond</span>
+        <span class="brand-name">MultiMarket</span>
+      </div>
+      <div class="header-status">
+        <span class="pulse-indicator"></span>
+        <span class="status-text">Sesión Conectada</span>
+      </div>
+    </header>
+
+    <!-- Content Grid -->
+    <div class="dashboard-grid">
+      
+      <!-- Left Column: Session Card & JWT Profile Verifier -->
+      <section class="card-column">
+        
+        <!-- Session Card -->
+        <div class="dashboard-card session-card">
+          <h3 class="card-title">Información de Sesión</h3>
+          <p class="card-subtitle">Datos de autenticación reactivos leídos desde Signals</p>
+          
+          <div class="session-info-rows">
+            <div class="info-row">
+              <span class="info-label">Usuario Conectado:</span>
+              <span class="info-value email-value">{{ authService.currentUserEmail() }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Roles Asignados:</span>
+              <div class="roles-container">
+                <span *ngFor="let role of authService.currentUserRoles()" class="role-badge" [class]="role.toLowerCase()">
+                  {{ role }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button (click)="logout()" class="logout-btn">
+            <span class="material-symbols-outlined btn-icon">logout</span>
+            <span>Cerrar Sesión</span>
+          </button>
+        </div>
+
+        <!-- JWT Secure Profile Verifier -->
+        <div class="dashboard-card profile-card">
+          <h3 class="card-title">Verificación de Token JWT</h3>
+          <p class="card-subtitle">Prueba la conexión al endpoint seguro <code>/auth/profile</code></p>
+          
+          <!-- Fetch Action -->
+          <div *ngIf="!profileDetails()" class="profile-fetch-action">
+            <button 
+              (click)="fetchProfile()" 
+              [disabled]="isLoadingProfile()" 
+              class="fetch-btn"
+            >
+              <ng-container *ngIf="isLoadingProfile(); else defaultFetchText">
+                <span class="spinner"></span>
+                <span>Cargando perfil...</span>
+              </ng-container>
+              <ng-template #defaultFetchText>
+                <span class="material-symbols-outlined btn-icon">verified_user</span>
+                <span>Probar Interceptor JWT</span>
+              </ng-template>
+            </button>
+            <p class="fetch-hint">Esto enviará el token JWT en las cabeceras de forma transparente.</p>
+          </div>
+
+          <!-- Profile Details Render -->
+          <div *ngIf="profileDetails()" class="profile-details animate-fade-in">
+            <div class="profile-header-row">
+              <span class="material-symbols-outlined profile-avatar">account_circle</span>
+              <div class="avatar-meta">
+                <span class="profile-name">{{ profileDetails().nombres }} {{ profileDetails().apellidos }}</span>
+                <span class="profile-subtitle">Perfil recuperado de SQL Server</span>
+              </div>
+            </div>
+
+            <div class="profile-info-grid">
+              <div class="profile-info-item">
+                <span class="item-label">DNI / Documento:</span>
+                <span class="item-value">{{ profileDetails().dni }}</span>
+              </div>
+              <div class="profile-info-item">
+                <span class="item-label">Teléfono:</span>
+                <span class="item-value">{{ profileDetails().telefono }}</span>
+              </div>
+              <div class="profile-info-item full-width">
+                <span class="item-label">Dirección Registrada:</span>
+                <span class="item-value">{{ profileDetails().direccion }}</span>
+              </div>
+            </div>
+
+            <button (click)="profileDetails.set(null)" class="clear-profile-btn">
+              <span>Limpiar Vista</span>
+            </button>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- Right Column: Database Product Feed -->
+      <section class="feed-column">
+        <div class="dashboard-card feed-card">
+          
+          <div class="feed-header-row">
+            <div>
+              <h3 class="card-title">Catálogo de Productos</h3>
+              <p class="card-subtitle">Consulta de base de datos activa al endpoint <code>/productos</code></p>
+            </div>
+            <button (click)="loadProducts()" [disabled]="isLoadingProducts()" class="refresh-btn">
+              <span class="material-symbols-outlined" [class.spin-icon]="isLoadingProducts()">refresh</span>
+            </button>
+          </div>
+
+          <!-- Loading State -->
+          <div *ngIf="isLoadingProducts()" class="feed-loading-state">
+            <span class="spinner large-spinner"></span>
+            <p>Conectando con base de datos SQL Server...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!isLoadingProducts() && products().length === 0" class="feed-empty-state">
+            <span class="material-symbols-outlined empty-icon">inventory_2</span>
+            <span class="empty-title">El catálogo está vacío</span>
+            <p class="empty-text">
+              La base de datos no contiene productos en este momento. Esto es normal en una base de datos recién creada. 
+              El backend está listo para recibir importaciones de archivos XML desde el módulo correspondiente.
+            </p>
+          </div>
+
+          <!-- Products Table / List -->
+          <div *ngIf="!isLoadingProducts() && products().length > 0" class="products-list animate-fade-in">
+            <div class="products-table-wrapper">
+              <table class="products-table">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let prod of products()">
+                    <td class="sku-cell"><code>{{ prod.sku }}</code></td>
+                    <td class="name-cell">
+                      <span class="product-name-text">{{ prod.nombre }}</span>
+                      <span class="vendedor-text">Por: {{ prod.vendedorNombre || 'Tienda' }}</span>
+                    </td>
+                    <td><span class="category-tag">{{ prod.categoriaNombre }}</span></td>
+                    <td class="price-cell">S/ {{ prod.precio | number:'1.2-2' }}</td>
+                    <td class="stock-cell" [class.low-stock]="prod.stock < 5">
+                      {{ prod.stock }} u.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+  </div>
+</main>

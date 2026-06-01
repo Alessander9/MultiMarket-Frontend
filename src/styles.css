@@ -1,0 +1,106 @@
+/* CSS variables defining the Obsidian Artisans theme for MultiMarket */
+:root {
+  --background: #09090b;
+  --surface: #0c0c0f;
+  --surface-container: #121215;
+  --surface-container-low: #0f0f12;
+  --surface-container-high: #18181b;
+  --surface-container-highest: #1e1e22;
+  --surface-dim: #0c0c0f;
+  --surface-bright: #18181b;
+
+  /* Theme Accents (Violet & Emerald) */
+  --primary: #a78bfa;
+  --primary-container: #7c3aed;
+  --primary-fixed: #ede9fe;
+  --primary-fixed-dim: #c4b5fd;
+  --on-primary: #0a0012;
+  --on-primary-container: #ede9fe;
+  
+  --secondary: #71717a;
+  --secondary-container: #27272a;
+  --on-secondary: #09090b;
+  
+  --tertiary: #34d399;
+  --tertiary-container: #065f46;
+  --on-tertiary: #001a12;
+  
+  /* Neutral Foregrounds */
+  --on-background: #fafafa;
+  --on-surface: #fafafa;
+  --on-surface-variant: #a1a1aa;
+  
+  /* Borders and Outlines */
+  --outline: #52525b;
+  --outline-variant: #27272a;
+  
+  /* Alert / Error states */
+  --error: #ef4444;
+  --error-container: #3b1111;
+  --on-error: #1a0000;
+  
+  /* Spacings and Borders */
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+  
+  --font-sans: 'Geist', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'Geist Mono', SFMono-Regular, Consolas, monospace;
+}
+
+/* Global Reset & Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--on-background);
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Premium Selection Styles */
+::selection {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Custom Scrollbar for sleek premium look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--outline-variant);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+/* Utility Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

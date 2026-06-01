@@ -1,0 +1,2192 @@
+<!-- Floating Toast Notification System -->
+<div *ngIf="toastMessage()" class="toast-notification animate-fade-in" 
+     [class.toast-info]="toastType() === 'info'" 
+     [class.toast-error]="toastType() === 'error'">
+  <span class="material-symbols-outlined toast-icon">
+    {{ toastType() === 'success' ? 'check_circle' : toastType() === 'error' ? 'cancel' : 'info' }}
+  </span>
+  <span class="toast-text">{{ toastMessage() }}</span>
+</div>
+
+<!-- Main SaaS Enterprise Layout Container -->
+<div class="dashboard-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
+  
+  <!-- =================================================== -->
+  <!-- 1. SIDEBAR IZQUIERDO COLLAPSABLE                   -->
+  <!-- =================================================== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-container">
+        <span class="material-symbols-outlined logo-icon">diamond</span>
+        <span class="brand-text">MultiMarket</span>
+      </div>
+      <button (click)="toggleSidebar()" class="collapse-toggle-btn">
+        <span class="material-symbols-outlined">
+          {{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
+        </span>
+      </button>
+    </div>
+
+    <!-- Navigation Menu Sections -->
+    <nav class="sidebar-nav">
+      
+      <!-- DASHBOARD SECTION -->
+      <div class="nav-section">
+        <span class="section-heading">DASHBOARD</span>
+        <ul class="nav-list">
+          <li class="nav-item" [class.active]="activeSection() === 'dashboard'" (click)="selectSection('dashboard')">
+            <span class="material-symbols-outlined nav-icon">dashboard</span>
+            <span class="nav-text">Resumen General</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- MARKETPLACE SECTION -->
+      <div class="nav-section">
+        <span class="section-heading">MARKETPLACE</span>
+        <ul class="nav-list">
+          <li class="nav-item" [class.active]="activeSection() === 'vendedores'" (click)="selectSection('vendedores')">
+            <span class="material-symbols-outlined nav-icon">storefront</span>
+            <span class="nav-text">Vendedores</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'productos'" (click)="selectSection('productos')">
+            <span class="material-symbols-outlined nav-icon">inventory_2</span>
+            <span class="nav-text">Productos</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'categorias'" (click)="selectSection('categorias')">
+            <span class="material-symbols-outlined nav-icon">category</span>
+            <span class="nav-text">Categorías</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'inventario'" (click)="selectSection('inventario')">
+            <span class="material-symbols-outlined nav-icon">warehouse</span>
+            <span class="nav-text">Inventario</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- OPERACIONES SECTION -->
+      <div class="nav-section">
+        <span class="section-heading">OPERACIONES</span>
+        <ul class="nav-list">
+          <li class="nav-item" [class.active]="activeSection() === 'pedidos'" (click)="selectSection('pedidos')">
+            <span class="material-symbols-outlined nav-icon">shopping_bag</span>
+            <span class="nav-text">Pedidos</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'pagos'" (click)="selectSection('pagos')">
+            <span class="material-symbols-outlined nav-icon">credit_card</span>
+            <span class="nav-text">Pagos</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- USUARIOS SECTION -->
+      <div class="nav-section">
+        <span class="section-heading">USUARIOS</span>
+        <ul class="nav-list">
+          <li class="nav-item" [class.active]="activeSection() === 'usuarios'" (click)="selectSection('usuarios')">
+            <span class="material-symbols-outlined nav-icon">group</span>
+            <span class="nav-text">Usuarios</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'roles'" (click)="selectSection('roles')">
+            <span class="material-symbols-outlined nav-icon">badge</span>
+            <span class="nav-text">Roles</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- COMUNICACIÓN SECTION -->
+      <div class="nav-section">
+        <span class="section-heading">COMUNICACIÓN</span>
+        <ul class="nav-list">
+          <li class="nav-item" [class.active]="activeSection() === 'chats'" (click)="selectSection('chats')">
+            <span class="material-symbols-outlined nav-icon">chat</span>
+            <span class="nav-text">Chats</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'notificaciones'" (click)="selectSection('notificaciones')">
+            <span class="material-symbols-outlined nav-icon">notifications_active</span>
+            <span class="nav-text">Notificaciones</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- INTEGRACIONES SECTION -->
+      <div class="nav-section">
+        <span class="section-heading">INTEGRACIONES</span>
+        <ul class="nav-list">
+          <li class="nav-item" [class.active]="activeSection() === 'importaciones'" (click)="selectSection('importaciones')">
+            <span class="material-symbols-outlined nav-icon">upload_file</span>
+            <span class="nav-text">Importaciones XML</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'exportaciones'" (click)="selectSection('exportaciones')">
+            <span class="material-symbols-outlined nav-icon">download_file</span>
+            <span class="nav-text">Exportaciones</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- MONITOREO SECTION -->
+      <div class="nav-section">
+        <span class="section-heading">MONITOREO</span>
+        <ul class="nav-list">
+          <li class="nav-item" [class.active]="activeSection() === 'kafka'" (click)="selectSection('kafka')">
+            <span class="material-symbols-outlined nav-icon">swap_horizontal_circle</span>
+            <span class="nav-text">Kafka</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'logs'" (click)="selectSection('logs')">
+            <span class="material-symbols-outlined nav-icon">terminal</span>
+            <span class="nav-text">Logs</span>
+          </li>
+          <li class="nav-item" [class.active]="activeSection() === 'servicios'" (click)="selectSection('servicios')">
+            <span class="material-symbols-outlined nav-icon">settings_ethernet</span>
+            <span class="nav-text">Servicios SOAP</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- CONFIGURACIÓN SECTION -->
+      <div class="nav-section">
+        <span class="section-heading">CONFIGURACIÓN</span>
+        <ul class="nav-list">
+          <li class="nav-item" [class.active]="activeSection() === 'configuracion'" (click)="selectSection('configuracion')">
+            <span class="material-symbols-outlined nav-icon">settings</span>
+            <span class="nav-text">Configuración General</span>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Right Canvas (Header + Content) -->
+  <div class="main-canvas">
+    
+    <!-- =================================================== -->
+    <!-- 2. HEADER SUPERIOR (70px)                           -->
+    <!-- =================================================== -->
+    <header class="top-header">
+      <div class="header-left">
+        <div class="mobile-logo-container">
+          <span class="material-symbols-outlined logo-icon">diamond</span>
+        </div>
+        <div class="breadcrumb">
+          <span class="breadcrumb-root">Inicio</span>
+          <span class="breadcrumb-separator">/</span>
+          <span class="breadcrumb-current">{{ activeSection() | uppercase }}</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Global search bound to active section filtering -->
+        <div class="global-search-container">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input type="text" placeholder="Buscar en esta sección..." 
+                 [value]="searchQuery()" 
+                 (input)="searchQuery.set($any($event.target).value)" 
+                 class="global-search-input"/>
+        </div>
+
+        <button class="header-action-btn" (click)="showNotifications.set(!showNotifications())">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="notification-badge"></span>
+        </button>
+
+        <button class="header-action-btn" (click)="selectSection('configuracion')">
+          <span class="material-symbols-outlined">settings</span>
+        </button>
+
+        <!-- User Profile Card -->
+        <div class="user-profile-menu-container">
+          <button class="profile-card-btn" (click)="showProfileMenu.set(!showProfileMenu())">
+            <div class="admin-avatar">A</div>
+            <div class="admin-meta">
+              <span class="admin-name">Administrador General</span>
+              <span class="admin-access">Rol: ADMIN</span>
+            </div>
+            <span class="material-symbols-outlined arrow-icon">keyboard_arrow_down</span>
+          </button>
+
+          <!-- Profile Dropdown Menu -->
+          <div *ngIf="showProfileMenu()" class="profile-dropdown animate-fade-in">
+            <div class="dropdown-header">
+              <span class="dropdown-email">admin@multimarket.com</span>
+              <span class="dropdown-role">ADMINISTRADOR GENERAL</span>
+            </div>
+            <ul class="dropdown-list">
+              <li class="dropdown-item" (click)="selectSection('configuracion'); showProfileMenu.set(false)">
+                <span class="material-symbols-outlined">manage_accounts</span>
+                <span>Mi Perfil</span>
+              </li>
+              <li class="dropdown-item logout-item" (click)="logout()">
+                <span class="material-symbols-outlined">logout</span>
+                <span>Cerrar Sesión</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- =================================================== -->
+    <!-- 3. MAIN CONTENT CONTAINER                           -->
+    <!-- =================================================== -->
+    <main class="content-body">
+      <div class="atmospheric-glow-spot"></div>
+
+      <!-- Micro pulsing skeleton loading state for premium feel -->
+      <div *ngIf="isLoading()" class="skeleton-container animate-fade-in">
+        <div class="skeleton-banner"></div>
+        <div class="skeleton-kpi-grid">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+        <div class="skeleton-table"></div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: DASHBOARD (MAIN RESUMEN)                  -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'dashboard'" class="animate-fade-in section-block">
+        <section class="welcome-section">
+          <div>
+            <h2 class="welcome-title">Centro de Control Operacional</h2>
+            <p class="welcome-subtitle">Visión analítica del estado del negocio en tiempo real.</p>
+          </div>
+          <div class="quick-stats-timestamp">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>Tiempo real • Base de datos: SQL Server en Línea</span>
+          </div>
+        </section>
+
+        <!-- KPI Grid -->
+        <section class="kpi-grid">
+          <div *ngFor="let kpi of dashboardService.kpis()" class="kpi-card">
+            <div class="kpi-card-header">
+              <span class="kpi-title">{{ kpi.titulo }}</span>
+              <div class="kpi-icon-container">
+                <span class="material-symbols-outlined kpi-icon">{{ kpi.icono }}</span>
+              </div>
+            </div>
+            <div class="kpi-card-value">{{ kpi.valor }}</div>
+            <div class="kpi-card-footer">
+              <span class="kpi-trend" [class.trend-negative]="!kpi.tendenciaPositiva">
+                {{ kpi.tendencia }}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Charts Grid -->
+        <section class="charts-section-grid">
+          <div class="dashboard-block-card chart-card">
+            <div class="block-header">
+              <div>
+                <h4 class="block-title">Ventas Últimos 30 Días</h4>
+                <p class="block-subtitle">Evolución de ingresos diarios acumulados</p>
+              </div>
+              <span class="chart-badge bg-emerald">S/ 12,540 Hoy</span>
+            </div>
+            <div class="custom-chart-wrapper">
+              <svg class="svg-line-chart" viewBox="0 0 500 150">
+                <defs>
+                  <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="rgba(167, 139, 250, 0.25)"/>
+                    <stop offset="100%" stop-color="rgba(167, 139, 250, 0)"/>
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="30" x2="500" y2="30" stroke="#1f1f23" stroke-dasharray="4,4"/>
+                <line x1="0" y1="75" x2="500" y2="75" stroke="#1f1f23" stroke-dasharray="4,4"/>
+                <line x1="0" y1="120" x2="500" y2="120" stroke="#1f1f23" stroke-dasharray="4,4"/>
+                <path d="M 0,150 L 0,110 L 80,100 L 160,120 L 240,80 L 320,60 L 400,90 L 500,65 L 500,150 Z" fill="url(#salesGradient)"/>
+                <path d="M 0,110 L 80,100 L 160,120 L 240,80 L 320,60 L 400,90 L 500,65" fill="none" stroke="var(--primary)" stroke-width="3"/>
+                <circle cx="500" cy="65" r="5" fill="var(--primary)" stroke="#09090b" stroke-width="2"/>
+              </svg>
+              <div class="chart-x-axis">
+                <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-block-card chart-card">
+            <div class="block-header">
+              <div>
+                <h4 class="block-title">Pedidos Últimos 30 Días</h4>
+                <p class="block-subtitle">Volumen de transacciones comerciales</p>
+              </div>
+              <span class="chart-badge bg-purple">145 Pedidos Hoy</span>
+            </div>
+            <div class="custom-chart-wrapper">
+              <svg class="svg-bar-chart" viewBox="0 0 500 150">
+                <line x1="0" y1="30" x2="500" y2="30" stroke="#1f1f23" stroke-dasharray="4,4"/>
+                <line x1="0" y1="75" x2="500" y2="75" stroke="#1f1f23" stroke-dasharray="4,4"/>
+                <line x1="0" y1="120" x2="500" y2="120" stroke="#1f1f23" stroke-dasharray="4,4"/>
+                <rect x="20" y="50" width="24" height="100" rx="3" fill="var(--tertiary)" opacity="0.8"/>
+                <rect x="85" y="38" width="24" height="112" rx="3" fill="var(--tertiary)" opacity="0.8"/>
+                <rect x="150" y="60" width="24" height="90" rx="3" fill="var(--tertiary)" opacity="0.8"/>
+                <rect x="215" y="32" width="24" height="118" rx="3" fill="var(--tertiary)" opacity="0.8"/>
+                <rect x="280" y="20" width="24" height="130" rx="3" fill="var(--tertiary)"/>
+                <rect x="345" y="42" width="24" height="108" rx="3" fill="var(--tertiary)" opacity="0.8"/>
+                <rect x="410" y="27" width="24" height="123" rx="3" fill="var(--tertiary)"/>
+              </svg>
+              <div class="chart-x-axis">
+                <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sub Grid: Categories & Vendors -->
+        <section class="multi-column-grid-2">
+          <div class="dashboard-block-card">
+            <h4 class="block-title">Top Categorías por Ingreso</h4>
+            <p class="block-subtitle">Distribución y cuota de participación en ventas</p>
+            <div class="categories-list">
+              <div *ngFor="let cat of dashboardService.topCategories()" class="category-progress-item">
+                <div class="category-meta-row">
+                  <span class="category-progress-name">{{ cat.nombre }}</span>
+                  <span class="category-progress-value">
+                    S/ {{ cat.ventas | number:'1.0-0' }} <span class="dim-orders">({{ cat.pedidos }} pedidos)</span>
+                  </span>
+                </div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" [style.width.%]="cat.participacion"></div>
+                </div>
+                <div class="category-footer-row">
+                  <span>Participación de Mercado</span>
+                  <span class="percentage-label">{{ cat.participacion }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-block-card table-card">
+            <h4 class="block-title">Top 10 Vendedores Activos</h4>
+            <p class="block-subtitle">Líderes de facturación de tiendas regionales</p>
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Nombre Tienda</th>
+                    <th>Región</th>
+                    <th>Facturado</th>
+                    <th>Productos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let vendor of dashboardService.topVendors()">
+                    <td class="vendor-name-cell">🏪 {{ vendor.nombreTienda }}</td>
+                    <td><span class="region-badge">{{ vendor.region }}</span></td>
+                    <td class="table-bold-value">S/ {{ vendor.ventas | number:'1.0-0' }}</td>
+                    <td>{{ vendor.productosCount }} items</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- System Alerts & Activities -->
+        <section class="multi-column-grid-2-3">
+          <div class="dashboard-block-card table-card">
+            <h4 class="block-title">Actividad Reciente del Sistema</h4>
+            <p class="block-subtitle">Logs de auditoría del backend y eventos del broker</p>
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table font-mono-table">
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>Módulo</th>
+                    <th>Resultado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let act of dashboardService.recentActivities()">
+                    <td>{{ act.hora }}</td>
+                    <td class="user-log-cell">{{ act.usuario }}</td>
+                    <td>{{ act.accion }}</td>
+                    <td><span class="module-tag">{{ act.modulo }}</span></td>
+                    <td>
+                      <span class="status-badge" [class]="act.resultado.toLowerCase()">
+                        {{ act.resultado }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="dashboard-block-card alerts-card">
+            <h4 class="block-title">Alertas Críticas de Operaciones</h4>
+            <p class="block-subtitle">Monitoreo de umbrales del marketplace</p>
+            <div class="alerts-list">
+              <div class="alert-item danger" (click)="selectSection('inventario')">
+                <span class="material-symbols-outlined alert-item-icon">warning</span>
+                <div class="alert-meta">
+                  <span class="alert-item-title">Stock Bajo Alerta</span>
+                  <span>{{ dashboardService.criticalAlerts().stockBajo }} productos bajo stock mínimo</span>
+                </div>
+                <span class="alert-count danger-tag">{{ dashboardService.criticalAlerts().stockBajo }}</span>
+              </div>
+
+              <div class="alert-item warning" (click)="selectSection('pedidos')">
+                <span class="material-symbols-outlined alert-item-icon">shopping_cart_checkout</span>
+                <div class="alert-meta">
+                  <span class="alert-item-title">Pedidos Pendientes</span>
+                  <span>{{ dashboardService.criticalAlerts().pedidosPendientes }} pedidos sin despachar</span>
+                </div>
+                <span class="alert-count warning-tag">{{ dashboardService.criticalAlerts().pedidosPendientes }}</span>
+              </div>
+
+              <div class="alert-item danger" (click)="selectSection('pagos')">
+                <span class="material-symbols-outlined alert-item-icon">sms_failed</span>
+                <div class="alert-meta">
+                  <span class="alert-item-title">Pagos Fallidos</span>
+                  <span>{{ dashboardService.criticalAlerts().pagosFallidos }} cobros SOAP rechazados</span>
+                </div>
+                <span class="alert-count danger-tag">{{ dashboardService.criticalAlerts().pagosFallidos }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick actions buttons row -->
+        <section class="quick-actions-section">
+          <div class="dashboard-block-card">
+            <h4 class="block-title">Acciones Rápidas del Administrador</h4>
+            <p class="block-subtitle">Acceso directo a formularios operacionales</p>
+            <div class="quick-buttons-row">
+              <button class="action-btn" (click)="selectSection('usuarios')">
+                <span class="material-symbols-outlined">person_add</span>
+                <span>Crear Usuario</span>
+              </button>
+              <button class="action-btn" (click)="selectSection('vendedores')">
+                <span class="material-symbols-outlined">storefront</span>
+                <span>Crear Vendedor</span>
+              </button>
+              <button class="action-btn" (click)="selectSection('productos')">
+                <span class="material-symbols-outlined">add_box</span>
+                <span>Crear Producto</span>
+              </button>
+              <button class="action-btn" (click)="selectSection('inventario')">
+                <span class="material-symbols-outlined">warehouse</span>
+                <span>Ajustar Stock</span>
+              </button>
+              <button class="action-btn highlight-btn" (click)="selectSection('importaciones')">
+                <span class="material-symbols-outlined">upload_file</span>
+                <span>Importar XML</span>
+              </button>
+              <button class="action-btn" (click)="selectSection('exportaciones')">
+                <span class="material-symbols-outlined">download</span>
+                <span>Exportar Catálogo</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: USUARIOS                                  -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'usuarios'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Gestión de Usuarios</h2>
+            <p class="welcome-subtitle">Auditoría de cuentas administrativas, vendedores y clientes.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openCreateUser()">
+              <span class="material-symbols-outlined">person_add</span>
+              <span>Nuevo Usuario</span>
+            </button>
+            <button class="action-btn" (click)="exportUsersCsv()">
+              <span class="material-symbols-outlined">download</span>
+              <span>Exportar CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <!-- Left Table list -->
+          <div class="dashboard-block-card table-card list-panel">
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Correo</th>
+                    <th>Roles</th>
+                    <th>Registro</th>
+                    <th>Estado</th>
+                    <th>Seguridad</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngIf="filteredUsers().length === 0">
+                    <td colspan="7" class="empty-state-cell">Sin usuarios que coincidan con la búsqueda.</td>
+                  </tr>
+                  <tr *ngFor="let user of filteredUsers()">
+                    <td>{{ user.id }}</td>
+                    <td class="table-bold-value">{{ user.correo }}</td>
+                    <td>
+                      <div class="roles-chips-container">
+                        <span *ngFor="let role of user.roles" class="role-chip-premium" [class.role-admin]="role === 'ADMIN'" [class.role-vendor]="role === 'VENDEDOR'" [class.role-buyer]="role === 'COMPRADOR'">
+                          {{ role }}
+                        </span>
+                      </div>
+                    </td>
+                    <td>{{ user.fechaRegistro }}</td>
+                    <td>
+                      <span class="pill-chip" [class.chip-active]="user.estado" [class.chip-inactive]="!user.estado">
+                        <span class="chip-dot"></span>
+                        <span>{{ user.estado ? 'Activo' : 'Inactivo' }}</span>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="pill-chip" [class.chip-blocked]="user.bloqueado" [class.chip-secure]="!user.bloqueado">
+                        <span class="material-symbols-outlined chip-icon">{{ user.bloqueado ? 'lock' : 'verified_user' }}</span>
+                        <span>{{ user.bloqueado ? 'Bloqueado' : 'Seguro' }}</span>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="actions-btn-group">
+                        <button (click)="selectedUserId.set(user.id)" class="btn-action-premium btn-view" title="Ver Detalles">
+                          <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                        <button (click)="openEditUser(user)" class="btn-action-premium btn-edit" title="Editar">
+                          <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button (click)="toggleBlockUser(user)" class="btn-action-premium btn-block" [title]="user.bloqueado ? 'Desbloquear' : 'Bloquear'">
+                          <span class="material-symbols-outlined">{{ user.bloqueado ? 'lock_open' : 'lock' }}</span>
+                        </button>
+                        <button (click)="deleteUser(user.id)" class="btn-action-premium btn-delete" title="Eliminar">
+                          <span class="material-symbols-outlined">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right Side Form (Create/Edit) -->
+          <div *ngIf="isCreatingUser() || isEditingUser()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">{{ isCreatingUser() ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}</h4>
+            <p class="block-subtitle">Formulario de registro relacional en SQL Server</p>
+
+            <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="portal-form">
+              <div class="form-group">
+                <label>Correo Electrónico *</label>
+                <input type="email" formControlName="correo" placeholder="ejemplo@multimarket.com" class="portal-input"/>
+                <span *ngIf="userForm.get('correo')?.touched && userForm.get('correo')?.invalid" class="validation-error">Correo inválido</span>
+              </div>
+
+              <div class="form-group" *ngIf="isCreatingUser()">
+                <label>Contraseña *</label>
+                <input type="password" formControlName="password" placeholder="Mínimo 6 caracteres" class="portal-input"/>
+                <span *ngIf="userForm.get('password')?.touched && userForm.get('password')?.invalid" class="validation-error">Contraseña requerida (min. 6)</span>
+              </div>
+
+              <div class="form-group" *ngIf="isCreatingUser()">
+                <label>Confirmar Contraseña *</label>
+                <input type="password" formControlName="confirmPassword" placeholder="Repita contraseña" class="portal-input"/>
+                <span *ngIf="userForm.hasError('notSame') && userForm.get('confirmPassword')?.touched" class="validation-error">Las contraseñas no coinciden</span>
+              </div>
+
+              <div class="form-group">
+                <label>Roles de Acceso *</label>
+                <select multiple formControlName="roles" class="portal-select-multiple">
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="VENDEDOR">VENDEDOR</option>
+                  <option value="COMPRADOR">COMPRADOR</option>
+                </select>
+                <small class="dim-tip">Ctrl + click para multiselección.</small>
+              </div>
+
+              <div class="form-group">
+                <label class="switch-container">
+                  <input type="checkbox" formControlName="estado"/>
+                  <span class="switch-slider"></span>
+                  <span class="switch-label">Habilitar Cuenta</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="userForm.invalid" class="action-btn highlight-btn">Guardar</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Drawer details -->
+          <div *ngIf="selectedUser()" class="dashboard-block-card detail-drawer animate-slide-in">
+            <div class="drawer-header-row">
+              <h4 class="block-title">Auditoría del Usuario</h4>
+              <button (click)="selectedUserId.set(null)" class="close-drawer-btn">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div class="detail-content">
+              <div class="detail-avatar-circle">{{ selectedUser()?.correo?.charAt(0)?.toUpperCase() }}</div>
+              <div class="detail-meta-list">
+                <div class="detail-meta-item"><span>Correo:</span><strong>{{ selectedUser()?.correo }}</strong></div>
+                <div class="detail-meta-item"><span>Registro:</span><span>{{ selectedUser()?.fechaRegistro }}</span></div>
+                <div class="detail-meta-item">
+                  <span>Roles:</span>
+                  <div><span *ngFor="let r of selectedUser()?.roles" class="role-badge">{{ r }}</span></div>
+                </div>
+                <div class="detail-meta-item"><span>Correo Verificado:</span><span class="badge bg-emerald">SÍ</span></div>
+                <div class="detail-meta-item"><span>Fallos de Acceso:</span><span>{{ selectedUser()?.intentosFallidos }} / 5</span></div>
+                <div class="detail-meta-item"><span>Estado:</span><span [class.blocked-tag]="selectedUser()?.bloqueado">{{ selectedUser()?.bloqueado ? 'BLOQUEADO' : 'ACTIVO' }}</span></div>
+              </div>
+
+              <h5 class="sub-block-title">Historial de Conexiones</h5>
+              <div class="nested-list font-mono-nested">
+                <div class="session-log-row"><span>31/05/2026 19:22</span><span>192.168.1.155</span><span class="text-emerald">SUCCESS</span></div>
+                <div class="session-log-row"><span>30/05/2026 10:04</span><span>192.168.1.155</span><span class="text-emerald">SUCCESS</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: ROLES                                     -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'roles'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Roles y Permisos</h2>
+            <p class="welcome-subtitle">Control de acceso basado en roles (RBAC) para administración.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openCreateRole()">
+              <span class="material-symbols-outlined">badge</span>
+              <span>Nuevo Rol</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Rol</th>
+                    <th>Descripción</th>
+                    <th>Permisos Asignados</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let role of filteredRoles()">
+                    <td>{{ role.id }}</td>
+                    <td class="table-bold-value"><span class="module-tag">{{ role.nombre }}</span></td>
+                    <td>{{ role.descripcion }}</td>
+                    <td>
+                      <span *ngFor="let perm of role.permisos" class="permission-tag">{{ perm }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div *ngIf="isCreatingRole()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">Crear Nuevo Rol</h4>
+            <p class="block-subtitle">Formulario de registro relacional</p>
+
+            <form [formGroup]="roleForm" (ngSubmit)="saveRole()" class="portal-form">
+              <div class="form-group">
+                <label>Nombre del Rol *</label>
+                <input type="text" formControlName="nombre" placeholder="Ej. OPERADOR_LOGISTICO" class="portal-input"/>
+                <span *ngIf="roleForm.get('nombre')?.touched && roleForm.get('nombre')?.invalid" class="validation-error">Sólo letras mayúsculas y guiones bajos (_)</span>
+              </div>
+
+              <div class="form-group">
+                <label>Descripción *</label>
+                <textarea formControlName="descripcion" placeholder="Describa el alcance de funciones del rol" class="portal-textarea"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Configurar Permisos:</label>
+                <div class="permissions-checklist">
+                  <div class="permission-check-item" (click)="togglePermission('read')">
+                    <span class="material-symbols-outlined checkbox-icon">{{ isPermissionSelected('read') ? 'check_box' : 'check_box_outline_blank' }}</span>
+                    <span>Lectura (read)</span>
+                  </div>
+                  <div class="permission-check-item" (click)="togglePermission('write')">
+                    <span class="material-symbols-outlined checkbox-icon">{{ isPermissionSelected('write') ? 'check_box' : 'check_box_outline_blank' }}</span>
+                    <span>Escritura (write)</span>
+                  </div>
+                  <div class="permission-check-item" (click)="togglePermission('delete')">
+                    <span class="material-symbols-outlined checkbox-icon">{{ isPermissionSelected('delete') ? 'check_box' : 'check_box_outline_blank' }}</span>
+                    <span>Eliminación (delete)</span>
+                  </div>
+                  <div class="permission-check-item" (click)="togglePermission('admin')">
+                    <span class="material-symbols-outlined checkbox-icon">{{ isPermissionSelected('admin') ? 'check_box' : 'check_box_outline_blank' }}</span>
+                    <span>Administración Total (admin)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="roleForm.invalid" class="action-btn highlight-btn">Guardar</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: VENDEDORES                                 -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'vendedores'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Directorio de Vendedores Regionales</h2>
+            <p class="welcome-subtitle">Control de comercios, validación de tiendas y catálogos.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openCreateVendor()">
+              <span class="material-symbols-outlined">storefront</span>
+              <span>Nuevo Vendedor</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Tienda</th>
+                    <th>Región</th>
+                    <th>Dirección</th>
+                    <th>Registro</th>
+                    <th>Rating</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let vendor of filteredVendors()">
+                    <td class="vendor-name-cell">
+                      <img [src]="vendor.logo" class="vendor-mini-logo" alt="logo"/>
+                      <span class="table-bold-value">{{ vendor.nombreTienda }}</span>
+                    </td>
+                    <td><span class="region-chip-premium">{{ vendor.region }}</span></td>
+                    <td>{{ vendor.direccion }}</td>
+                    <td>{{ vendor.fechaCreacion }}</td>
+                    <td>⭐ {{ vendor.calificacionPromedio }}</td>
+                    <td>
+                      <span class="pill-chip" [class.chip-active]="vendor.activo" [class.chip-inactive]="!vendor.activo">
+                        <span class="chip-dot"></span>
+                        <span>{{ vendor.activo ? 'Habilitado' : 'Suspendido' }}</span>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="actions-btn-group">
+                        <button (click)="selectedVendorId.set(vendor.id)" class="btn-action-premium btn-view" title="Ver Catálogo">
+                          <span class="material-symbols-outlined">inventory_2</span>
+                        </button>
+                        <button (click)="openEditVendor(vendor)" class="btn-action-premium btn-edit" title="Editar">
+                          <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button (click)="deleteVendor(vendor.id)" class="btn-action-premium btn-delete" title="Dar de Baja">
+                          <span class="material-symbols-outlined">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Form Panel -->
+          <div *ngIf="isCreatingVendor() || isEditingVendor()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">{{ isCreatingVendor() ? 'Registrar Vendedor' : 'Editar Tienda Vendedor' }}</h4>
+            <p class="block-subtitle">Configuración corporativa de la tienda regional</p>
+
+            <form [formGroup]="vendorForm" (ngSubmit)="saveVendor()" class="portal-form">
+              <div class="form-group">
+                <label>Nombre de la Tienda *</label>
+                <input type="text" formControlName="nombreTienda" placeholder="Ej. Chocolates finos" class="portal-input"/>
+              </div>
+
+              <div class="form-group">
+                <label>Descripción *</label>
+                <textarea formControlName="descripcion" class="portal-textarea"></textarea>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Región *</label>
+                  <select formControlName="region" class="portal-select">
+                    <option value="Cusco">Cusco</option>
+                    <option value="Amazonas">Amazonas</option>
+                    <option value="Puno">Puno</option>
+                    <option value="San Martín">San Martín</option>
+                    <option value="Lima">Lima</option>
+                  </select>
+                </div>
+                <div class="form-group-half">
+                  <label>Dirección Física *</label>
+                  <input type="text" formControlName="direccion" class="portal-input"/>
+                </div>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>URL Logotipo</label>
+                  <input type="text" formControlName="logo" class="portal-input"/>
+                </div>
+                <div class="form-group-half">
+                  <label>URL Banner Tienda</label>
+                  <input type="text" formControlName="banner" class="portal-input"/>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="switch-container">
+                  <input type="checkbox" formControlName="activo"/>
+                  <span class="switch-slider"></span>
+                  <span class="switch-label">Habilitar Tienda</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="vendorForm.invalid" class="action-btn highlight-btn">Guardar</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Drawer details and seller products list -->
+          <div *ngIf="selectedVendor()" class="dashboard-block-card detail-drawer animate-slide-in">
+            <div class="drawer-header-row">
+              <h4 class="block-title">Ficha del Vendedor</h4>
+              <button (click)="selectedVendorId.set(null)" class="close-drawer-btn">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div class="detail-content">
+              <div class="vendor-banner-preview" [style.background-image]="'url(' + selectedVendor()?.banner + ')'">
+                <img [src]="selectedVendor()?.logo" class="vendor-detail-logo" alt="logo"/>
+              </div>
+
+              <div class="detail-meta-list" style="margin-top: 50px;">
+                <div class="detail-meta-item"><span>Tienda:</span><strong>{{ selectedVendor()?.nombreTienda }}</strong></div>
+                <div class="detail-meta-item"><span>Descripción:</span><span>{{ selectedVendor()?.descripcion }}</span></div>
+                <div class="detail-meta-item"><span>Región / Dirección:</span><span>{{ selectedVendor()?.region }} - {{ selectedVendor()?.direccion }}</span></div>
+                <div class="detail-meta-item"><span>Calificación:</span><span>⭐ {{ selectedVendor()?.calificacionPromedio }} / 5.0</span></div>
+              </div>
+
+              <h5 class="sub-block-title">Productos Registrados en su Catálogo</h5>
+              <div class="table-scroll-wrapper">
+                <table class="dashboard-table">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>SKU</th>
+                      <th>Precio</th>
+                      <th>Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngIf="selectedVendorProducts().length === 0">
+                      <td colspan="4" class="empty-state-cell">El vendedor no registra productos publicados.</td>
+                    </tr>
+                    <tr *ngFor="let p of selectedVendorProducts()">
+                      <td>{{ p.nombre }}</td>
+                      <td><code>{{ p.sku }}</code></td>
+                      <td>S/ {{ p.precio }}</td>
+                      <td>{{ p.stock }} uds.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: CATEGORIAS                                 -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'categorias'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Categorías del Catálogo</h2>
+            <p class="welcome-subtitle">Clasificación jerárquica para la indexación de productos.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openCreateCategory()">
+              <span class="material-symbols-outlined">create_new_folder</span>
+              <span>Nueva Categoría</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Categoría</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let cat of filteredCategories()">
+                    <td>{{ cat.id }}</td>
+                    <td class="table-bold-value">{{ cat.nombre }}</td>
+                    <td>{{ cat.descripcion }}</td>
+                    <td>
+                      <span class="pill-chip" [class.chip-active]="cat.activa" [class.chip-inactive]="!cat.activa">
+                        <span class="chip-dot"></span>
+                        <span>{{ cat.activa ? 'Activa' : 'Inactiva' }}</span>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="actions-btn-group">
+                        <button (click)="openEditCategory(cat)" class="btn-action-premium btn-edit" title="Editar">
+                          <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button (click)="deleteCategory(cat.id)" class="btn-action-premium btn-delete" title="Eliminar">
+                          <span class="material-symbols-outlined">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Form -->
+          <div *ngIf="isCreatingCategory() || isEditingCategory()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">{{ isCreatingCategory() ? 'Nueva Categoría' : 'Editar Categoría' }}</h4>
+            <p class="block-subtitle">Formulario de registro relacional</p>
+
+            <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="portal-form">
+              <div class="form-group">
+                <label>Nombre *</label>
+                <input type="text" formControlName="nombre" class="portal-input"/>
+              </div>
+
+              <div class="form-group">
+                <label>Descripción *</label>
+                <textarea formControlName="descripcion" class="portal-textarea"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label class="switch-container">
+                  <input type="checkbox" formControlName="activa"/>
+                  <span class="switch-slider"></span>
+                  <span class="switch-label">Habilitada</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="categoryForm.invalid" class="action-btn highlight-btn">Guardar</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: PRODUCTOS                                  -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'productos'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Catálogo de Productos Global</h2>
+            <p class="welcome-subtitle">Catálogos de vendedores, monitoreo de precios y existencias.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openCreateProduct()">
+              <span class="material-symbols-outlined">add_box</span>
+              <span>Nuevo Producto</span>
+            </button>
+            <button class="action-btn" (click)="exportProductsCsv()">
+              <span class="material-symbols-outlined">download</span>
+              <span>Exportar CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Imagen</th>
+                    <th>Producto</th>
+                    <th>SKU</th>
+                    <th>Categoría</th>
+                    <th>Vendedor</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of filteredProducts()">
+                    <td><img [src]="p.imagenes[0]" class="prod-mini-img" alt="prod"/></td>
+                    <td class="table-bold-value">{{ p.nombre }}</td>
+                    <td><code>{{ p.sku }}</code></td>
+                    <td><span class="region-chip-premium">{{ p.categoriaNombre }}</span></td>
+                    <td>🏪 {{ p.vendedorNombre }}</td>
+                    <td class="table-bold-value text-cyan">S/ {{ p.precio | number:'1.2-2' }}</td>
+                    <td>
+                      <div class="stock-cell-wrapper">
+                        <span class="stock-chip" [class.stock-critical]="p.stock === 0" [class.stock-low]="p.stock > 0 && p.stock < 10" [class.stock-healthy]="p.stock >= 10">
+                          <span class="stock-dot-pulse"></span>
+                          <span>{{ p.stock }} uds</span>
+                        </span>
+                        <div class="stock-mini-bar">
+                          <div class="stock-mini-fill" [style.width.%]="p.stock > 100 ? 100 : p.stock" [class.bg-critical]="p.stock === 0" [class.bg-low]="p.stock > 0 && p.stock < 10" [class.bg-healthy]="p.stock >= 10"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="pill-chip" [class.chip-active]="p.activo" [class.chip-inactive]="!p.activo">
+                        <span class="chip-dot"></span>
+                        <span>{{ p.activo ? 'Activo' : 'Baja' }}</span>
+                      </span>
+                    </td>
+                    <td>
+                      <div class="actions-btn-group">
+                        <button (click)="selectedProductId.set(p.id)" class="btn-action-premium btn-view" title="Ficha Técnica">
+                          <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                        <button (click)="openEditProduct(p)" class="btn-action-premium btn-edit" title="Editar">
+                          <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button (click)="deleteProduct(p.id)" class="btn-action-premium btn-delete" title="Dar de baja">
+                          <span class="material-symbols-outlined">delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Product Form -->
+          <div *ngIf="isCreatingProduct() || isEditingProduct()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">{{ isCreatingProduct() ? 'Publicar Nuevo Producto' : 'Editar Ficha Producto' }}</h4>
+            <p class="block-subtitle">Formulario de registro relacional en catálogo</p>
+
+            <form [formGroup]="productForm" (ngSubmit)="saveProduct()" class="portal-form">
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Nombre del Producto *</label>
+                  <input type="text" formControlName="nombre" class="portal-input"/>
+                </div>
+                <div class="form-group-half">
+                  <label>SKU Corporativo *</label>
+                  <input type="text" formControlName="sku" placeholder="Ej. CAF-CUS-102" class="portal-input"/>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Descripción del Producto *</label>
+                <textarea formControlName="descripcion" class="portal-textarea"></textarea>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Categoría Relacional *</label>
+                  <select formControlName="categoriaId" class="portal-select">
+                    <option *ngFor="let c of portalService.categories()" [value]="c.id">{{ c.nombre }}</option>
+                  </select>
+                </div>
+                <div class="form-group-half">
+                  <label>Vendedor Titular *</label>
+                  <select formControlName="vendedorId" class="portal-select">
+                    <option *ngFor="let v of portalService.vendors()" [value]="v.id">{{ v.nombreTienda }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Precio de Venta (S/) *</label>
+                  <input type="number" step="0.01" formControlName="precio" class="portal-input"/>
+                </div>
+                <div class="form-group-half">
+                  <label>Existencia Inicial (Stock) *</label>
+                  <input type="number" formControlName="stock" class="portal-input"/>
+                </div>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Peso Físico (kg) *</label>
+                  <input type="number" step="0.01" formControlName="peso" class="portal-input"/>
+                </div>
+                <div class="form-group-half">
+                  <label>URL Imagen del Producto</label>
+                  <input type="text" formControlName="imagenes" class="portal-input"/>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="switch-container">
+                  <input type="checkbox" formControlName="activo"/>
+                  <span class="switch-slider"></span>
+                  <span class="switch-label">Habilitar Producto para Venta</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="productForm.invalid" class="action-btn highlight-btn">Guardar</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Product Details Drawer -->
+          <div *ngIf="selectedProduct()" class="dashboard-block-card detail-drawer animate-slide-in">
+            <div class="drawer-header-row">
+              <h4 class="block-title">Ficha Técnica del Producto</h4>
+              <button (click)="selectedProductId.set(null)" class="close-drawer-btn">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div class="detail-content">
+              <div class="product-detail-preview">
+                <img [src]="selectedProduct()?.imagenes?.[0]" class="prod-large-img" alt="prod"/>
+              </div>
+
+              <div class="detail-meta-list" style="margin-top: 20px;">
+                <div class="detail-meta-item"><span>Producto:</span><strong>{{ selectedProduct()?.nombre }}</strong></div>
+                <div class="detail-meta-item"><span>SKU:</span><code>{{ selectedProduct()?.sku }}</code></div>
+                <div class="detail-meta-item"><span>Categoría:</span><span>{{ selectedProduct()?.categoriaNombre }}</span></div>
+                <div class="detail-meta-item"><span>Vendedor Tienda:</span><span>🏪 {{ selectedProduct()?.vendedorNombre }}</span></div>
+                <div class="detail-meta-item"><span>Precio de Venta:</span><strong class="text-cyan">S/ {{ selectedProduct()?.precio | number:'1.2-2' }}</strong></div>
+                <div class="detail-meta-item"><span>Stock Actual:</span><span class="badge" [class.bg-danger]="selectedProduct()?.stock! < 10" [class.bg-emerald]="selectedProduct()?.stock! >= 10">{{ selectedProduct()?.stock }} unidades</span></div>
+                <div class="detail-meta-item"><span>Peso Unitario:</span><span>{{ selectedProduct()?.peso }} kg</span></div>
+                <div class="detail-meta-item"><span>Fecha de Alta:</span><span>{{ selectedProduct()?.fechaCreacion }}</span></div>
+                <div class="detail-meta-item"><span>Descripción:</span><span class="desc-para">{{ selectedProduct()?.descripcion }}</span></div>
+              </div>
+
+              <h5 class="sub-block-title">Galería de Imágenes</h5>
+              <div class="image-gallery-drawer-grid">
+                <div *ngFor="let img of selectedProduct()?.imagenes" class="gallery-thumbnail-wrapper">
+                  <img [src]="img" class="gallery-thumb" alt="thumbnail"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: INVENTARIO                                 -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'inventario'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Control de Stock General</h2>
+            <p class="welcome-subtitle">Kárdex general de existencias en almacenes de vendedores.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openAdjustInventory()">
+              <span class="material-symbols-outlined">edit_note</span>
+              <span>Ajuste Manual Stock</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <h4 class="block-title">Existencias en Almacén</h4>
+            <p class="block-subtitle">Balance de inventario físico actualizable</p>
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Producto</th>
+                    <th>SKU</th>
+                    <th>Stock Físico</th>
+                    <th>Estado de Alerta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of portalService.products()">
+                    <td>{{ p.id }}</td>
+                    <td class="table-bold-value">{{ p.nombre }}</td>
+                    <td><code>{{ p.sku }}</code></td>
+                    <td>
+                      <div class="stock-cell-wrapper">
+                        <span class="stock-chip" [class.stock-critical]="p.stock === 0" [class.stock-low]="p.stock > 0 && p.stock < 10" [class.stock-healthy]="p.stock >= 10">
+                          <span class="stock-dot-pulse"></span>
+                          <span>{{ p.stock }} uds</span>
+                        </span>
+                        <div class="stock-mini-bar">
+                          <div class="stock-mini-fill" [style.width.%]="p.stock > 100 ? 100 : p.stock" [class.bg-critical]="p.stock === 0" [class.bg-low]="p.stock > 0 && p.stock < 10" [class.bg-healthy]="p.stock >= 10"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="pill-chip" [class.chip-blocked]="p.stock < 10" [class.chip-secure]="p.stock >= 10">
+                        <span class="material-symbols-outlined chip-icon">{{ p.stock < 10 ? 'warning' : 'check_circle' }}</span>
+                        <span>{{ p.stock < 10 ? 'Stock Bajo' : 'Abastecido' }}</span>
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div *ngIf="isAdjustingInventory()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">Ajuste de Almacén (Manual)</h4>
+            <p class="block-subtitle">Formulario de alteración de stock físico</p>
+
+            <form [formGroup]="inventoryForm" (ngSubmit)="saveInventoryAdjustment()" class="portal-form">
+              <div class="form-group">
+                <label>Seleccionar Producto *</label>
+                <select formControlName="productoId" class="portal-select">
+                  <option *ngFor="let p of portalService.products()" [value]="p.id">{{ p.nombre }} (Stock: {{ p.stock }})</option>
+                </select>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Cantidad de Ajuste *</label>
+                  <input type="number" formControlName="cantidad" class="portal-input"/>
+                </div>
+                <div class="form-group-half">
+                  <label>Tipo de Movimiento *</label>
+                  <select formControlName="tipoMovimiento" class="portal-select">
+                    <option value="ENTRADA">ENTRADA (+ Stock)</option>
+                    <option value="SALIDA">SALIDA (- Stock)</option>
+                    <option value="AJUSTE">AJUSTE MANUAL (- Stock)</option>
+                    <option value="DEVOLUCION">DEVOLUCIÓN CLIENTE (+ Stock)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Observación / Justificación Técnica *</label>
+                <textarea formControlName="observacion" placeholder="Detalle la auditoría de este movimiento físico..." class="portal-textarea"></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="inventoryForm.invalid" class="action-btn highlight-btn">Aplicar Ajuste</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Historical Kárdex Log block -->
+        <div class="dashboard-block-card table-card" style="margin-top: 32px;">
+          <h4 class="block-title">Kárdex de Movimientos Recientes</h4>
+          <p class="block-subtitle">Registro de auditoría física de entradas y salidas de mercadería</p>
+          <div class="table-scroll-wrapper">
+            <table class="dashboard-table font-mono-table">
+              <thead>
+                <tr>
+                  <th>Fecha Movimiento</th>
+                  <th>ID Prod</th>
+                  <th>Producto</th>
+                  <th>Tipo</th>
+                  <th>Cantidad Alterada</th>
+                  <th>Justificación / Observación</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let mov of filteredInventoryMovements()">
+                  <td>{{ mov.fechaMovimiento }}</td>
+                  <td>{{ mov.productoId }}</td>
+                  <td class="table-bold-value" style="font-family: inherit;">{{ mov.productoNombre }}</td>
+                  <td>
+                    <span class="status-badge" [class.ok]="mov.tipoMovimiento === 'ENTRADA' || mov.tipoMovimiento === 'DEVOLUCION'"
+                                              [class.warn]="mov.tipoMovimiento === 'SALIDA'"
+                                              [class.error]="mov.tipoMovimiento === 'AJUSTE'">
+                      {{ mov.tipoMovimiento }}
+                    </span>
+                  </td>
+                  <td class="table-bold-value">{{ mov.cantidad }} unidades</td>
+                  <td>{{ mov.observacion }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: PEDIDOS                                    -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'pedidos'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Registro Operativo de Pedidos</h2>
+            <p class="welcome-subtitle">Ciclo de vida comercial, control de pagos y despachos.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn" (click)="exportOrdersCsv()">
+              <span class="material-symbols-outlined">download</span>
+              <span>Exportar CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="search-filter-bar flex-row-filter">
+          <div class="search-input-box search-filter-width">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" placeholder="Buscar pedido por número o cliente..." [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)"/>
+          </div>
+          
+          <div class="select-filter-box">
+            <label>Filtrar Estado:</label>
+            <select [value]="orderFilterStatus()" (change)="orderFilterStatus.set($any($event.target).value)" class="portal-select-filter">
+              <option value="ALL">Todos los estados</option>
+              <option value="PENDIENTE">PENDIENTE</option>
+              <option value="PAGADO">PAGADO</option>
+              <option value="ENVIADO">ENVIADO</option>
+              <option value="ENTREGADO">ENTREGADO</option>
+              <option value="CANCELADO">CANCELADO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Número Pedido</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Tienda Vendedor</th>
+                    <th>Total Pedido</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let order of filteredOrders()">
+                    <td><code>{{ order.numeroPedido }}</code></td>
+                    <td>{{ order.fechaPedido }}</td>
+                    <td>
+                      <div class="client-meta-row">
+                        <strong>{{ order.compradorNombre }}</strong>
+                        <span class="dim-email">{{ order.compradorCorreo }}</span>
+                      </div>
+                    </td>
+                    <td>🏪 {{ order.vendedorNombre }}</td>
+                    <td class="table-bold-value text-cyan">S/ {{ order.total | number:'1.2-2' }}</td>
+                    <td>
+                      <span class="pill-chip-order" [class.order-pendiente]="order.estado === 'PENDIENTE'" 
+                                                   [class.order-pagado]="order.estado === 'PAGADO'" 
+                                                   [class.order-enviado]="order.estado === 'ENVIADO'" 
+                                                   [class.order-entregado]="order.estado === 'ENTREGADO'" 
+                                                   [class.order-cancelado]="order.estado === 'CANCELADO'">
+                        {{ order.estado }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="actions-btn-group">
+                        <button (click)="selectedOrderId.set(order.id)" class="btn-action-premium btn-view" title="Detalle Pedido">
+                          <span class="material-symbols-outlined">receipt_long</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Order Details Drawer -->
+          <div *ngIf="selectedOrder()" class="dashboard-block-card detail-drawer animate-slide-in">
+            <div class="drawer-header-row">
+              <h4 class="block-title">Detalles Facturación Pedido</h4>
+              <button (click)="selectedOrderId.set(null)" class="close-drawer-btn">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div class="detail-content">
+              <div class="order-invoice-top">
+                <div>
+                  <span>Número de Pedido:</span>
+                  <strong><code>{{ selectedOrder()?.numeroPedido }}</code></strong>
+                </div>
+                <div>
+                  <span>Fecha:</span>
+                  <strong>{{ selectedOrder()?.fechaPedido }}</strong>
+                </div>
+              </div>
+
+              <div class="detail-meta-list" style="margin-top: 16px;">
+                <div class="detail-meta-item"><span>Comprador:</span><span>{{ selectedOrder()?.compradorNombre }} ({{ selectedOrder()?.compradorCorreo }})</span></div>
+                <div class="detail-meta-item"><span>Vendedor:</span><span>🏪 {{ selectedOrder()?.vendedorNombre }}</span></div>
+                <div class="detail-meta-item"><span>Método Pago:</span><span>{{ selectedOrder()?.metodoPago || 'N/A' }}</span></div>
+                <div class="detail-meta-item"><span>Código Transacción:</span><code>{{ selectedOrder()?.codigoOperacion || 'PENDIENTE_PROCESAMIENTO' }}</code></div>
+              </div>
+
+              <!-- Status transition buttons -->
+              <h5 class="sub-block-title">Actualizar Estado del Pedido</h5>
+              <div class="status-controls-actions-row">
+                <button (click)="updateOrderStatus(selectedOrder()!.id, 'PENDIENTE')" class="action-btn-status text-warn" [class.active-st]="selectedOrder()?.estado === 'PENDIENTE'">Pendiente</button>
+                <button (click)="updateOrderStatus(selectedOrder()!.id, 'PAGADO')" class="action-btn-status text-ok" [class.active-st]="selectedOrder()?.estado === 'PAGADO'">Pagado</button>
+                <button (click)="updateOrderStatus(selectedOrder()!.id, 'ENVIADO')" class="action-btn-status text-info" [class.active-st]="selectedOrder()?.estado === 'ENVIADO'">Enviado</button>
+                <button (click)="updateOrderStatus(selectedOrder()!.id, 'ENTREGADO')" class="action-btn-status text-ok" [class.active-st]="selectedOrder()?.estado === 'ENTREGADO'">Entregado</button>
+                <button (click)="updateOrderStatus(selectedOrder()!.id, 'CANCELADO')" class="action-btn-status text-err" [class.active-st]="selectedOrder()?.estado === 'CANCELADO'">Cancelar</button>
+              </div>
+
+              <h5 class="sub-block-title">Productos Adquiridos</h5>
+              <div class="table-scroll-wrapper">
+                <table class="dashboard-table font-mono-table">
+                  <thead>
+                    <tr>
+                      <th style="font-family: inherit;">Producto</th>
+                      <th>SKU</th>
+                      <th>Cantidad</th>
+                      <th>Precio Unit.</th>
+                      <th>Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let det of selectedOrder()?.detalles">
+                      <td style="font-family: inherit;">{{ det.productoNombre }}</td>
+                      <td><code>{{ det.sku }}</code></td>
+                      <td>{{ det.cantidad }} uds</td>
+                      <td>S/ {{ det.precioUnitario }}</td>
+                      <td class="text-cyan">S/ {{ det.subtotal }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Financial breakdown values -->
+              <div class="financial-breakdown-box">
+                <div class="fin-row"><span>Subtotal:</span><span>S/ {{ selectedOrder()?.subtotal }}</span></div>
+                <div class="fin-row"><span>Impuesto (IGV 18%):</span><span>S/ {{ selectedOrder()?.impuesto }}</span></div>
+                <div class="fin-row"><span>Costo Envío:</span><span>S/ {{ selectedOrder()?.costoEnvio }}</span></div>
+                <hr class="fin-divider"/>
+                <div class="fin-row total-row"><span>TOTAL GENERAL:</span><strong class="text-cyan">S/ {{ selectedOrder()?.total }}</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: PAGOS                                      -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'pagos'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Monitoreo de Pagos y WebServices SOAP</h2>
+            <p class="welcome-subtitle">Registro de cobros relacionales e integraciones bancarias SOAP.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn" (click)="exportPaymentsCsv()">
+              <span class="material-symbols-outlined">download</span>
+              <span>Exportar CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <h4 class="block-title">Bitácora de Pagos de Clientes</h4>
+            <p class="block-subtitle">Verificación de pasarela relacional</p>
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Pedido</th>
+                    <th>Monto Cobrado</th>
+                    <th>Método Pago</th>
+                    <th>Operación / Código</th>
+                    <th>Estado SOAP</th>
+                    <th>Fecha Procesado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let p of filteredPayments()">
+                    <td><code>{{ p.pedidoNumero }}</code></td>
+                    <td class="table-bold-value text-cyan">S/ {{ p.monto | number:'1.2-2' }}</td>
+                    <td>{{ p.metodoPago }}</td>
+                    <td><code>{{ p.codigoOperacion }}</code></td>
+                    <td>
+                      <span class="pill-chip-payment" [class.pay-approved]="p.estadoPago === 'APROBADO'"
+                                                     [class.pay-failed]="p.estadoPago === 'FALLIDO'"
+                                                     [class.pay-refunded]="p.estadoPago === 'REEMBOLSADO'">
+                        {{ p.estadoPago }}
+                      </span>
+                    </td>
+                    <td>{{ p.fechaPago }}</td>
+                    <td>
+                      <div class="actions-btn-group">
+                        <button (click)="selectedPaymentId.set(p.id)" class="btn-action-premium btn-view" title="Ver SOAP XML Log">
+                          <span class="material-symbols-outlined">terminal</span>
+                        </button>
+                        <button *ngIf="p.estadoPago === 'FALLIDO'" (click)="retryPayment(p)" class="btn-action-premium btn-edit" title="Reintentar Transacción SOAP">
+                          <span class="material-symbols-outlined">replay</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- SOAP LOGS VISUAL DETAILS DRAWERS -->
+          <div *ngIf="selectedPayment()" class="dashboard-block-card detail-drawer audit-xml-panel animate-slide-in">
+            <div class="drawer-header-row">
+              <h4 class="block-title">SOAP Audit Trace Log (XML)</h4>
+              <button (click)="selectedPaymentId.set(null)" class="close-drawer-btn">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div class="detail-content font-mono-audit">
+              <p class="dim-desc-audit">Llamada WebService SOAP JAX-WS del banco receptor:</p>
+              
+              <div class="xml-block-box">
+                <span class="xml-title">SOAP REQUEST ENVELOPE:</span>
+                <pre class="xml-stream">&lt;soapenv:Envelope xmlns:web="http://multimarket.com/payment"&gt;
+  &lt;soapenv:Body&gt;
+    &lt;web:procesarPago&gt;
+      &lt;web:pedido&gt;{{ selectedPayment()?.pedidoNumero }}&lt;/web:pedido&gt;
+      &lt;web:monto&gt;{{ selectedPayment()?.monto }}&lt;/web:monto&gt;
+      &lt;web:canal&gt;{{ selectedPayment()?.metodoPago }}&lt;/web:canal&gt;
+    &lt;/web:procesarPago&gt;
+  &lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;</pre>
+              </div>
+
+              <div class="xml-block-box">
+                <span class="xml-title">SOAP RESPONSE ENVELOPE:</span>
+                <pre class="xml-stream" [class.error-xml]="selectedPayment()?.estadoPago === 'FALLIDO'">&lt;soapenv:Envelope&gt;
+  &lt;soapenv:Body&gt;
+    &lt;web:procesarPagoResponse&gt;
+      &lt;web:codigo&gt;{{ selectedPayment()?.codigoOperacion }}&lt;/web:codigo&gt;
+      &lt;web:estado&gt;{{ selectedPayment()?.estadoPago }}&lt;/web:estado&gt;
+      &lt;web:timestamp&gt;{{ selectedPayment()?.fechaPago }}&lt;/web:timestamp&gt;
+    &lt;/web:procesarPagoResponse&gt;
+  &lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;</pre>
+              </div>
+
+              <button *ngIf="selectedPayment()?.estadoPago === 'FALLIDO'" (click)="retryPayment(selectedPayment()!)" class="action-btn highlight-btn" style="width:100%;">
+                Forzar Reintento SOAP
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: CHATS                                      -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'chats'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Auditoría de Conversaciones</h2>
+            <p class="welcome-subtitle">Monitoreo de chats de negociación e interactividad cliente-vendedor.</p>
+          </div>
+        </div>
+
+        <div class="chat-workspace-grid">
+          <!-- Left Sidebar Chat List -->
+          <div class="dashboard-block-card chat-sidebar-card">
+            <h4 class="block-title">Conversaciones Activas</h4>
+            <div class="chat-sidebar-list">
+              <div *ngFor="let chat of filteredChats()" class="chat-sidebar-item" 
+                   [class.active-item]="selectedChatId() === chat.id"
+                   (click)="selectedChatId.set(chat.id)">
+                <div class="chat-item-avatar">🏪</div>
+                <div class="chat-item-meta">
+                  <span class="chat-item-name">{{ chat.vendedorNombre }}</span>
+                  <span class="chat-item-sub">{{ chat.compradorCorreo }}</span>
+                  <p class="chat-item-last">{{ chat.ultimoMensaje }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Chat Window Workspace -->
+          <div class="dashboard-block-card chat-window-card">
+            <div *ngIf="!selectedChat()" class="chat-empty-panel">
+              <span class="material-symbols-outlined chat-empty-icon">chat</span>
+              <p>Seleccione una conversación para abrir el canal de monitoreo.</p>
+            </div>
+
+            <div *ngIf="selectedChat()" class="chat-active-panel">
+              <div class="chat-window-header">
+                <div>
+                  <h4 class="block-title">{{ selectedChat()?.vendedorNombre }}</h4>
+                  <p class="block-subtitle">Auditoría de Chat con: {{ selectedChat()?.compradorCorreo }}</p>
+                </div>
+                <span class="region-badge">Monitoreado</span>
+              </div>
+
+              <!-- Message Bubbles Scroll Body -->
+              <div class="chat-window-messages">
+                <div *ngFor="let msg of selectedChat()?.mensajes" class="chat-bubble-wrapper"
+                     [class.admin-bubble]="msg.remitente === 'admin@multimarket.com'"
+                     [class.vendor-bubble]="msg.remitente === 'vendedor@multimarket.com'"
+                     [class.buyer-bubble]="msg.remitente === 'comprador@multimarket.com'">
+                  <div class="chat-bubble-author">{{ msg.remitente }}</div>
+                  <div class="chat-bubble-content">
+                    <p>{{ msg.contenido }}</p>
+                    <span class="bubble-time">{{ msg.fecha }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Interactive message input bar -->
+              <div class="chat-window-input-row">
+                <input type="text" placeholder="Escriba una respuesta administrativa de soporte..." 
+                       [value]="chatMessageText()" 
+                       (input)="chatMessageText.set($any($event.target).value)" 
+                       (keydown.enter)="sendMessage()" 
+                       class="chat-input-field"/>
+                <button (click)="sendMessage()" class="chat-send-btn">
+                  <span class="material-symbols-outlined">send</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: NOTIFICACIONES                             -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'notificaciones'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Bandeja de Notificaciones del Sistema</h2>
+            <p class="welcome-subtitle">Envío masivo de alertas a compradores y vendedores.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openCreateNotification()">
+              <span class="material-symbols-outlined">notifications_active</span>
+              <span>Redactar Notificación</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Título</th>
+                    <th>Mensaje</th>
+                    <th>Módulo / Tipo</th>
+                    <th>Destinatarios</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let not of filteredNotifications()">
+                    <td>{{ not.fechaCreacion }}</td>
+                    <td class="table-bold-value">{{ not.titulo }}</td>
+                    <td>{{ not.mensaje }}</td>
+                    <td><span class="module-tag">{{ not.tipo }}</span></td>
+                    <td><span class="region-badge">{{ not.destinatarios }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Notification Form -->
+          <div *ngIf="isCreatingNotification()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">Distribuir Comunicado</h4>
+            <p class="block-subtitle">Envío asíncrono vía WebSocket a clientes activos</p>
+
+            <form [formGroup]="notificationForm" (ngSubmit)="sendNotification()" class="portal-form">
+              <div class="form-group">
+                <label>Título de la Alerta *</label>
+                <input type="text" formControlName="titulo" placeholder="Ej. Actualización de políticas de cobro" class="portal-input"/>
+              </div>
+
+              <div class="form-group">
+                <label>Mensaje Corporativo *</label>
+                <textarea formControlName="mensaje" rows="4" class="portal-textarea"></textarea>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Tipo de Alerta</label>
+                  <select formControlName="tipo" class="portal-select">
+                    <option value="SISTEMA">SISTEMA</option>
+                    <option value="PEDIDO">PEDIDO</option>
+                    <option value="PAGO">PAGO</option>
+                  </select>
+                </div>
+                <div class="form-group-half">
+                  <label>Audiencia Destinataria</label>
+                  <select formControlName="destinatarios" class="portal-select">
+                    <option value="TODOS">TODOS LOS ROLES</option>
+                    <option value="VENDEDORES">SOLO VENDEDORES</option>
+                    <option value="COMPRADORES">SOLO COMPRADORES</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="notificationForm.invalid" class="action-btn highlight-btn">Despachar Alerta</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: IMPORTACIONES                              -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'importaciones'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Importación de Catálogos (XML)</h2>
+            <p class="welcome-subtitle">Validación sintáctica de archivos XML y parsing relacional en SQL Server.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openCreateImport()">
+              <span class="material-symbols-outlined">upload_file</span>
+              <span>Nueva Importación XML</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <h4 class="block-title">Historial de Cargas XML</h4>
+            <p class="block-subtitle">Parsing y auditoría de archivos de inventario</p>
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table font-mono-table">
+                <thead>
+                  <tr>
+                    <th>Archivo XML</th>
+                    <th>Fecha Carga</th>
+                    <th>Registros</th>
+                    <th>Parsed OK</th>
+                    <th>Errores Schema</th>
+                    <th>Estado Parsing</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let imp of filteredXmlImports()">
+                    <td class="table-bold-value" style="font-family: inherit;">📁 {{ imp.nombreArchivo }}</td>
+                    <td>{{ imp.fechaImportacion }}</td>
+                    <td>{{ imp.totalRegistros }}</td>
+                    <td class="text-emerald">{{ imp.registrosCorrectos }}</td>
+                    <td class="text-danger">{{ imp.registrosError }}</td>
+                    <td>
+                      <span class="status-badge" [class.ok]="imp.estado === 'COMPLETADO'" [class.error]="imp.estado === 'FALLIDO'">
+                        {{ imp.estado }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- XML Simulation Form -->
+          <div *ngIf="isCreatingImport()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">Subir Archivo XML</h4>
+            <p class="block-subtitle">Simulador de parser relacional frontend-backend</p>
+
+            <form [formGroup]="xmlImportForm" (ngSubmit)="processXmlImport()" class="portal-form">
+              <div class="form-group">
+                <label>Nombre del Archivo XML *</label>
+                <input type="text" formControlName="fileName" placeholder="productos_lote_1.xml" class="portal-input"/>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Total items en XML *</label>
+                  <input type="number" formControlName="totalRecords" class="portal-input"/>
+                </div>
+                <div class="form-group-half">
+                  <label>Simular Registros con Error *</label>
+                  <input type="number" formControlName="errorCount" class="portal-input"/>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="xmlImportForm.invalid" class="action-btn highlight-btn">Validar y Procesar XML</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: EXPORTACIONES                              -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'exportaciones'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Consola de Exportación de Datos</h2>
+            <p class="welcome-subtitle">Dump del catálogo completo y ventas en formatos estandarizados.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="openCreateExport()">
+              <span class="material-symbols-outlined">download_file</span>
+              <span>Nueva Exportación</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card table-card list-panel">
+            <h4 class="block-title">Historial de Descargas</h4>
+            <p class="block-subtitle">Dumps catalogados relacionales</p>
+            <div class="table-scroll-wrapper">
+              <table class="dashboard-table font-mono-table">
+                <thead>
+                  <tr>
+                    <th>Formato</th>
+                    <th>Fecha Exportación</th>
+                    <th>Ruta de Archivo de Salida</th>
+                    <th>Estado de Generación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let exp of filteredExports()">
+                    <td><span class="module-tag">{{ exp.formato }}</span></td>
+                    <td>{{ exp.fechaExportacion }}</td>
+                    <td><code>{{ exp.rutaArchivo }}</code></td>
+                    <td><span class="badge bg-emerald">COMPLETADO</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div *ngIf="isCreatingExport()" class="dashboard-block-card form-panel animate-slide-in">
+            <h4 class="block-title">Generar Dump</h4>
+            <p class="block-subtitle">Configuración del archivo de salida</p>
+
+            <form [formGroup]="exportForm" (ngSubmit)="triggerCatalogExport()" class="portal-form">
+              <div class="form-group">
+                <label>Formato de Salida *</label>
+                <select formControlName="formato" class="portal-select">
+                  <option value="JSON">JSON Relacional</option>
+                  <option value="XML">XML SOAP Validado</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Rango del Filtro *</label>
+                <select formControlName="range" class="portal-select">
+                  <option value="ALL">Todo el Catálogo Global</option>
+                  <option value="VENDEDOR_1">Cooperativa Cusco únicamente</option>
+                  <option value="TEXTILES">Sólo Textiles de Alpaca</option>
+                </select>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="exportForm.invalid" class="action-btn highlight-btn">Ejecutar Descarga</button>
+                <button type="button" (click)="resetAllFormToggles()" class="action-btn">Cancelar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: KAFKA                                      -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'kafka'" class="animate-fade-in section-block">
+        <section class="welcome-section">
+          <div>
+            <h2 class="welcome-title">Apache Kafka Event Broker Monitor</h2>
+            <p class="welcome-subtitle">Métricas en tiempo real del broker asíncrono y topics del marketplace.</p>
+          </div>
+          <div class="quick-stats-timestamp">
+            <span class="status-indicator-tag online">
+              <span class="status-dot"></span>
+              <span>BROKER ONLINE</span>
+            </span>
+          </div>
+        </section>
+
+        <!-- KPI metrics row -->
+        <section class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-card-header"><span class="kpi-title">Topics Activos</span></div>
+            <div class="kpi-card-value">5 Topics</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-header"><span class="kpi-title">Mensajes Hoy</span></div>
+            <div class="kpi-card-value">{{ dashboardService.kafkaStatus().mensajesHoy }} ev.</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-header"><span class="kpi-title">Errores Topics</span></div>
+            <div class="kpi-card-value error-val">{{ dashboardService.kafkaStatus().errores }} exceptions</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card-header"><span class="kpi-title">Lag Promedio</span></div>
+            <div class="kpi-card-value text-cyan">4 ms</div>
+          </div>
+        </section>
+
+        <!-- Streams console -->
+        <div class="dashboard-block-card table-card" style="margin-top: 32px;">
+          <h4 class="block-title">Consola de Eventos Recibidos (Broker Pipe)</h4>
+          <p class="block-subtitle">Monitoreo de payloads JSON transmitidos asíncronamente</p>
+          <div class="table-scroll-wrapper console-body-dark">
+            <div class="console-line">
+              <span class="line-time">[19:28:44]</span> <span class="line-topic">topic: order-events</span> 
+              <span class="line-msg">Payload: {{ '{' }}"orderId": 122, "status": "PAGADO", "comprador": "comprador@multimarket.com"{{ '}' }}</span>
+            </div>
+            <div class="console-line">
+              <span class="line-time">[19:28:44]</span> <span class="line-topic">topic: stock-events</span> 
+              <span class="line-msg">Payload: {{ '{' }}"productoId": 1, "alert": "STOCK_UPDATED", "new_qty": 43{{ '}' }}</span>
+            </div>
+            <div class="console-line warn-line">
+              <span class="line-time">[19:15:02]</span> <span class="line-topic">topic: payment-events</span> 
+              <span class="line-msg">Lag alert: Consumer group 'soapevents' reports 15 messages behind broker head.</span>
+            </div>
+            <div class="console-line">
+              <span class="line-time">[18:50:33]</span> <span class="line-topic">topic: system-notifications</span> 
+              <span class="line-msg">Payload: {{ '{' }}"alertType": "GLOBAL", "title": "Campaña de Invierno"{{ '}' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: LOGS                                       -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'logs'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Logs de Auditoría y Excepciones</h2>
+            <p class="welcome-subtitle">Visor centralizado de transacciones relacionales en SQL Server.</p>
+          </div>
+          <div class="header-action-group">
+            <button (click)="dashboardService.reloadLogs(); showToast('Registros de logs actualizados.', 'success')" class="action-btn">
+              <span class="material-symbols-outlined">sync</span>
+              <span>Sincronizar Logs</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="search-filter-bar flex-row-filter">
+          <div class="search-input-box search-filter-width">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" placeholder="Filtrar por acción o usuario administrativo..." [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)"/>
+          </div>
+          
+          <div class="select-filter-box">
+            <label>Nivel:</label>
+            <select [value]="logFilterLevel()" (change)="logFilterLevel.set($any($event.target).value)" class="portal-select-filter">
+              <option value="ALL">TODOS</option>
+              <option value="OK">INFO / OK</option>
+              <option value="WARN">WARN</option>
+              <option value="ERROR">ERROR</option>
+            </select>
+          </div>
+
+          <div class="select-filter-box">
+            <label>Módulo:</label>
+            <select [value]="logFilterModule()" (change)="logFilterModule.set($any($event.target).value)" class="portal-select-filter">
+              <option value="ALL">TODOS</option>
+              <option value="AUTH">AUTH (Usuarios)</option>
+              <option value="PRODUCTO">PRODUCTO</option>
+              <option value="PEDIDO">PEDIDO</option>
+              <option value="PAGO">PAGO</option>
+              <option value="KAFKA">KAFKA</option>
+              <option value="SOAP">SOAP</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Scrollable dark stream shell console -->
+        <div class="dashboard-block-card table-card">
+          <h4 class="block-title">Terminal Stream SQL Server Triggers</h4>
+          <p class="block-subtitle">Monitoreo relacional forense</p>
+          <div class="table-scroll-wrapper console-body-dark text-log-viewer">
+            <div *ngIf="filteredLogs().length === 0" class="empty-state-cell">No se encontraron líneas de logs para los filtros aplicados.</div>
+            <div *ngFor="let log of filteredLogs()" class="console-line-log"
+                 [class.ok-log]="log.resultado === 'OK'"
+                 [class.warn-log]="log.resultado === 'WARN'"
+                 [class.err-log]="log.resultado === 'ERROR'">
+              <span class="log-level-tag">[{{ log.resultado }}]</span>
+              <span class="log-time-tag">{{ log.hora }}</span>
+              <span class="log-user-tag">{{ log.usuario }}</span>
+              <span class="log-action-tag">{{ log.accion }}</span>
+              <span class="region-badge font-mono" style="margin-left: 10px;">mod: {{ log.modulo }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: SERVICIOS                                  -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'servicios'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Microservicios y Estado del WSDL</h2>
+            <p class="welcome-subtitle">Health Check global del ecosistema MultiMarket.</p>
+          </div>
+        </div>
+
+        <div class="services-monitor-grid">
+          <!-- Microservice status cards -->
+          <div class="dashboard-block-card service-hw-card">
+            <div class="serv-header-row">
+              <span class="store-badge">⚙️</span>
+              <h5 class="monitor-card-title">Spring Boot API Core</h5>
+              <span class="status-indicator-tag online"><span class="status-dot"></span><span>ONLINE</span></span>
+            </div>
+            <div class="serv-meta-body">
+              <p>Puerto: <code>8080</code></p>
+              <p>Uptime: 15 días, 4 horas</p>
+              <p>Response Time: 18ms</p>
+            </div>
+          </div>
+
+          <div class="dashboard-block-card service-hw-card">
+            <div class="serv-header-row">
+              <span class="store-badge">💾</span>
+              <h5 class="monitor-card-title">SQL Server Database</h5>
+              <span class="status-indicator-tag online"><span class="status-dot"></span><span>ONLINE</span></span>
+            </div>
+            <div class="serv-meta-body">
+              <p>Puerto: <code>1433</code></p>
+              <p>Base: <code>multimarket_db</code></p>
+              <p>Conexiones activas: 24</p>
+            </div>
+          </div>
+
+          <div class="dashboard-block-card service-hw-card">
+            <div class="serv-header-row">
+              <span class="store-badge">🏦</span>
+              <h5 class="monitor-card-title">Soap Banco JAX-WS</h5>
+              <span class="status-indicator-tag online"><span class="status-dot"></span><span>DISPONIBLE</span></span>
+            </div>
+            <div class="serv-meta-body">
+              <p>WSDL: Accessible</p>
+              <p>Errores SOAP XML: {{ dashboardService.soapStatus().erroresSoap }} hoy</p>
+              <p>Response Time: {{ dashboardService.soapStatus().tiempoRespuesta }}</p>
+            </div>
+          </div>
+
+          <div class="dashboard-block-card service-hw-card">
+            <div class="serv-header-row">
+              <span class="store-badge">💬</span>
+              <h5 class="monitor-card-title">Apache Kafka Broker</h5>
+              <span class="status-indicator-tag online"><span class="status-dot"></span><span>ONLINE</span></span>
+            </div>
+            <div class="serv-meta-body">
+              <p>Broker URL: <code>localhost:9092</code></p>
+              <p>Lag Promedio: 4ms</p>
+              <p>Messages/Sec: 15 ev</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: CONFIGURACION                              -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'configuracion'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Configuración Corporativa de MultiMarket</h2>
+            <p class="welcome-subtitle">Ajuste de pasarelas de pago, broker Kafka y seguridad de la plataforma.</p>
+          </div>
+        </div>
+
+        <div class="portal-grid-split">
+          <div class="dashboard-block-card form-panel list-panel">
+            <h4 class="block-title">Variables del Entorno del Sistema</h4>
+            <p class="block-subtitle">Auditoría global de propiedades y microservicios</p>
+
+            <form [formGroup]="settingForm" (ngSubmit)="saveSettings()" class="portal-form">
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Nombre Comercial de la Plataforma *</label>
+                  <input type="text" formControlName="marketplaceName" class="portal-input"/>
+                </div>
+                <div class="form-group-half">
+                  <label>Comisión del Marketplace (%) *</label>
+                  <input type="number" step="0.1" formControlName="commissionRate" class="portal-input"/>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Dirección Endpoint SOAP del Banco JAX-WS *</label>
+                <input type="text" formControlName="soapBankWsdl" class="portal-input"/>
+              </div>
+
+              <div class="form-group form-row">
+                <div class="form-group-half">
+                  <label>Broker de Mensajería Kafka *</label>
+                  <input type="text" formControlName="kafkaBrokerUrl" class="portal-input"/>
+                </div>
+                <div class="form-group-half">
+                  <label>Límite Máximo de Intentos Fallidos Login *</label>
+                  <input type="number" formControlName="maxLoginAttempts" class="portal-input"/>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="switch-container">
+                  <input type="checkbox" formControlName="maintenanceMode"/>
+                  <span class="switch-slider"></span>
+                  <span class="switch-label">Habilitar Modo de Mantenimiento Global (Desactiva login temporalmente)</span>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" [disabled]="settingForm.invalid" class="action-btn highlight-btn">Guardar Parámetros</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>

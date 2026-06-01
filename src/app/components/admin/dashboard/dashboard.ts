@@ -1,0 +1,957 @@
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { AuthService } from '../../../services/auth.service';
+import { AdminDashboardService } from '../../../services/admin-dashboard.service';
+import { AdminPortalService, AdminUser, AdminRole, AdminVendor, AdminCategory, AdminProduct, InventoryMovement, AdminOrder, AdminPayment, SOAPLog, AdminChat, AdminNotification, XmlImportLog, JsonXmlExportLog } from '../../../services/admin-portal.service';
+
+@Component({
+  selector: 'app-admin-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  templateUrl: './dashboard.html',
+  styleUrl: './dashboard.css'
+})
+export class Dashboard implements OnInit, OnDestroy {
+  protected readonly authService = inject(AuthService);
+  protected readonly dashboardService = inject(AdminDashboardService);
+  protected readonly portalService = inject(AdminPortalService);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+
+  // Layout UI Toggles
+  readonly sidebarCollapsed = signal(false);
+  readonly activeSection = signal('dashboard');
+  readonly isLoading = signal(false);
+  
+  // Header Dropdown Toggles
+  readonly showNotifications = signal(false);
+  readonly showProfileMenu = signal(false);
+
+  // Global Search, Filtering, Pagination & Sorting
+  readonly searchQuery = signal('');
+  readonly toastMessage = signal<string | null>(null);
+  readonly toastType = signal<'success' | 'info' | 'error'>('success');
+  readonly currentPage = signal(1);
+  readonly pageSize = 10;
+  readonly sortBy = signal<string>('id');
+  readonly sortAsc = signal<boolean>(true);
+
+  // Filter modifiers for specific sections
+  readonly logFilterLevel = signal<string>('ALL');
+  readonly logFilterModule = signal<string>('ALL');
+  readonly orderFilterStatus = signal<string>('ALL');
+  readonly paymentFilterStatus = signal<string>('ALL');
+
+  // Selected Entities (Detail Drawers)
+  readonly selectedUserId = signal<number | null>(null);
+  readonly selectedRoleId = signal<number | null>(null);
+  readonly selectedVendorId = signal<number | null>(null);
+  readonly selectedCategoryId = signal<number | null>(null);
+  readonly selectedProductId = signal<number | null>(null);
+  readonly selectedOrderId = signal<number | null>(null);
+  readonly selectedPaymentId = signal<number | null>(null);
+  readonly selectedChatId = signal<number | null>(null);
+  readonly selectedSoapLogId = signal<number | null>(null);
+
+  // View Forms State (CRUD toggles)
+  readonly isCreatingUser = signal(false);
+  readonly isEditingUser = signal(false);
+  readonly isCreatingRole = signal(false);
+  readonly isEditingRole = signal(false);
+  readonly isCreatingVendor = signal(false);
+  readonly isEditingVendor = signal(false);
+  readonly isCreatingCategory = signal(false);
+  readonly isEditingCategory = signal(false);
+  readonly isCreatingProduct = signal(false);
+  readonly isEditingProduct = signal(false);
+  readonly isAdjustingInventory = signal(false);
+  readonly isCreatingNotification = signal(false);
+  readonly isCreatingImport = signal(false);
+  readonly isCreatingExport = signal(false);
+
+  // Reactive Form Groups
+  userForm!: FormGroup;
+  roleForm!: FormGroup;
+  vendorForm!: FormGroup;
+  categoryForm!: FormGroup;
+  productForm!: FormGroup;
+  inventoryForm!: FormGroup;
+  notificationForm!: FormGroup;
+  xmlImportForm!: FormGroup;
+  exportForm!: FormGroup;
+  settingForm!: FormGroup;
+
+  // Temporary message input for chat details
+  readonly chatMessageText = signal('');
+
+  private routerSubscription!: Subscription;
+
+  constructor() {
+    this.initForms();
+  }
+
+  ngOnInit(): void {
+    // Security check: Redirect to login if user session is not active
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.updateActiveSectionFromUrl();
+    
+    // Listen to router changes to update sections reactively
+    this.routerSubscription = this.router.events.subscribe(() => {
+      this.updateActiveSectionFromUrl();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  private initForms(): void {
+    this.userForm = this.fb.group({
+      correo: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', [Validators.required]],
+      roles: [['COMPRADOR'], [Validators.required]],
+      estado: [true]
+    }, { validators: this.checkPasswords });
+
+    this.roleForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.pattern(/^[A-Z_]+$/)]],
+      descripcion: ['', [Validators.required]],
+      permisos: [[]]
+    });
+
+    this.vendorForm = this.fb.group({
+      nombreTienda: ['', [Validators.required]],
+      descripcion: ['', [Validators.required]],
+      region: ['Cusco', [Validators.required]],
+      direccion: ['', [Validators.required]],
+      logo: ['https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100'],
+      banner: ['https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600'],
+      activo: [true]
+    });
+
+    this.categoryForm = this.fb.group({
+      nombre: ['', [Validators.required]],
+      descripcion: ['', [Validators.required]],
+      activa: [true]
+    });
+
+    this.productForm = this.fb.group({
+      nombre: ['', [Validators.required]],
+      descripcion: ['', [Validators.required]],
+      sku: ['', [Validators.required]],
+      categoriaId: [1, [Validators.required]],
+      vendedorId: [1, [Validators.required]],
+      precio: [10.00, [Validators.required, Validators.min(0.01)]],
+      stock: [10, [Validators.required, Validators.min(0)]],
+      peso: [0.10, [Validators.required, Validators.min(0.01)]],
+      activo: [true],
+      imagenes: ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300']
+    });
+
+    this.inventoryForm = this.fb.group({
+      productoId: [null, [Validators.required]],
+      cantidad: [1, [Validators.required, Validators.min(1)]],
+      tipoMovimiento: ['ENTRADA', [Validators.required]],
+      observacion: ['', [Validators.required]]
+    });
+
+    this.notificationForm = this.fb.group({
+      titulo: ['', [Validators.required]],
+      mensaje: ['', [Validators.required]],
+      tipo: ['SISTEMA', [Validators.required]],
+      destinatarios: ['TODOS', [Validators.required]]
+    });
+
+    this.xmlImportForm = this.fb.group({
+      fileName: ['catalogo_nuevo.xml', [Validators.required]],
+      totalRecords: [15, [Validators.required, Validators.min(1)]],
+      errorCount: [0, [Validators.required, Validators.min(0)]]
+    });
+
+    this.exportForm = this.fb.group({
+      formato: ['JSON', [Validators.required]],
+      range: ['ALL', [Validators.required]]
+    });
+
+    this.settingForm = this.fb.group({
+      marketplaceName: ['MultiMarket Enterprise', [Validators.required]],
+      commissionRate: [8.5, [Validators.required, Validators.min(0), Validators.max(100)]],
+      soapBankWsdl: ['http://banco-soap.com/payments?wsdl', [Validators.required]],
+      kafkaBrokerUrl: ['localhost:9092', [Validators.required]],
+      maxLoginAttempts: [5, [Validators.required, Validators.min(1)]],
+      maintenanceMode: [false]
+    });
+  }
+
+  private checkPasswords(group: FormGroup) {
+    const pass = group.get('password')?.value;
+    const confirmPass = group.get('confirmPassword')?.value;
+    return pass === confirmPass ? null : { notSame: true };
+  }
+
+  // Synchronize state dynamically from Route URL
+  private updateActiveSectionFromUrl(): void {
+    const url = this.router.url;
+    let parsedSection = 'dashboard';
+    
+    if (url.includes('/admin/users')) parsedSection = 'usuarios';
+    else if (url.includes('/admin/roles')) parsedSection = 'roles';
+    else if (url.includes('/admin/vendors')) parsedSection = 'vendedores';
+    else if (url.includes('/admin/categories')) parsedSection = 'categorias';
+    else if (url.includes('/admin/products')) parsedSection = 'productos';
+    else if (url.includes('/admin/inventory')) parsedSection = 'inventario';
+    else if (url.includes('/admin/orders')) parsedSection = 'pedidos';
+    else if (url.includes('/admin/payments')) parsedSection = 'pagos';
+    else if (url.includes('/admin/chats')) parsedSection = 'chats';
+    else if (url.includes('/admin/notifications')) parsedSection = 'notificaciones';
+    else if (url.includes('/admin/imports')) parsedSection = 'importaciones';
+    else if (url.includes('/admin/exports')) parsedSection = 'exportaciones';
+    else if (url.includes('/admin/kafka')) parsedSection = 'kafka';
+    else if (url.includes('/admin/logs')) parsedSection = 'logs';
+    else if (url.includes('/admin/services')) parsedSection = 'servicios';
+    else if (url.includes('/admin/settings')) parsedSection = 'configuracion';
+
+    if (this.activeSection() !== parsedSection) {
+      this.isLoading.set(true);
+      // Clean previous query filters and selections
+      this.searchQuery.set('');
+      this.currentPage.set(1);
+      this.selectedUserId.set(null);
+      this.selectedRoleId.set(null);
+      this.selectedVendorId.set(null);
+      this.selectedCategoryId.set(null);
+      this.selectedProductId.set(null);
+      this.selectedOrderId.set(null);
+      this.selectedPaymentId.set(null);
+      this.selectedChatId.set(null);
+      this.selectedSoapLogId.set(null);
+      this.resetAllFormToggles();
+
+      setTimeout(() => {
+        this.isLoading.set(false);
+      }, 350); // Fast micro-loader transition for premium UX
+    }
+
+    this.activeSection.set(parsedSection);
+  }
+
+  protected resetAllFormToggles(): void {
+    this.isCreatingUser.set(false);
+    this.isEditingUser.set(false);
+    this.isCreatingRole.set(false);
+    this.isEditingRole.set(false);
+    this.isCreatingVendor.set(false);
+    this.isEditingVendor.set(false);
+    this.isCreatingCategory.set(false);
+    this.isEditingCategory.set(false);
+    this.isCreatingProduct.set(false);
+    this.isEditingProduct.set(false);
+    this.isAdjustingInventory.set(false);
+    this.isCreatingNotification.set(false);
+    this.isCreatingImport.set(false);
+    this.isCreatingExport.set(false);
+  }
+
+  // Sidebar navigation mapping to actual angular paths
+  selectSection(sectionId: string): void {
+    let routePath = 'dashboard';
+    
+    if (sectionId === 'usuarios') routePath = 'users';
+    else if (sectionId === 'roles') routePath = 'roles';
+    else if (sectionId === 'vendedores') routePath = 'vendors';
+    else if (sectionId === 'categorias') routePath = 'categories';
+    else if (sectionId === 'productos') routePath = 'products';
+    else if (sectionId === 'inventario') routePath = 'inventory';
+    else if (sectionId === 'pedidos') routePath = 'orders';
+    else if (sectionId === 'pagos') routePath = 'payments';
+    else if (sectionId === 'chats') routePath = 'chats';
+    else if (sectionId === 'notificaciones') routePath = 'notifications';
+    else if (sectionId === 'importaciones') routePath = 'imports';
+    else if (sectionId === 'exportaciones') routePath = 'exports';
+    else if (sectionId === 'kafka') routePath = 'kafka';
+    else if (sectionId === 'logs') routePath = 'logs';
+    else if (sectionId === 'servicios') routePath = 'services';
+    else if (sectionId === 'configuracion') routePath = 'settings';
+
+    this.router.navigate(['/admin/' + routePath]);
+  }
+
+  toggleSidebar(): void {
+    this.sidebarCollapsed.update(collapsed => !collapsed);
+  }
+
+  showToast(message: string, type: 'success' | 'info' | 'error' = 'success'): void {
+    this.toastMessage.set(message);
+    this.toastType.set(type);
+    
+    setTimeout(() => {
+      if (this.toastMessage() === message) {
+        this.toastMessage.set(null);
+      }
+    }, 4000);
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+  // ==========================================
+  // In-Memory Search, Sort & Paginate Computeds
+  // ==========================================
+
+  // USERS
+  readonly filteredUsers = computed(() => {
+    let list = this.portalService.users();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(u => u.correo.toLowerCase().includes(query) || u.roles.join(' ').toLowerCase().includes(query));
+    }
+    
+    const sort = this.sortBy();
+    const asc = this.sortAsc();
+    return [...list].sort((a: any, b: any) => {
+      const valA = a[sort];
+      const valB = b[sort];
+      if (valA < valB) return asc ? -1 : 1;
+      if (valA > valB) return asc ? 1 : -1;
+      return 0;
+    });
+  });
+
+  readonly selectedUser = computed(() => {
+    const id = this.selectedUserId();
+    return this.portalService.users().find(u => u.id === id) || null;
+  });
+
+  // ROLES
+  readonly filteredRoles = computed(() => {
+    let list = this.portalService.roles();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(r => r.nombre.toLowerCase().includes(query) || r.descripcion.toLowerCase().includes(query));
+    }
+    return list;
+  });
+
+  readonly selectedRole = computed(() => {
+    const id = this.selectedRoleId();
+    return this.portalService.roles().find(r => r.id === id) || null;
+  });
+
+  // VENDORS
+  readonly filteredVendors = computed(() => {
+    let list = this.portalService.vendors();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(v => v.nombreTienda.toLowerCase().includes(query) || v.region.toLowerCase().includes(query));
+    }
+    return list;
+  });
+
+  readonly selectedVendor = computed(() => {
+    const id = this.selectedVendorId();
+    return this.portalService.vendors().find(v => v.id === id) || null;
+  });
+
+  readonly selectedVendorProducts = computed(() => {
+    const vendorId = this.selectedVendorId();
+    if (!vendorId) return [];
+    return this.portalService.products().filter(p => p.vendedorId === vendorId);
+  });
+
+  // CATEGORIES
+  readonly filteredCategories = computed(() => {
+    let list = this.portalService.categories();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(c => c.nombre.toLowerCase().includes(query) || c.descripcion.toLowerCase().includes(query));
+    }
+    return list;
+  });
+
+  readonly selectedCategory = computed(() => {
+    const id = this.selectedCategoryId();
+    return this.portalService.categories().find(c => c.id === id) || null;
+  });
+
+  // PRODUCTS
+  readonly filteredProducts = computed(() => {
+    let list = this.portalService.products();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(p => p.nombre.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query));
+    }
+
+    // Map Category and Vendor Names dynamically
+    return list.map(p => {
+      const cat = this.portalService.categories().find(c => c.id === p.categoriaId);
+      const vend = this.portalService.vendors().find(v => v.id === p.vendedorId);
+      return {
+        ...p,
+        categoriaNombre: cat ? cat.nombre : 'Sin Categoría',
+        vendedorNombre: vend ? vend.nombreTienda : 'Sin Vendedor'
+      };
+    });
+  });
+
+  readonly selectedProduct = computed(() => {
+    const id = this.selectedProductId();
+    const prod = this.portalService.products().find(p => p.id === id);
+    if (!prod) return null;
+    
+    const cat = this.portalService.categories().find(c => c.id === prod.categoriaId);
+    const vend = this.portalService.vendors().find(v => v.id === prod.vendedorId);
+    return {
+      ...prod,
+      categoriaNombre: cat ? cat.nombre : 'Sin Categoría',
+      vendedorNombre: vend ? vend.nombreTienda : 'Sin Vendedor'
+    };
+  });
+
+  // INVENTORY MOVEMENTS
+  readonly filteredInventoryMovements = computed(() => {
+    let list = this.portalService.inventoryMovements();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(m => m.productoNombre.toLowerCase().includes(query) || m.tipoMovimiento.toLowerCase().includes(query));
+    }
+    return list;
+  });
+
+  // ORDERS
+  readonly filteredOrders = computed(() => {
+    let list = this.portalService.orders();
+    const query = this.searchQuery().toLowerCase();
+    const status = this.orderFilterStatus();
+    
+    if (query) {
+      list = list.filter(o => o.numeroPedido.toLowerCase().includes(query) || o.compradorNombre.toLowerCase().includes(query) || o.compradorCorreo.toLowerCase().includes(query));
+    }
+    if (status !== 'ALL') {
+      list = list.filter(o => o.estado === status);
+    }
+    return list;
+  });
+
+  readonly selectedOrder = computed(() => {
+    const id = this.selectedOrderId();
+    return this.portalService.orders().find(o => o.id === id) || null;
+  });
+
+  // PAYMENTS
+  readonly filteredPayments = computed(() => {
+    let list = this.portalService.payments();
+    const query = this.searchQuery().toLowerCase();
+    const status = this.paymentFilterStatus();
+    
+    if (query) {
+      list = list.filter(p => p.pedidoNumero.toLowerCase().includes(query) || p.codigoOperacion.toLowerCase().includes(query));
+    }
+    if (status !== 'ALL') {
+      list = list.filter(p => p.estadoPago === status);
+    }
+    return list;
+  });
+
+  readonly selectedPayment = computed(() => {
+    const id = this.selectedPaymentId();
+    return this.portalService.payments().find(p => p.id === id) || null;
+  });
+
+  // SOAP AUDIT LOGS
+  readonly selectedSoapLog = computed(() => {
+    const id = this.selectedSoapLogId();
+    return this.portalService.soapLogs().find(l => l.id === id) || null;
+  });
+
+  // CHATS
+  readonly filteredChats = computed(() => {
+    let list = this.portalService.chats();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(c => c.compradorCorreo.toLowerCase().includes(query) || c.vendedorNombre.toLowerCase().includes(query));
+    }
+    return list;
+  });
+
+  readonly selectedChat = computed(() => {
+    const id = this.selectedChatId();
+    return this.portalService.chats().find(c => c.id === id) || null;
+  });
+
+  // NOTIFICATIONS
+  readonly filteredNotifications = computed(() => {
+    let list = this.portalService.notifications();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(n => n.titulo.toLowerCase().includes(query) || n.mensaje.toLowerCase().includes(query));
+    }
+    return list;
+  });
+
+  // XML IMPORTS & EXPORTS
+  readonly filteredXmlImports = computed(() => {
+    let list = this.portalService.xmlImports();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(x => x.nombreArchivo.toLowerCase().includes(query));
+    }
+    return list;
+  });
+
+  readonly filteredExports = computed(() => {
+    let list = this.portalService.exports();
+    const query = this.searchQuery().toLowerCase();
+    
+    if (query) {
+      list = list.filter(e => e.formato.toLowerCase().includes(query));
+    }
+    return list;
+  });
+
+  // MONITOREO LOGS
+  readonly filteredLogs = computed(() => {
+    // Simulating SQL server audit queries
+    const activities = this.dashboardService.recentActivities();
+    const level = this.logFilterLevel();
+    const mod = this.logFilterModule();
+    const query = this.searchQuery().toLowerCase();
+
+    let result = activities;
+
+    if (level !== 'ALL') {
+      result = result.filter(log => {
+        if (level === 'ERROR') return log.resultado === 'ERROR';
+        if (level === 'WARN') return log.resultado === 'WARN';
+        return log.resultado === 'OK';
+      });
+    }
+
+    if (mod !== 'ALL') {
+      result = result.filter(log => log.modulo === mod);
+    }
+
+    if (query) {
+      result = result.filter(log => 
+        log.usuario.toLowerCase().includes(query) || 
+        log.accion.toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  });
+
+  // ==========================================
+  // CRUD Dispatchers and Event Handlers
+  // ==========================================
+
+  // 1. USERS CRUD
+  openCreateUser(): void {
+    this.resetAllFormToggles();
+    this.userForm.reset({ roles: ['COMPRADOR'], estado: true });
+    this.isCreatingUser.set(true);
+  }
+
+  openEditUser(user: AdminUser): void {
+    this.resetAllFormToggles();
+    this.selectedUserId.set(user.id);
+    this.userForm.reset({
+      correo: user.correo,
+      password: '',
+      confirmPassword: '',
+      roles: user.roles,
+      estado: user.estado
+    });
+    // Remove validators for password since editing
+    this.userForm.get('password')?.clearValidators();
+    this.userForm.get('confirmPassword')?.clearValidators();
+    this.userForm.get('password')?.updateValueAndValidity();
+    this.userForm.get('confirmPassword')?.updateValueAndValidity();
+
+    this.isEditingUser.set(true);
+  }
+
+  saveUser(): void {
+    if (this.isCreatingUser()) {
+      if (this.userForm.invalid) {
+        this.showToast('Formulario inválido. Verifique los campos.', 'error');
+        return;
+      }
+      this.portalService.addUser(this.userForm.value);
+      this.showToast('Usuario administrativo guardado con éxito.', 'success');
+    } else if (this.isEditingUser()) {
+      const updateData: any = {
+        correo: this.userForm.get('correo')?.value,
+        roles: this.userForm.get('roles')?.value,
+        estado: this.userForm.get('estado')?.value
+      };
+      
+      const pwd = this.userForm.get('password')?.value;
+      if (pwd) {
+        updateData.password = pwd;
+      }
+
+      this.portalService.updateUser(this.selectedUserId()!, updateData);
+      this.showToast('Usuario actualizado con éxito en la base de datos.', 'success');
+    }
+    this.resetAllFormToggles();
+  }
+
+  deleteUser(id: number): void {
+    if (confirm('¿Está seguro de eliminar este usuario de forma permanente?')) {
+      this.portalService.deleteUser(id);
+      this.showToast('Usuario removido de los registros de SQL Server.', 'success');
+    }
+  }
+
+  toggleBlockUser(user: AdminUser): void {
+    const updatedStatus = !user.bloqueado;
+    this.portalService.updateUser(user.id, { bloqueado: updatedStatus, estado: !updatedStatus });
+    this.showToast(updatedStatus ? `Usuario ${user.correo} BLOQUEADO por seguridad.` : `Usuario ${user.correo} DESBLOQUEADO.`, 'info');
+  }
+
+  // 2. ROLES CRUD
+  openCreateRole(): void {
+    this.resetAllFormToggles();
+    this.roleForm.reset({ permisos: [] });
+    this.isCreatingRole.set(true);
+  }
+
+  saveRole(): void {
+    if (this.roleForm.invalid) {
+      this.showToast('Complete los campos obligatorios del Rol.', 'error');
+      return;
+    }
+    this.portalService.addRole(this.roleForm.value);
+    this.showToast('Nuevo Rol creado exitosamente.', 'success');
+    this.resetAllFormToggles();
+  }
+
+  togglePermission(perm: string): void {
+    const current = this.roleForm.get('permisos')?.value as string[] || [];
+    if (current.includes(perm)) {
+      this.roleForm.patchValue({ permisos: current.filter(p => p !== perm) });
+    } else {
+      this.roleForm.patchValue({ permisos: [...current, perm] });
+    }
+  }
+
+  isPermissionSelected(perm: string): boolean {
+    const current = this.roleForm.get('permisos')?.value as string[] || [];
+    return current.includes(perm);
+  }
+
+  // 3. VENDORS CRUD
+  openCreateVendor(): void {
+    this.resetAllFormToggles();
+    this.vendorForm.reset({ region: 'Cusco', activo: true });
+    this.isCreatingVendor.set(true);
+  }
+
+  openEditVendor(vendor: AdminVendor): void {
+    this.resetAllFormToggles();
+    this.selectedVendorId.set(vendor.id);
+    this.vendorForm.reset({
+      nombreTienda: vendor.nombreTienda,
+      descripcion: vendor.descripcion,
+      region: vendor.region,
+      direccion: vendor.direccion,
+      logo: vendor.logo,
+      banner: vendor.banner,
+      activo: vendor.activo
+    });
+    this.isEditingVendor.set(true);
+  }
+
+  saveVendor(): void {
+    if (this.vendorForm.invalid) {
+      this.showToast('Formulario inválido. Verifique los campos obligatorios del Vendedor.', 'error');
+      return;
+    }
+    
+    if (this.isCreatingVendor()) {
+      this.portalService.addVendor(this.vendorForm.value);
+      this.showToast('Vendedor regional registrado con éxito.', 'success');
+    } else {
+      this.portalService.updateVendor(this.selectedVendorId()!, this.vendorForm.value);
+      this.showToast('Datos de la tienda del vendedor actualizados.', 'success');
+    }
+    this.resetAllFormToggles();
+  }
+
+  deleteVendor(id: number): void {
+    if (confirm('¿Dar de baja a este vendedor? Esto desactivará su catálogo.')) {
+      this.portalService.deleteVendor(id);
+      this.showToast('Vendedor eliminado físicamente de la base de datos.', 'success');
+    }
+  }
+
+  // 4. CATEGORIES CRUD
+  openCreateCategory(): void {
+    this.resetAllFormToggles();
+    this.categoryForm.reset({ activa: true });
+    this.isCreatingCategory.set(true);
+  }
+
+  openEditCategory(cat: AdminCategory): void {
+    this.resetAllFormToggles();
+    this.selectedCategoryId.set(cat.id);
+    this.categoryForm.reset({
+      nombre: cat.nombre,
+      descripcion: cat.descripcion,
+      activa: cat.activa
+    });
+    this.isEditingCategory.set(true);
+  }
+
+  saveCategory(): void {
+    if (this.categoryForm.invalid) {
+      this.showToast('Verifique el nombre y descripción de la categoría.', 'error');
+      return;
+    }
+
+    if (this.isCreatingCategory()) {
+      this.portalService.addCategory(this.categoryForm.value);
+      this.showToast('Categoría creada satisfactoriamente.', 'success');
+    } else {
+      this.portalService.updateCategory(this.selectedCategoryId()!, this.categoryForm.value);
+      this.showToast('Categoría actualizada con éxito.', 'success');
+    }
+    this.resetAllFormToggles();
+  }
+
+  deleteCategory(id: number): void {
+    if (confirm('¿Eliminar esta categoría?')) {
+      this.portalService.deleteCategory(id);
+      this.showToast('Categoría eliminada del catálogo.', 'success');
+    }
+  }
+
+  // 5. PRODUCTS CRUD
+  openCreateProduct(): void {
+    this.resetAllFormToggles();
+    this.productForm.reset({
+      categoriaId: this.portalService.categories()[0]?.id || 1,
+      vendedorId: this.portalService.vendors()[0]?.id || 1,
+      precio: 10.0,
+      stock: 10,
+      peso: 0.20,
+      activo: true,
+      imagenes: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300'
+    });
+    this.isCreatingProduct.set(true);
+  }
+
+  openEditProduct(p: AdminProduct): void {
+    this.resetAllFormToggles();
+    this.selectedProductId.set(p.id);
+    this.productForm.reset({
+      nombre: p.nombre,
+      descripcion: p.descripcion,
+      sku: p.sku,
+      categoriaId: p.categoriaId,
+      vendedorId: p.vendedorId,
+      precio: p.precio,
+      stock: p.stock,
+      peso: p.peso,
+      activo: p.activo,
+      imagenes: p.imagenes[0]
+    });
+    this.isEditingProduct.set(true);
+  }
+
+  saveProduct(): void {
+    if (this.productForm.invalid) {
+      this.showToast('Formulario inválido. Verifique precios, stock y SKU.', 'error');
+      return;
+    }
+
+    const payload = {
+      ...this.productForm.value,
+      imagenes: [this.productForm.value.imagenes]
+    };
+
+    if (this.isCreatingProduct()) {
+      this.portalService.addProduct(payload);
+      this.showToast('Producto publicado. Evento Kafka despachado al broker.', 'success');
+    } else {
+      this.portalService.updateProduct(this.selectedProductId()!, payload);
+      this.showToast('Detalles del producto actualizados en SQL Server.', 'success');
+    }
+    this.resetAllFormToggles();
+  }
+
+  deleteProduct(id: number): void {
+    if (confirm('¿Dar de baja a este producto? El stock quedará inhabilitado.')) {
+      this.portalService.deleteProduct(id);
+      this.showToast('Producto eliminado del marketplace.', 'success');
+    }
+  }
+
+  // 6. INVENTORY ADJUSTMENTS
+  openAdjustInventory(): void {
+    this.resetAllFormToggles();
+    this.inventoryForm.reset({
+      productoId: this.portalService.products()[0]?.id || null,
+      cantidad: 1,
+      tipoMovimiento: 'ENTRADA',
+      observacion: ''
+    });
+    this.isAdjustingInventory.set(true);
+  }
+
+  saveInventoryAdjustment(): void {
+    if (this.inventoryForm.invalid) {
+      this.showToast('Complete la cantidad y una justificación válida.', 'error');
+      return;
+    }
+    
+    const formVals = this.inventoryForm.value;
+    this.portalService.adjustInventory(
+      Number(formVals.productoId),
+      formVals.cantidad,
+      formVals.tipoMovimiento,
+      formVals.observacion
+    );
+    this.showToast('Stock de producto modificado y registrado en kárdex.', 'success');
+    this.resetAllFormToggles();
+  }
+
+  // 7. ORDERS MANAGEMENT
+  updateOrderStatus(orderId: number, status: 'PENDIENTE' | 'PAGADO' | 'ENVIADO' | 'ENTREGADO' | 'CANCELADO'): void {
+    this.portalService.updateOrderStatus(orderId, status);
+    this.showToast(`Estado de pedido actualizado a: ${status}`, 'success');
+  }
+
+  // 8. PAYMENTS AND SOAP
+  retryPayment(pay: AdminPayment): void {
+    this.showToast(`Conectando con Servicio SOAP Banco para transaccionar: ${pay.pedidoNumero}...`, 'info');
+    this.portalService.retrySoapPayment(pay.id).subscribe(msg => {
+      this.showToast(msg, 'success');
+    });
+  }
+
+  // 9. MESSAGING CHATS INTERACTIVE SYSTEM
+  sendMessage(): void {
+    const text = this.chatMessageText().trim();
+    const chatId = this.selectedChatId();
+    if (!text || !chatId) return;
+
+    const chatObj = this.portalService.chats().find(c => c.id === chatId);
+    if (!chatObj) return;
+
+    chatObj.mensajes.push({
+      remitente: 'admin@multimarket.com',
+      contenido: text,
+      fecha: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })
+    });
+    chatObj.ultimoMensaje = text;
+    this.chatMessageText.set('');
+    this.showToast('Respuesta enviada de forma interactiva.', 'success');
+  }
+
+  // 10. NOTIFICATIONS
+  openCreateNotification(): void {
+    this.resetAllFormToggles();
+    this.notificationForm.reset({ tipo: 'SISTEMA', destinatarios: 'TODOS' });
+    this.isCreatingNotification.set(true);
+  }
+
+  sendNotification(): void {
+    if (this.notificationForm.invalid) {
+      this.showToast('Complete el título y cuerpo de la notificación.', 'error');
+      return;
+    }
+    this.portalService.addNotification(this.notificationForm.value);
+    this.showToast('Notificación global distribuida a destinatarios.', 'success');
+    this.resetAllFormToggles();
+  }
+
+  // 11. XML IMPORTS
+  openCreateImport(): void {
+    this.resetAllFormToggles();
+    this.xmlImportForm.reset({ fileName: 'catalogo_cusco_final.xml', totalRecords: 12, errorCount: 0 });
+    this.isCreatingImport.set(true);
+  }
+
+  processXmlImport(): void {
+    if (this.xmlImportForm.invalid) {
+      this.showToast('Ingrese un nombre de archivo .xml válido.', 'error');
+      return;
+    }
+
+    const val = this.xmlImportForm.value;
+    this.portalService.uploadCatalogXmlSimulation(val.fileName, val.totalRecords, val.errorCount).subscribe(msg => {
+      this.showToast(msg, 'success');
+    });
+    this.resetAllFormToggles();
+  }
+
+  // 12. EXPORTS
+  openCreateExport(): void {
+    this.resetAllFormToggles();
+    this.exportForm.reset({ formato: 'JSON', range: 'ALL' });
+    this.isCreatingExport.set(true);
+  }
+
+  triggerCatalogExport(): void {
+    const val = this.exportForm.value;
+    this.portalService.exportCatalogSimulation(val.formato).subscribe(msg => {
+      this.showToast(msg, 'success');
+    });
+    this.resetAllFormToggles();
+  }
+
+  // 13. SETTINGS
+  saveSettings(): void {
+    if (this.settingForm.invalid) {
+      this.showToast('Complete correctamente la configuración del sistema.', 'error');
+      return;
+    }
+    this.showToast('Configuraciones generales de la plataforma y microservicios guardadas.', 'success');
+  }
+
+  // ==========================================
+  // EXCEL / CSV EXPORTERS Dispatchers
+  // ==========================================
+  exportUsersCsv(): void {
+    this.portalService.exportToCsv(this.portalService.users(), 'MultiMarket_Usuarios');
+    this.showToast('Listado de usuarios exportado a CSV.', 'success');
+  }
+
+  exportProductsCsv(): void {
+    this.portalService.exportToCsv(this.portalService.products(), 'MultiMarket_Productos');
+    this.showToast('Catálogo de productos exportado a CSV.', 'success');
+  }
+
+  exportOrdersCsv(): void {
+    this.portalService.exportToCsv(this.portalService.orders(), 'MultiMarket_Pedidos');
+    this.showToast('Libro de pedidos exportado a CSV.', 'success');
+  }
+
+  exportPaymentsCsv(): void {
+    this.portalService.exportToCsv(this.portalService.payments(), 'MultiMarket_Pagos');
+    this.showToast('Registro de cobros SOAP exportado a CSV.', 'success');
+  }
+}
+
