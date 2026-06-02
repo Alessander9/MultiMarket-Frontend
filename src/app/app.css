@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  position: relative;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+.app-shell__ambient {
+  position: fixed;
+  inset: auto;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(24px);
+  opacity: 0.9;
+}
+
+.app-shell__ambient--violet {
+  top: -8rem;
+  left: -6rem;
+  width: 26rem;
+  height: 26rem;
+  background: radial-gradient(circle, rgba(109, 74, 255, 0.22), transparent 68%);
+}
+
+.app-shell__ambient--emerald {
+  right: -7rem;
+  bottom: 4rem;
+  width: 22rem;
+  height: 22rem;
+  background: radial-gradient(circle, rgba(68, 215, 168, 0.12), transparent 68%);
+}
+
+router-outlet {
+  position: relative;
+  z-index: 1;
+}

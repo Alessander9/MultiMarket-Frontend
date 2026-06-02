@@ -1,0 +1,426 @@
+<div class="products-wrapper animate-fade-in">
+
+  <!-- ================= STATE BANNER / ALERTS ================= -->
+  <div class="feedback-toast" *ngIf="feedbackMessage()" [ngClass]="feedbackMessage()?.type ?? 'success'">
+    <span class="material-symbols-outlined">
+      {{ feedbackMessage()?.type === 'success' ? 'check_circle' : 'error' }}
+    </span>
+    <p>{{ feedbackMessage()?.text }}</p>
+  </div>
+
+  <!-- ================= LIST STATE ================= -->
+  <div class="state-container list-state" *ngIf="viewState() === 'list'">
+    
+    <!-- Top Action bar -->
+    <div class="products-header">
+      <div class="page-title-area">
+        <h2>Catálogo de Productos</h2>
+        <p>Publica, edita y gestiona el stock de tus artículos en la tienda</p>
+      </div>
+      <button class="btn-create-prod" (click)="openCreate()">
+        <span class="material-symbols-outlined">add</span>
+        Crear Producto
+      </button>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-panel card">
+      <div class="filters-row">
+        <!-- Search bar -->
+        <div class="filter-group flex-2">
+          <label class="filter-label">Buscar</label>
+          <div class="filter-input-wrapper">
+            <span class="material-symbols-outlined">search</span>
+            <input 
+              type="text" 
+              placeholder="Buscar por Nombre, SKU, descripción..." 
+              [value]="filterSearch()" 
+              (input)="filterSearch.set($any($event.target).value); currentPage.set(1)"
+              class="filter-input"
+            />
+          </div>
+        </div>
+
+        <!-- Category dropdown -->
+        <div class="filter-group">
+          <label class="filter-label">Categoría</label>
+          <select 
+            [value]="filterCategory()" 
+            (change)="filterCategory.set($any($event.target).value); currentPage.set(1)"
+            class="filter-input"
+          >
+            <option value="ALL">Todas las Categorías</option>
+            <option *ngFor="let cat of categories()" [value]="cat">{{ cat }}</option>
+          </select>
+        </div>
+
+        <!-- Status dropdown -->
+        <div class="filter-group">
+          <label class="filter-label">Estado</label>
+          <select 
+            [value]="filterStatus()" 
+            (change)="filterStatus.set($any($event.target).value); currentPage.set(1)"
+            class="filter-input"
+          >
+            <option value="ALL">Todos los Estados</option>
+            <option value="ACTIVO">ACTIVO</option>
+            <option value="INACTIVO">INACTIVO</option>
+            <option value="SIN_STOCK">SIN STOCK</option>
+          </select>
+        </div>
+
+        <!-- Price range -->
+        <div class="filter-group">
+          <label class="filter-label">Precio Mín</label>
+          <input 
+            type="number" 
+            placeholder="Min" 
+            [value]="filterMinPrice() || ''" 
+            (input)="filterMinPrice.set($any($event.target).value ? +$any($event.target).value : null); currentPage.set(1)"
+            class="filter-input"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Precio Máx</label>
+          <input 
+            type="number" 
+            placeholder="Max" 
+            [value]="filterMaxPrice() || ''" 
+            (input)="filterMaxPrice.set($any($event.target).value ? +$any($event.target).value : null); currentPage.set(1)"
+            class="filter-input"
+          />
+        </div>
+
+        <!-- Clear filters button -->
+        <button class="btn-clear-filters" (click)="clearFilters()" title="Restablecer filtros">
+          <span class="material-symbols-outlined">filter_alt_off</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading Indicators -->
+    <div class="table-loading-bar" *ngIf="isLoading()">
+      <div class="loading-progress"></div>
+    </div>
+
+    <!-- Products Table Card -->
+    <div class="products-table-card card">
+      <div class="table-responsive" *ngIf="filteredProducts().length > 0">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>Imagen</th>
+              <th (click)="toggleSort('nombre')" class="sortable-header">
+                Nombre
+                <span class="material-symbols-outlined sort-icon" *ngIf="sortBy() === 'nombre'">
+                  {{ sortAsc() ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                </span>
+              </th>
+              <th (click)="toggleSort('sku')" class="sortable-header">
+                SKU
+                <span class="material-symbols-outlined sort-icon" *ngIf="sortBy() === 'sku'">
+                  {{ sortAsc() ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                </span>
+              </th>
+              <th>Categoría</th>
+              <th (click)="toggleSort('precio')" class="sortable-header text-right">
+                Precio
+                <span class="material-symbols-outlined sort-icon" *ngIf="sortBy() === 'precio'">
+                  {{ sortAsc() ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                </span>
+              </th>
+              <th (click)="toggleSort('stock')" class="sortable-header text-right">
+                Stock
+                <span class="material-symbols-outlined sort-icon" *ngIf="sortBy() === 'stock'">
+                  {{ sortAsc() ? 'arrow_drop_up' : 'arrow_drop_down' }}
+                </span>
+              </th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prod of pagedProducts()" (click)="openDetail(prod)" class="clickable-row">
+              <td>
+                <img [src]="prod.imagenes[0]" alt="Producto" class="prod-thumbnail" />
+              </td>
+              <td>
+                <div class="prod-name-cell">
+                  <span class="prod-title">{{ prod.nombre }}</span>
+                  <span class="prod-desc-excerpt">{{ prod.descripcion.substring(0, 55) }}...</span>
+                </div>
+              </td>
+              <td>
+                <span class="sku-badge">{{ prod.sku }}</span>
+              </td>
+              <td>
+                <span class="category-badge">{{ prod.categoria }}</span>
+              </td>
+              <td class="text-right font-semibold">
+                S/ {{ prod.precio | number:'1.2-2' }}
+              </td>
+              <td class="text-right">
+                <span [class.text-red]="prod.stock === 0" [class.text-yellow]="prod.stock > 0 && prod.stock <= 10">
+                  {{ prod.stock }} und
+                </span>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="prod.estado.toLowerCase()">
+                  {{ prod.estado === 'ACTIVO' ? 'Activo' : prod.estado === 'INACTIVO' ? 'Inactivo' : 'Sin Stock' }}
+                </span>
+              </td>
+              <td>
+                <div class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-action-view" (click)="openDetail(prod)" title="Ver Ficha">
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+                  <button class="btn-action-edit" (click)="openEdit(prod)" title="Editar">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button class="btn-action-delete" (click)="deleteProduct(prod.id, $event)" title="Eliminar del catálogo">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State inside Table -->
+      <div class="empty-state-container" *ngIf="filteredProducts().length === 0">
+        <span class="material-symbols-outlined empty-state-icon">inventory_2</span>
+        <h3>No se encontraron productos</h3>
+        <p>No hay artículos que coincidan con los filtros de búsqueda establecidos.</p>
+        <div class="empty-actions">
+          <button class="btn-clear" (click)="clearFilters()">Limpiar Filtros</button>
+          <button class="btn-create" (click)="openCreate()">Agregar Producto</button>
+        </div>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="table-pagination-footer" *ngIf="filteredProducts().length > 0">
+        <div class="pagination-info">
+          Mostrando productos 
+          <strong>{{ (currentPage() - 1) * pageSize + 1 }}</strong> 
+          a 
+          <strong>{{ (currentPage() * pageSize) > filteredProducts().length ? filteredProducts().length : (currentPage() * pageSize) }}</strong> 
+          de 
+          <strong>{{ filteredProducts().length }}</strong>
+        </div>
+
+        <div class="pagination-buttons">
+          <button class="pag-btn" [disabled]="currentPage() === 1" (click)="changePage(-1)">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <span class="page-indicator">Pág {{ currentPage() }} de {{ totalPages() }}</span>
+          <button class="pag-btn" [disabled]="currentPage() === totalPages()" (click)="changePage(1)">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CREATE / EDIT STATE ================= -->
+  <div class="state-container form-state" *ngIf="viewState() === 'create' || viewState() === 'edit'">
+    <div class="products-header">
+      <div class="page-title-area">
+        <h2>{{ viewState() === 'create' ? 'Crear Nuevo Producto' : 'Editar Producto' }}</h2>
+        <p>Ingresa la ficha de especificaciones detallada para venta directa</p>
+      </div>
+      <button class="btn-cancel-top" (click)="viewState.set('list')">
+        Regresar al Listado
+      </button>
+    </div>
+
+    <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="product-form card">
+      <div class="form-scroll-content">
+        <div class="form-grid">
+          
+          <!-- Nombre -->
+          <div class="form-group full-width">
+            <label class="form-label" for="nombre">Nombre del Producto *</label>
+            <input type="text" id="nombre" formControlName="nombre" class="form-input" placeholder="Ej. Café Orgánico Molido 500g" />
+            <span class="validation-err" *ngIf="productForm.get('nombre')?.touched && productForm.get('nombre')?.invalid">
+              El nombre es obligatorio (máx 100 caracteres).
+            </span>
+          </div>
+
+          <!-- Descripción -->
+          <div class="form-group full-width">
+            <label class="form-label" for="descripcion">Descripción Comercial *</label>
+            <textarea id="descripcion" formControlName="descripcion" rows="5" class="form-input" placeholder="Detalla el aroma, origen, notas de cata o uso..."></textarea>
+            <span class="validation-err" *ngIf="productForm.get('descripcion')?.touched && productForm.get('descripcion')?.invalid">
+              La descripción es obligatoria (máx 800 caracteres).
+            </span>
+          </div>
+
+          <!-- SKU -->
+          <div class="form-group">
+            <label class="form-label" for="sku">Código SKU Único *</label>
+            <input type="text" id="sku" formControlName="sku" class="form-input" placeholder="Ej. CAF-ORG-500G" [attr.disabled]="viewState() === 'edit' ? true : null" />
+            <span class="validation-err" *ngIf="productForm.get('sku')?.touched && productForm.get('sku')?.invalid">
+              SKU es obligatorio (letras, números y guiones).
+            </span>
+          </div>
+
+          <!-- Categoría -->
+          <div class="form-group">
+            <label class="form-label" for="categoria">Categoría *</label>
+            <select id="categoria" formControlName="categoria" class="form-input">
+              <option value="Café">Café</option>
+              <option value="Chocolate">Chocolate</option>
+              <option value="Miel">Miel</option>
+              <option value="Artesanías">Artesanías</option>
+              <option value="Textiles">Textiles</option>
+            </select>
+          </div>
+
+          <!-- Precio -->
+          <div class="form-group">
+            <label class="form-label" for="precio">Precio de Venta (S/) *</label>
+            <input type="number" id="precio" formControlName="precio" class="form-input" step="0.1" />
+            <span class="validation-err" *ngIf="productForm.get('precio')?.touched && productForm.get('precio')?.invalid">
+              Ingrese un precio de venta válido (> 0).
+            </span>
+          </div>
+
+          <!-- Stock Inicial -->
+          <div class="form-group">
+            <label class="form-label" for="stock">Stock Disponible *</label>
+            <input type="number" id="stock" formControlName="stock" class="form-input" />
+            <span class="validation-err" *ngIf="productForm.get('stock')?.touched && productForm.get('stock')?.invalid">
+              El stock no puede ser negativo.
+            </span>
+          </div>
+
+          <!-- Peso -->
+          <div class="form-group">
+            <label class="form-label" for="peso">Peso de Envío (kg) *</label>
+            <input type="number" id="peso" formControlName="peso" class="form-input" step="0.01" />
+            <span class="validation-err" *ngIf="productForm.get('peso')?.touched && productForm.get('peso')?.invalid">
+              Ingrese un peso válido (> 0.01).
+            </span>
+          </div>
+
+          <!-- Estado -->
+          <div class="form-group">
+            <label class="form-label" for="estado">Estado de Publicación *</label>
+            <select id="estado" formControlName="estado" class="form-input">
+              <option value="ACTIVO">ACTIVO (Público)</option>
+              <option value="INACTIVO">INACTIVO (Borrador)</option>
+              <option value="SIN_STOCK">SIN STOCK (Agotado)</option>
+            </select>
+          </div>
+
+          <!-- URL Imagen -->
+          <div class="form-group full-width">
+            <label class="form-label" for="imagenUrl">URL Imagen Principal del Producto</label>
+            <input type="text" id="imagenUrl" formControlName="imagenUrl" class="form-input" placeholder="https://unsplash.com/... o enlace de imagen" />
+          </div>
+
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="viewState.set('list')">Cancelar</button>
+        <button type="submit" class="btn-save" [disabled]="productForm.invalid || isLoading()">
+          {{ isLoading() ? 'Guardando...' : 'Guardar Ficha' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ================= DETAIL STATE ================= -->
+  <div class="state-container detail-state animate-fade-in" *ngIf="viewState() === 'detail' && selectedProduct()">
+    <div class="products-header">
+      <div class="page-title-area">
+        <h2>Ficha de Producto</h2>
+        <p>Información técnica y visual expuesta al comprador final</p>
+      </div>
+      <button class="btn-cancel-top" (click)="closeToDetails()">
+        Regresar al Listado
+      </button>
+    </div>
+
+    <div class="product-detail-grid">
+      <!-- Media / Galería -->
+      <div class="detail-gallery card">
+        <div class="gallery-main-view">
+          <img [src]="selectedProduct()?.imagenes?.[0]" alt="Producto principal" class="gallery-main-img" />
+        </div>
+        <div class="gallery-thumbs-row">
+          <div class="thumb-box active">
+            <img [src]="selectedProduct()?.imagenes?.[0]" alt="Thumbnail" />
+          </div>
+          <!-- Mock alternate images -->
+          <div class="thumb-box">
+            <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=100" alt="Thumbnail Mock" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Especificaciones -->
+      <div class="detail-specs card">
+        <div class="specs-header">
+          <span class="specs-category">{{ selectedProduct()?.categoria }}</span>
+          <span class="status-badge" [ngClass]="selectedProduct()?.estado?.toLowerCase() ?? ''">
+            {{ selectedProduct()?.estado }}
+          </span>
+        </div>
+
+        <h3 class="specs-title">{{ selectedProduct()?.nombre }}</h3>
+        
+        <div class="price-stock-hero-row">
+          <div class="hero-block">
+            <span class="hero-label">Precio Sugerido</span>
+            <span class="hero-val text-emerald">S/ {{ selectedProduct()?.precio | number:'1.2-2' }}</span>
+          </div>
+          <div class="hero-divider"></div>
+          <div class="hero-block">
+            <span class="hero-label">Inventario Físico</span>
+            <span class="hero-val" [class.text-red]="selectedProduct()?.stock === 0">
+              {{ selectedProduct()?.stock }} und
+            </span>
+          </div>
+        </div>
+
+        <div class="specs-divider"></div>
+
+        <div class="specs-technical-list">
+          <div class="technical-row">
+            <span class="tech-label">SKU de Venta</span>
+            <span class="tech-val font-mono">{{ selectedProduct()?.sku }}</span>
+          </div>
+
+          <div class="technical-row">
+            <span class="tech-label">Peso Neto de Envío</span>
+            <span class="tech-val">{{ selectedProduct()?.peso }} kg</span>
+          </div>
+
+          <div class="technical-row">
+            <span class="tech-label">ID Registro de Sistema</span>
+            <span class="tech-val font-mono">#PRD-{{ selectedProduct()?.id }}</span>
+          </div>
+        </div>
+
+        <div class="specs-divider"></div>
+
+        <div class="specs-description">
+          <h4>Descripción Comercial</h4>
+          <p>{{ selectedProduct()?.descripcion }}</p>
+        </div>
+
+        <div class="specs-actions">
+          <button class="btn-edit-specs" (click)="openEdit(selectedProduct()!)">
+            <span class="material-symbols-outlined font-sm">edit</span>
+            Editar Ficha Completa
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

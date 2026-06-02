@@ -1,0 +1,96 @@
+<div class="payments-wrapper animate-fade-in">
+  
+  <div class="payments-page-header">
+    <div class="page-title-area">
+      <h2>Liquidaciones y Pagos</h2>
+      <p>Supervisa los desembolsos de tus ventas acumuladas transferidas a tu cuenta bancaria registrada</p>
+    </div>
+  </div>
+
+  <div class="payments-grid">
+    <!-- List panel -->
+    <div class="card list-card">
+      <h3>Historial de Liquidaciones quincenales</h3>
+      
+      <div class="table-responsive">
+        <table class="payouts-table">
+          <thead>
+            <tr>
+              <th>Cód. Operación</th>
+              <th>Fecha de Desembolso</th>
+              <th class="text-right">Monto Liquidado</th>
+              <th>Método de Pago</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of sellerService.payouts()" (click)="openDetail(p)" class="clickable-row" [class.active]="selectedPayout()?.id === p.id">
+              <td>
+                <span class="op-code">{{ p.codigoOperacion }}</span>
+              </td>
+              <td>{{ p.fecha | date:'mediumDate' }}</td>
+              <td class="text-right font-semibold text-emerald">S/ {{ p.monto | number:'1.2-2' }}</td>
+              <td>{{ p.metodo }}</td>
+              <td>
+                <span class="payout-badge" [ngClass]="p.estado.toLowerCase()">
+                  {{ p.estado }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="card detail-card">
+      <div class="empty-detail-state" *ngIf="!selectedPayout()">
+        <span class="material-symbols-outlined empty-icon">account_balance_wallet</span>
+        <h4>Detalle del Desembolso</h4>
+        <p>Seleccione una liquidación del historial izquierdo para ver la información detallada de transferencia.</p>
+      </div>
+
+      <div class="payout-detail-content animate-fade-in" *ngIf="selectedPayout()">
+        <div class="detail-header-row">
+          <h3>Operación {{ selectedPayout()?.codigoOperacion }}</h3>
+          <button class="btn-close-payout" (click)="closeDetail()">×</button>
+        </div>
+
+        <div class="payout-hero-row">
+          <span class="hero-label">Importe Transferido</span>
+          <h2 class="hero-val text-emerald">S/ {{ selectedPayout()?.monto | number:'1.2-2' }}</h2>
+        </div>
+
+        <div class="payout-specs-list">
+          <div class="payout-spec-row">
+            <span class="spec-label">Fecha Proceso</span>
+            <span class="spec-val">{{ selectedPayout()?.fecha | date:'mediumDate' }}</span>
+          </div>
+
+          <div class="payout-spec-row">
+            <span class="spec-label">Método y Canal</span>
+            <span class="spec-val">{{ selectedPayout()?.metodo }}</span>
+          </div>
+
+          <div class="payout-spec-row">
+            <span class="spec-label">Cuenta de Destino</span>
+            <span class="spec-val font-mono">{{ selectedPayout()?.cuentaDestino }}</span>
+          </div>
+
+          <div class="payout-spec-row">
+            <span class="spec-label">Estado de Transacción</span>
+            <span class="payout-badge" [ngClass]="selectedPayout()?.estado?.toLowerCase() ?? ''">
+              {{ selectedPayout()?.estado }}
+            </span>
+          </div>
+        </div>
+
+        <div class="payout-help-alert">
+          <span class="material-symbols-outlined help-icon">info</span>
+          <p>Los depósitos pueden tomar hasta 48 horas hábiles en reflejarse en su cuenta bancaria dependiendo de los ciclos de compensación interbancarios.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

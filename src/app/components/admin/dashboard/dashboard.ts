@@ -20,6 +20,7 @@ export class Dashboard implements OnInit, OnDestroy {
   protected readonly portalService = inject(AdminPortalService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
 
   // Layout UI Toggles
   readonly sidebarCollapsed = signal(false);
@@ -39,6 +40,41 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly sortBy = signal<string>('id');
   readonly sortAsc = signal<boolean>(true);
 
+  readonly executiveSnapshot = computed(() => ([
+    { label: 'Usuarios', value: this.portalService.users().length, hint: 'Cuentas activas en plataforma', icon: 'group', tone: 'purple' },
+    { label: 'Vendedores', value: this.portalService.vendors().length, hint: 'Tiendas operativas hoy', icon: 'storefront', tone: 'emerald' },
+    { label: 'Productos', value: this.portalService.products().length, hint: 'Catálogo publicado', icon: 'inventory_2', tone: 'slate' },
+    { label: 'Pedidos', value: this.portalService.orders().length, hint: 'Órdenes en el sistema', icon: 'shopping_bag', tone: 'gold' }
+  ]));
+
+  readonly operationsPulse = computed(() => ([
+    { label: 'Alertas críticas', value: this.dashboardService.criticalAlerts().erroresCriticos, hint: 'requieren atención inmediata' },
+    { label: 'SOAP hoy', value: this.dashboardService.soapStatus().transaccionesHoy, hint: `respuesta ${this.dashboardService.soapStatus().tiempoRespuesta}` },
+    { label: 'Kafka eventos', value: this.dashboardService.kafkaStatus().eventosProcesados, hint: `${this.dashboardService.kafkaStatus().errores} errores registrados` },
+    { label: 'Sistema', value: `${this.dashboardService.systemStatus().cpu}%`, hint: `${this.dashboardService.systemStatus().microservicios} servicios monitoreados` }
+  ]));
+
+  readonly dashboardHighlights = computed(() => [
+    {
+      title: 'Ventas del Día',
+      value: this.dashboardService.kpis()[4]?.valor ?? 'S/ 0',
+      sub: this.dashboardService.kpis()[4]?.tendencia ?? 'Sin variación',
+      icon: 'payments'
+    },
+    {
+      title: 'Pedidos Pendientes',
+      value: this.dashboardService.criticalAlerts().pedidosPendientes.toString(),
+      sub: 'recomendados para priorizar despacho',
+      icon: 'hourglass_top'
+    },
+    {
+      title: 'Stock Bajo',
+      value: this.dashboardService.criticalAlerts().stockBajo.toString(),
+      sub: 'productos por reabastecer',
+      icon: 'warning'
+    }
+  ]);
+
   // Filter modifiers for specific sections
   readonly logFilterLevel = signal<string>('ALL');
   readonly logFilterModule = signal<string>('ALL');
@@ -49,6 +85,7 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly selectedUserId = signal<number | null>(null);
   readonly selectedRoleId = signal<number | null>(null);
   readonly selectedVendorId = signal<number | null>(null);
+  readonly productsVendorFilterId = signal<number | null>(null);
   readonly selectedCategoryId = signal<number | null>(null);
   readonly selectedProductId = signal<number | null>(null);
   readonly selectedOrderId = signal<number | null>(null);
@@ -88,6 +125,7 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly chatMessageText = signal('');
 
   private routerSubscription!: Subscription;
+  private queryParamsSubscription!: Subscription;
 
   constructor() {
     this.initForms();
@@ -101,16 +139,38 @@ export class Dashboard implements OnInit, OnDestroy {
     }
 
     this.updateActiveSectionFromUrl();
+    this.refreshBackendData();
     
     // Listen to router changes to update sections reactively
     this.routerSubscription = this.router.events.subscribe(() => {
       this.updateActiveSectionFromUrl();
     });
+
+    // Listen to query parameters reactively to filter by store
+    this.queryParamsSubscription = this.route.queryParams.subscribe(params => {
+      const storeId = params['storeId'];
+      if (storeId) {
+        this.productsVendorFilterId.set(Number(storeId));
+      } else {
+        this.productsVendorFilterId.set(null);
+      }
+    });
+  }
+
+  private refreshBackendData(): void {
+    this.portalService.loadCategories().subscribe();
+    this.portalService.loadProducts().subscribe();
+    this.portalService.loadOrders().subscribe();
+    this.portalService.loadNotifications().subscribe();
+    this.portalService.loadChats().subscribe();
   }
 
   ngOnDestroy(): void {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
+    }
+    if (this.queryParamsSubscription) {
+      this.queryParamsSubscription.unsubscribe();
     }
   }
 
@@ -207,6 +267,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (url.includes('/admin/users')) parsedSection = 'usuarios';
     else if (url.includes('/admin/roles')) parsedSection = 'roles';
     else if (url.includes('/admin/vendors')) parsedSection = 'vendedores';
+    else if (url.includes('/admin/stores')) parsedSection = 'tiendas';
     else if (url.includes('/admin/categories')) parsedSection = 'categorias';
     else if (url.includes('/admin/products')) parsedSection = 'productos';
     else if (url.includes('/admin/inventory')) parsedSection = 'inventario';
@@ -229,6 +290,9 @@ export class Dashboard implements OnInit, OnDestroy {
       this.selectedUserId.set(null);
       this.selectedRoleId.set(null);
       this.selectedVendorId.set(null);
+      if (parsedSection !== 'productos') {
+        this.productsVendorFilterId.set(null);
+      }
       this.selectedCategoryId.set(null);
       this.selectedProductId.set(null);
       this.selectedOrderId.set(null);
@@ -269,6 +333,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (sectionId === 'usuarios') routePath = 'users';
     else if (sectionId === 'roles') routePath = 'roles';
     else if (sectionId === 'vendedores') routePath = 'vendors';
+    else if (sectionId === 'tiendas') routePath = 'stores';
     else if (sectionId === 'categorias') routePath = 'categories';
     else if (sectionId === 'productos') routePath = 'products';
     else if (sectionId === 'inventario') routePath = 'inventory';
@@ -373,6 +438,11 @@ export class Dashboard implements OnInit, OnDestroy {
     return this.portalService.products().filter(p => p.vendedorId === vendorId);
   });
 
+  readonly selectedProductsVendor = computed(() => {
+    const id = this.productsVendorFilterId();
+    return this.portalService.vendors().find(v => v.id === id) || null;
+  });
+
   // CATEGORIES
   readonly filteredCategories = computed(() => {
     let list = this.portalService.categories();
@@ -392,14 +462,9 @@ export class Dashboard implements OnInit, OnDestroy {
   // PRODUCTS
   readonly filteredProducts = computed(() => {
     let list = this.portalService.products();
-    const query = this.searchQuery().toLowerCase();
     
-    if (query) {
-      list = list.filter(p => p.nombre.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query));
-    }
-
-    // Map Category and Vendor Names dynamically
-    return list.map(p => {
+    // Map Category and Vendor Names dynamically first
+    const mapped = list.map(p => {
       const cat = this.portalService.categories().find(c => c.id === p.categoriaId);
       const vend = this.portalService.vendors().find(v => v.id === p.vendedorId);
       return {
@@ -408,6 +473,24 @@ export class Dashboard implements OnInit, OnDestroy {
         vendedorNombre: vend ? vend.nombreTienda : 'Sin Vendedor'
       };
     });
+
+    let result = mapped;
+
+    const vendorFilterId = this.productsVendorFilterId();
+    if (vendorFilterId) {
+      result = result.filter(p => p.vendedorId === vendorFilterId);
+    }
+
+    const query = this.searchQuery().toLowerCase();
+    if (query) {
+      result = result.filter(p => 
+        p.nombre.toLowerCase().includes(query) || 
+        p.sku.toLowerCase().includes(query) ||
+        p.vendedorNombre.toLowerCase().includes(query) ||
+        p.categoriaNombre.toLowerCase().includes(query)
+      );
+    }
+    return result;
   });
 
   readonly selectedProduct = computed(() => {
@@ -690,20 +773,43 @@ export class Dashboard implements OnInit, OnDestroy {
     }
     
     if (this.isCreatingVendor()) {
-      this.portalService.addVendor(this.vendorForm.value);
-      this.showToast('Vendedor regional registrado con éxito.', 'success');
+      this.portalService.addVendor(this.vendorForm.value).subscribe(() => {
+        this.showToast('Vendedor regional registrado con éxito.', 'success');
+      });
     } else {
-      this.portalService.updateVendor(this.selectedVendorId()!, this.vendorForm.value);
-      this.showToast('Datos de la tienda del vendedor actualizados.', 'success');
+      this.portalService.updateVendor(this.selectedVendorId()!, this.vendorForm.value).subscribe(() => {
+        this.showToast('Datos de la tienda del vendedor actualizados.', 'success');
+      });
     }
     this.resetAllFormToggles();
   }
 
   deleteVendor(id: number): void {
     if (confirm('¿Dar de baja a este vendedor? Esto desactivará su catálogo.')) {
-      this.portalService.deleteVendor(id);
-      this.showToast('Vendedor eliminado físicamente de la base de datos.', 'success');
+      this.portalService.deleteVendor(id).subscribe(() => {
+        this.showToast('Vendedor eliminado físicamente de la base de datos.', 'success');
+      });
     }
+  }
+
+  // 3b. STORES (TIENDAS) HELPERS
+  getStoreProductCount(vendorId: number): number {
+    return this.portalService.products().filter(p => p.vendedorId === vendorId).length;
+  }
+
+  viewVendorProducts(vendor: AdminVendor): void {
+    this.searchQuery.set('');
+    this.router.navigate(['/admin/products'], { queryParams: { storeId: vendor.id } });
+  }
+
+  clearVendorFilter(): void {
+    this.router.navigate(['/admin/products']);
+  }
+
+  toggleVendorActive(vendor: AdminVendor): void {
+    const updatedStatus = !vendor.activo;
+    this.portalService.updateVendor(vendor.id, { activo: updatedStatus });
+    this.showToast(`Tienda "${vendor.nombreTienda}" ${updatedStatus ? 'Habilitada' : 'Suspendida'} con éxito.`, 'info');
   }
 
   // 4. CATEGORIES CRUD
@@ -731,19 +837,22 @@ export class Dashboard implements OnInit, OnDestroy {
     }
 
     if (this.isCreatingCategory()) {
-      this.portalService.addCategory(this.categoryForm.value);
-      this.showToast('Categoría creada satisfactoriamente.', 'success');
+      this.portalService.addCategory(this.categoryForm.value).subscribe(() => {
+        this.showToast('Categoría creada satisfactoriamente.', 'success');
+      });
     } else {
-      this.portalService.updateCategory(this.selectedCategoryId()!, this.categoryForm.value);
-      this.showToast('Categoría actualizada con éxito.', 'success');
+      this.portalService.updateCategory(this.selectedCategoryId()!, this.categoryForm.value).subscribe(() => {
+        this.showToast('Categoría actualizada con éxito.', 'success');
+      });
     }
     this.resetAllFormToggles();
   }
 
   deleteCategory(id: number): void {
     if (confirm('¿Eliminar esta categoría?')) {
-      this.portalService.deleteCategory(id);
-      this.showToast('Categoría eliminada del catálogo.', 'success');
+      this.portalService.deleteCategory(id).subscribe(() => {
+        this.showToast('Categoría eliminada del catálogo.', 'success');
+      });
     }
   }
 
@@ -792,19 +901,22 @@ export class Dashboard implements OnInit, OnDestroy {
     };
 
     if (this.isCreatingProduct()) {
-      this.portalService.addProduct(payload);
-      this.showToast('Producto publicado. Evento Kafka despachado al broker.', 'success');
+      this.portalService.addProduct(payload).subscribe(() => {
+        this.showToast('Producto publicado. Persistido en el backend.', 'success');
+      });
     } else {
-      this.portalService.updateProduct(this.selectedProductId()!, payload);
-      this.showToast('Detalles del producto actualizados en SQL Server.', 'success');
+      this.portalService.updateProduct(this.selectedProductId()!, payload).subscribe(() => {
+        this.showToast('Detalles del producto actualizados en SQL Server.', 'success');
+      });
     }
     this.resetAllFormToggles();
   }
 
   deleteProduct(id: number): void {
     if (confirm('¿Dar de baja a este producto? El stock quedará inhabilitado.')) {
-      this.portalService.deleteProduct(id);
-      this.showToast('Producto eliminado del marketplace.', 'success');
+      this.portalService.deleteProduct(id).subscribe(() => {
+        this.showToast('Producto eliminado del marketplace.', 'success');
+      });
     }
   }
 
@@ -954,4 +1066,3 @@ export class Dashboard implements OnInit, OnDestroy {
     this.showToast('Registro de cobros SOAP exportado a CSV.', 'success');
   }
 }
-

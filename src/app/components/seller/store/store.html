@@ -1,0 +1,327 @@
+<div class="store-wrapper animate-fade-in">
+  
+  <!-- Page Header -->
+  <div class="store-page-header">
+    <div class="page-title-area">
+      <h2>Mi Tienda</h2>
+      <p>Administra la vitrina digital de tu comercio en MultiMarket</p>
+    </div>
+    
+    <!-- Tab Controls -->
+    <div class="tab-controls">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'view'" 
+        (click)="activeTab.set('view')"
+      >
+        <span class="material-symbols-outlined font-sm">visibility</span>
+        Perfil Tienda
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'edit'" 
+        (click)="activeTab.set('edit')"
+      >
+        <span class="material-symbols-outlined font-sm">edit</span>
+        Editar Tienda
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeTab() === 'stats'" 
+        (click)="activeTab.set('stats')"
+      >
+        <span class="material-symbols-outlined font-sm">query_stats</span>
+        Estadísticas
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Notification Alert -->
+  <div class="success-toast animate-fade-in" *ngIf="successMessage()">
+    <span class="material-symbols-outlined">check_circle</span>
+    <p>{{ successMessage() }}</p>
+  </div>
+
+  <!-- ================= VIEW TAB ================= -->
+  <div class="store-tab-content view-tab" *ngIf="activeTab() === 'view'">
+    <div class="banner-container">
+      <img [src]="sellerService.storeProfile().banner" alt="Banner Tienda" class="store-banner-img" />
+      <div class="logo-overlap-container">
+        <img [src]="sellerService.storeProfile().logo" alt="Logo Tienda" class="store-logo-img" />
+      </div>
+    </div>
+
+    <div class="profile-details-grid">
+      <!-- Main Info -->
+      <div class="details-left card">
+        <div class="details-header">
+          <h3>{{ sellerService.storeProfile().nombre }}</h3>
+          <span class="region-tag">{{ sellerService.storeProfile().region }}</span>
+        </div>
+        <p class="store-desc">{{ sellerService.storeProfile().descripcion }}</p>
+        
+        <div class="address-row">
+          <span class="material-symbols-outlined">location_on</span>
+          <div>
+            <strong>Dirección de Despacho:</strong>
+            <p>{{ sellerService.storeProfile().direccion }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact & Social -->
+      <div class="details-right card">
+        <h3>Contacto y Enlaces</h3>
+        <div class="contact-list">
+          <div class="contact-item">
+            <span class="material-symbols-outlined text-purple">mail</span>
+            <div>
+              <span class="contact-label">Correo de Soporte</span>
+              <a [href]="'mailto:' + sellerService.storeProfile().correo" class="contact-value">{{ sellerService.storeProfile().correo }}</a>
+            </div>
+          </div>
+
+          <div class="contact-item">
+            <span class="material-symbols-outlined text-emerald">phone</span>
+            <div>
+              <span class="contact-label">Teléfono Comercial</span>
+              <span class="contact-value">{{ sellerService.storeProfile().telefono }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="social-links-area">
+          <h4>Canales Digitales</h4>
+          <div class="social-icons-row">
+            <a 
+              *ngIf="sellerService.storeProfile().redesSociales.facebook"
+              [href]="sellerService.storeProfile().redesSociales.facebook" 
+              target="_blank" 
+              class="social-btn facebook"
+              title="Facebook"
+            >
+              F
+            </a>
+            <a 
+              *ngIf="sellerService.storeProfile().redesSociales.instagram"
+              [href]="sellerService.storeProfile().redesSociales.instagram" 
+              target="_blank" 
+              class="social-btn instagram"
+              title="Instagram"
+            >
+              I
+            </a>
+            <a 
+              *ngIf="sellerService.storeProfile().redesSociales.website"
+              [href]="sellerService.storeProfile().redesSociales.website" 
+              target="_blank" 
+              class="social-btn website"
+              title="Sitio Web"
+            >
+              W
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= EDIT TAB ================= -->
+  <div class="store-tab-content edit-tab" *ngIf="activeTab() === 'edit'">
+    <form [formGroup]="storeForm" (ngSubmit)="onSubmit()" class="store-form card">
+      <div class="form-grid">
+        
+        <!-- Nombre Tienda -->
+        <div class="form-group full-width">
+          <label class="form-label" for="nombre">Nombre de la Tienda</label>
+          <input type="text" id="nombre" formControlName="nombre" class="form-input" placeholder="Ej. Café Altomayo Gourmet" />
+          <span class="validation-err" *ngIf="storeForm.get('nombre')?.touched && storeForm.get('nombre')?.invalid">
+            El nombre es obligatorio y debe tener menos de 50 caracteres.
+          </span>
+        </div>
+
+        <!-- Descripción -->
+        <div class="form-group full-width">
+          <label class="form-label" for="descripcion">Descripción Comercial</label>
+          <textarea id="descripcion" formControlName="descripcion" rows="4" class="form-input" placeholder="Cuéntale a tus clientes sobre tu tienda..."></textarea>
+          <span class="validation-err" *ngIf="storeForm.get('descripcion')?.touched && storeForm.get('descripcion')?.invalid">
+            La descripción es obligatoria (máx 500 caracteres).
+          </span>
+        </div>
+
+        <!-- Región -->
+        <div class="form-group">
+          <label class="form-label" for="region">Región / Departamento</label>
+          <select id="region" formControlName="region" class="form-input">
+            <option value="San Martín">San Martín</option>
+            <option value="Lima">Lima</option>
+            <option value="Cusco">Cusco</option>
+            <option value="Lambayeque">Lambayeque</option>
+            <option value="Arequipa">Arequipa</option>
+            <option value="Amazonas">Amazonas</option>
+          </select>
+        </div>
+
+        <!-- Dirección -->
+        <div class="form-group">
+          <label class="form-label" for="direccion">Dirección Comercial</label>
+          <input type="text" id="direccion" formControlName="direccion" class="form-input" placeholder="Ej. Av. Larco 452" />
+        </div>
+
+        <!-- Logo URL -->
+        <div class="form-group">
+          <label class="form-label" for="logo">URL Logo Tienda</label>
+          <input type="text" id="logo" formControlName="logo" class="form-input" />
+        </div>
+
+        <!-- Banner URL -->
+        <div class="form-group">
+          <label class="form-label" for="banner">URL Banner Portada</label>
+          <input type="text" id="banner" formControlName="banner" class="form-input" />
+        </div>
+
+        <!-- Correo Soporte -->
+        <div class="form-group">
+          <label class="form-label" for="correo">Correo de Contacto</label>
+          <input type="email" id="correo" formControlName="correo" class="form-input" />
+        </div>
+
+        <!-- Teléfono Comercial -->
+        <div class="form-group">
+          <label class="form-label" for="telefono">Teléfono Comercial</label>
+          <input type="text" id="telefono" formControlName="telefono" class="form-input" />
+        </div>
+
+        <!-- Redes Sociales Header -->
+        <div class="section-divider full-width">
+          <h4>Redes Sociales y Enlaces Externos</h4>
+        </div>
+
+        <!-- Facebook -->
+        <div class="form-group">
+          <label class="form-label" for="facebook">Enlace Facebook</label>
+          <input type="text" id="facebook" formControlName="facebook" class="form-input" placeholder="https://facebook.com/tienda" />
+        </div>
+
+        <!-- Instagram -->
+        <div class="form-group">
+          <label class="form-label" for="instagram">Enlace Instagram</label>
+          <input type="text" id="instagram" formControlName="instagram" class="form-input" placeholder="https://instagram.com/tienda" />
+        </div>
+
+        <!-- Sitio Web -->
+        <div class="form-group full-width">
+          <label class="form-label" for="website">Sitio Web Oficial</label>
+          <input type="text" id="website" formControlName="website" class="form-input" placeholder="https://www.tienda.pe" />
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="resetForm()">Cancelar</button>
+        <button type="submit" class="btn-save" [disabled]="storeForm.invalid || isSaving()">
+          {{ isSaving() ? 'Guardando...' : 'Guardar Cambios' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ================= STATS TAB ================= -->
+  <div class="store-tab-content stats-tab" *ngIf="activeTab() === 'stats'">
+    <div class="kpi-grid-mini">
+      <!-- Visitas Totales -->
+      <div class="mini-kpi card">
+        <span class="mini-label">Visitas Totales</span>
+        <h3>45,820</h3>
+        <span class="mini-change text-emerald">+18% este mes</span>
+      </div>
+
+      <!-- Tasa de Conversión -->
+      <div class="mini-kpi card">
+        <span class="mini-label">Conversión Promedio</span>
+        <h3>2.84%</h3>
+        <span class="mini-change text-emerald">+0.4% vs mes anterior</span>
+      </div>
+
+      <!-- Ticket Promedio -->
+      <div class="mini-kpi card">
+        <span class="mini-label">Ticket Promedio</span>
+        <h3>S/ 115.30</h3>
+        <span class="mini-change text-emerald">+2.5% vs mes anterior</span>
+      </div>
+
+      <!-- Calificación -->
+      <div class="mini-kpi card">
+        <span class="mini-label">Calificación Promedio</span>
+        <h3>4.8 / 5.0</h3>
+        <span class="mini-change text-purple">98% Satisfacción</span>
+      </div>
+    </div>
+
+    <!-- Charts Breakdown Grid -->
+    <div class="stats-breakdown-grid">
+      
+      <!-- Ventas por Categoría -->
+      <div class="card breakdown-card">
+        <h3>Ventas por Categoría</h3>
+        <div class="breakdown-list">
+          <div class="breakdown-item">
+            <span class="breakdown-name">Café Gourmet</span>
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar" style="width: 70%; background-color: var(--primary);"></div>
+            </div>
+            <span class="breakdown-val">70%</span>
+          </div>
+
+          <div class="breakdown-item">
+            <span class="breakdown-name">Chocolate y Dulces</span>
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar" style="width: 20%; background-color: var(--tertiary);"></div>
+            </div>
+            <span class="breakdown-val">20%</span>
+          </div>
+
+          <div class="breakdown-item">
+            <span class="breakdown-name">Miel Pura</span>
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar" style="width: 10%; background-color: #fbbf24;"></div>
+            </div>
+            <span class="breakdown-val">10%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Origen de Compras -->
+      <div class="card breakdown-card">
+        <h3>Origen de Compras (Regiones)</h3>
+        <div class="breakdown-list">
+          <div class="breakdown-item">
+            <span class="breakdown-name">Lima Metropolitana</span>
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar" style="width: 65%; background-color: var(--primary);"></div>
+            </div>
+            <span class="breakdown-val">65%</span>
+          </div>
+
+          <div class="breakdown-item">
+            <span class="breakdown-name">Cusco</span>
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar" style="width: 20%; background-color: var(--tertiary);"></div>
+            </div>
+            <span class="breakdown-val">20%</span>
+          </div>
+
+          <div class="breakdown-item">
+            <span class="breakdown-name">Otros Departamentos</span>
+            <div class="progress-bar-wrapper">
+              <div class="progress-bar" style="width: 15%; background-color: var(--secondary);"></div>
+            </div>
+            <span class="breakdown-val">15%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,115 @@
+<div class="chat-wrapper animate-fade-in">
+  <div class="chat-container card">
+    
+    <!-- LEFT SIDEBAR: CHAT THREADS -->
+    <div class="chat-threads-sidebar">
+      <div class="sidebar-header">
+        <h3>Mensajes</h3>
+        <p>Conversa directamente con los productores y artesanos locales</p>
+      </div>
+
+      <!-- Threads List -->
+      <div class="threads-list">
+        <div class="thread-row" 
+             *ngFor="let conv of customerService.conversations()" 
+             [class.active]="selectedConvId() === conv.id"
+             (click)="selectConversation(conv.id)">
+          <img [src]="conv.vendedorLogo" alt="Vendor Logo" class="thread-avatar" />
+          
+          <div class="thread-meta">
+            <div class="thread-top">
+              <span class="thread-name">{{ conv.vendedorNombreTienda }}</span>
+              <span class="thread-time">{{ conv.fechaUltimoMensaje | date:'HH:mm' }}</span>
+            </div>
+            <div class="thread-bottom">
+              <span class="thread-snippet">{{ conv.ultimoMensaje }}</span>
+              <span class="unread-badge" *ngIf="conv.noLeidos > 0">{{ conv.noLeidos }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-threads-state" *ngIf="customerService.conversations().length === 0">
+          <span class="material-symbols-outlined icon">forum</span>
+          <p>No tienes conversaciones iniciadas.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT BODY: ACTIVE CONVERSATION MESSENGER -->
+    <div class="chat-messenger-body" *ngIf="getSelectedConversation() as conv; else emptyChatState">
+      
+      <!-- Messenger Header -->
+      <div class="messenger-header">
+        <div class="vendor-profile-info">
+          <img [src]="conv.vendedorLogo" alt="Avatar" class="header-avatar" />
+          <div>
+            <h4>{{ conv.vendedorNombreTienda }}</h4>
+            <span class="status-indicator-active">● En Línea</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn-action-icon" title="Ver Tienda" [routerLink]="['/products']">
+            <span class="material-symbols-outlined">storefront</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Message list -->
+      <div class="messages-flow-area" #chatScrollContainer>
+        <div class="messages-scroller">
+          
+          <div class="message-bubble-wrapper" 
+               *ngFor="let msg of conv.mensajes" 
+               [class.buyer-msg]="msg.remitente === 'COMPRADOR'"
+               [class.vendor-msg]="msg.remitente === 'VENDEDOR'">
+            
+            <div class="bubble">
+              <p class="msg-text">{{ msg.contenido }}</p>
+              <div class="msg-meta">
+                <span class="msg-time">{{ msg.fecha | date:'HH:mm' }}</span>
+                <span class="material-symbols-outlined check-icon" *ngIf="msg.remitente === 'COMPRADOR'">done_all</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Typing indicator when vendor reply delay is simulated -->
+          <div class="typing-indicator" *ngIf="conv.noLeidos > 999">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Messenger Footer input bar -->
+      <div class="messenger-footer-input">
+        <button class="btn-attach" (click)="attachImage()" title="Adjuntar foto de comprobante o referencia">
+          <span class="material-symbols-outlined">attach_file</span>
+        </button>
+        
+        <input type="text" 
+               class="input-chat-box" 
+               [(ngModel)]="typedMessage"
+               (keyup.enter)="sendMessage()"
+               placeholder="Escribe un mensaje al vendedor..." />
+
+        <button class="btn-send-msg" (click)="sendMessage()" [disabled]="!typedMessage().trim()">
+          <span class="material-symbols-outlined">send</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Empty Selected State -->
+    <ng-template #emptyChatState>
+      <div class="chat-messenger-body empty-state-box">
+        <span class="material-symbols-outlined large-icon">chat</span>
+        <h4>Bandeja de Entrada MultiMarket</h4>
+        <p>Selecciona un vendedor en la barra lateral para empezar a chatear sobre tus compras, pedidos o especificaciones de productos locales.</p>
+      </div>
+    </ng-template>
+
+  </div>
+</div>

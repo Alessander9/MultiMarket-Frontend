@@ -1,0 +1,287 @@
+<div class="profile-wrapper animate-fade-in">
+
+  <div class="profile-page-header">
+    <div class="page-title-area">
+      <h2>Mi Cuenta y Perfil</h2>
+      <p>Administra tu información personal, llaves de seguridad, direcciones de envío y preferencias de la plataforma</p>
+    </div>
+  </div>
+
+  <div class="profile-grid">
+    
+    <!-- LEFT SIDEBAR TAB TRIGGER MENU -->
+    <div class="profile-tabs-sidebar">
+      <button class="profile-tab-link" [class.active]="activeTab() === 'personal'" (click)="selectTab('personal')">
+        <span class="material-symbols-outlined icon">person</span>
+        Datos Personales
+      </button>
+      <button class="profile-tab-link" [class.active]="activeTab() === 'addresses'" (click)="selectTab('addresses')">
+        <span class="material-symbols-outlined icon">location_on</span>
+        Direcciones de Envío
+      </button>
+      <button class="profile-tab-link" [class.active]="activeTab() === 'security'" (click)="selectTab('security')">
+        <span class="material-symbols-outlined icon">shield</span>
+        Seguridad de la Cuenta
+      </button>
+      <button class="profile-tab-link" [class.active]="activeTab() === 'preferences'" (click)="selectTab('preferences')">
+        <span class="material-symbols-outlined icon">tune</span>
+        Preferencias
+      </button>
+    </div>
+
+    <!-- RIGHT BODY CONTENT DISPLAY -->
+    <div class="profile-content-panel">
+
+      <!-- 1. PERSONAL DATA PANEL -->
+      <div class="card settings-card animate-scale-up" *ngIf="activeTab() === 'personal'">
+        <h3 class="settings-title">Datos Personales</h3>
+        <p class="settings-subtitle">Mantén actualizada tu información de contacto para agilizar la entrega de tus compras</p>
+
+        <div class="personal-photo-area">
+          <img [src]="profileForm.foto" alt="Profile Picture" class="avatar-preview" />
+          <div class="photo-info">
+            <h5>Foto de Perfil</h5>
+            <p>Se recomienda una imagen cuadrada en formato JPG o PNG de al menos 200x200px.</p>
+            <button class="btn-secondary-action font-sm">Subir Nueva Foto</button>
+          </div>
+        </div>
+
+        <div class="settings-form-grid">
+          <div class="form-group">
+            <label>Nombres *</label>
+            <input type="text" [(ngModel)]="profileForm.nombres" />
+          </div>
+          <div class="form-group">
+            <label>Apellidos *</label>
+            <input type="text" [(ngModel)]="profileForm.apellidos" />
+          </div>
+          <div class="form-group">
+            <label>Correo Electrónico *</label>
+            <input type="email" [(ngModel)]="profileForm.correo" />
+          </div>
+          <div class="form-group">
+            <label>Teléfono Celular *</label>
+            <input type="text" [(ngModel)]="profileForm.telefono" />
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="btn-save-settings" (click)="saveProfile()">Guardar Cambios</button>
+        </div>
+      </div>
+
+      <!-- 2. ADDRESSES CRUD PANEL -->
+      <div class="card settings-card animate-scale-up" *ngIf="activeTab() === 'addresses'">
+        
+        <div class="settings-section-header" *ngIf="!showAddressForm()">
+          <div>
+            <h3 class="settings-title">Direcciones Registradas</h3>
+            <p class="settings-subtitle">Gestiona las ubicaciones donde realizamos las entregas de tus pedidos</p>
+          </div>
+          <button class="btn-primary-action" (click)="openNewAddressForm()">
+            <span class="material-symbols-outlined">add</span>
+            Agregar Dirección
+          </button>
+        </div>
+
+        <!-- Address List grid -->
+        <div class="addresses-list-box" *ngIf="!showAddressForm()">
+          <div class="address-item-card" *ngFor="let addr of customerService.addresses()">
+            <div class="addr-top">
+              <span class="badge" *ngIf="addr.predeterminada">Predeterminada</span>
+              <div class="addr-actions">
+                <button class="btn-icon" (click)="openEditAddressForm(addr)" title="Editar Dirección">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="btn-icon btn-delete" (click)="deleteAddress(addr.id, $event)" title="Eliminar Dirección">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+            
+            <h4 class="addr-ref">{{ addr.nombreReferencia }}</h4>
+            <p class="addr-text">{{ addr.direccion }}</p>
+            <p class="addr-region">{{ addr.distrito }}, {{ addr.provincia }} - {{ addr.departamento }}</p>
+            <span class="addr-zip">CP: {{ addr.codigoPostal }}</span>
+            <p class="addr-note" *ngIf="addr.referencia"><strong>Nota:</strong> {{ addr.referencia }}</p>
+          </div>
+        </div>
+
+        <!-- Address Create/Edit Form panel -->
+        <div class="address-form-box" *ngIf="showAddressForm()">
+          <h4 class="form-title">{{ editingAddressId() ? 'Editar Dirección' : 'Registrar Nueva Dirección' }}</h4>
+          
+          <div class="settings-form-grid mt-16">
+            <div class="form-group full-width">
+              <label>Nombre de Referencia (Ej: Casa, Oficina de mi Novio) *</label>
+              <input type="text" [(ngModel)]="addressFormModel.nombreReferencia" placeholder="Mi Casa / Oficina" />
+            </div>
+
+            <div class="form-group">
+              <label>Departamento *</label>
+              <input type="text" [(ngModel)]="addressFormModel.departamento" />
+            </div>
+
+            <div class="form-group">
+              <label>Provincia *</label>
+              <input type="text" [(ngModel)]="addressFormModel.provincia" />
+            </div>
+
+            <div class="form-group">
+              <label>Distrito *</label>
+              <input type="text" [(ngModel)]="addressFormModel.distrito" placeholder="Ej: Miraflores" />
+            </div>
+
+            <div class="form-group">
+              <label>Código Postal</label>
+              <input type="text" [(ngModel)]="addressFormModel.codigoPostal" placeholder="Ej: 15074" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Dirección Completa (Calle, Av, Número, Dpto) *</label>
+              <input type="text" [(ngModel)]="addressFormModel.direccion" placeholder="Av. Larco 452, Dpto 502" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Referencia de ubicación</label>
+              <input type="text" [(ngModel)]="addressFormModel.referencia" placeholder="Frente al parque Kennedy" />
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="check-container">
+                <input type="checkbox" [(ngModel)]="addressFormModel.predeterminada" />
+                <span class="checkmark"></span>
+                Establecer como dirección predeterminada
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-form-actions">
+            <button class="btn-secondary-action" (click)="showAddressForm.set(false)">Cancelar</button>
+            <button class="btn-save-settings" (click)="saveAddress()">Guardar Dirección</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 3. SECURITY DATA PANEL -->
+      <div class="card settings-card animate-scale-up" *ngIf="activeTab() === 'security'">
+        <h3 class="settings-title">Cambiar Contraseña</h3>
+        <p class="settings-subtitle">Mantén protegida tu cuenta utilizando contraseñas seguras y robustas</p>
+
+        <div class="settings-form-grid">
+          <div class="form-group full-width">
+            <label>Contraseña Actual *</label>
+            <input type="password" [(ngModel)]="passwordForm.current" placeholder="••••••••" />
+          </div>
+          <div class="form-group">
+            <label>Nueva Contraseña *</label>
+            <input type="password" [(ngModel)]="passwordForm.new" placeholder="••••••••" />
+          </div>
+          <div class="form-group">
+            <label>Confirmar Nueva Contraseña *</label>
+            <input type="password" [(ngModel)]="passwordForm.confirm" placeholder="••••••••" />
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="btn-save-settings" (click)="changePassword()">Actualizar Contraseña</button>
+        </div>
+
+        <!-- Active sessions block -->
+        <div class="active-sessions-section">
+          <h4>Sesiones de Dispositivo Activas</h4>
+          <p>Dispositivos que se han autenticado en tu cuenta. Puedes revocar el acceso en cualquier momento.</p>
+          
+          <div class="sessions-list">
+            <div class="session-row" *ngFor="let session of activeSessions">
+              <div class="session-meta">
+                <span class="material-symbols-outlined device-icon">devices</span>
+                <div>
+                  <h5>{{ session.device }}</h5>
+                  <p>{{ session.location }} • Last access: {{ session.lastActive }}</p>
+                </div>
+              </div>
+              
+              <span class="current-badge" *ngIf="session.isCurrent">Sesión Actual</span>
+              
+              <button class="btn-secondary-action font-sm text-red" 
+                      *ngIf="!session.isCurrent" 
+                      (click)="revokeSession(session.device)">
+                Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. PREFERENCES DATA PANEL -->
+      <div class="card settings-card animate-scale-up" *ngIf="activeTab() === 'preferences'">
+        <h3 class="settings-title">Preferencias de la Cuenta</h3>
+        <p class="settings-subtitle">Configura el comportamiento del portal, zonas horarias y la interfaz visual</p>
+
+        <div class="settings-form-grid">
+          <div class="form-group">
+            <label>Idioma del Portal</label>
+            <select class="settings-select" [(ngModel)]="prefForm.idioma">
+              <option value="es">Español (Perú)</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Zona Horaria</label>
+            <select class="settings-select" [(ngModel)]="prefForm.zonaHoraria">
+              <option value="America/Lima (UTC-5)">America/Lima (UTC-5)</option>
+              <option value="America/Bogota (UTC-5)">America/Bogota (UTC-5)</option>
+              <option value="America/Santiago (UTC-4)">America/Santiago (UTC-4)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="notif-sliders-section">
+          <h4>Canales de Alertas y Suscripciones</h4>
+          
+          <div class="slider-row">
+            <div>
+              <h5>Notificaciones por Correo Electrónico</h5>
+              <p>Deseo recibir correos con actualizaciones sobre el estado de mis pedidos y despachos.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="prefForm.notificacionesEmail" />
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="slider-row">
+            <div>
+              <h5>Notificaciones Push en Navegador</h5>
+              <p>Activar alertas push para recibir avisos de chat de los vendedores en tiempo real.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" [(ngModel)]="prefForm.notificacionesPush" />
+              <span class="slider-round"></span>
+            </label>
+          </div>
+
+          <div class="slider-row">
+            <div>
+              <h5>Tema Visual de Interfaz</h5>
+              <p>Cambia entre el modo oscuro de alto contraste (Obsidian Dark) y el modo claro.</p>
+            </div>
+            <select class="settings-select w-160" [(ngModel)]="prefForm.tema">
+              <option value="dark">Obsidian Dark</option>
+              <option value="light">Soft Light</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="btn-save-settings" (click)="savePreferences()">Guardar Preferencias</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

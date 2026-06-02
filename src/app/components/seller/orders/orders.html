@@ -1,0 +1,291 @@
+<div class="orders-wrapper animate-fade-in">
+  
+  <!-- Toast feedback alert -->
+  <div class="feedback-toast" *ngIf="feedback()">
+    <span class="material-symbols-outlined">info</span>
+    <p>{{ feedback() }}</p>
+  </div>
+
+  <!-- Loading Bar -->
+  <div class="loading-bar-top" *ngIf="isLoading()">
+    <div class="bar-progress"></div>
+  </div>
+
+  <!-- ================= LIST VIEW ================= -->
+  <div class="state-container list-view" *ngIf="viewState() === 'list'">
+    <div class="orders-header">
+      <div class="page-title-area">
+        <h2>Gestión de Pedidos</h2>
+        <p>Controla las órdenes de compra de tus clientes y despacha eficientemente</p>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card card">
+      <div class="filters-row">
+        <!-- Search -->
+        <div class="filter-group flex-2">
+          <label class="filter-label">Buscar Pedido</label>
+          <div class="filter-input-wrapper">
+            <span class="material-symbols-outlined">search</span>
+            <input 
+              type="text" 
+              placeholder="Buscar por Nº Pedido, cliente, correo..." 
+              [value]="searchFilter()" 
+              (input)="searchFilter.set($any($event.target).value)"
+              class="filter-input"
+            />
+          </div>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="filter-group">
+          <label class="filter-label">Estado de Despacho</label>
+          <select 
+            [value]="statusFilter()" 
+            (change)="statusFilter.set($any($event.target).value)"
+            class="filter-input"
+          >
+            <option value="ALL">Todos los Pedidos</option>
+            <option value="PENDIENTE">PENDIENTE (Nuevo)</option>
+            <option value="PROCESANDO">PROCESANDO (Empaque)</option>
+            <option value="ENVIADO">ENVIADO (Tránsito)</option>
+            <option value="ENTREGADO">ENTREGADO (Recibido)</option>
+            <option value="CANCELADO">CANCELADO</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="orders-table-card card">
+      <div class="table-responsive" *ngIf="filteredOrders().length > 0">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>Nº Pedido</th>
+              <th>Fecha y Hora</th>
+              <th>Cliente</th>
+              <th>Artículos</th>
+              <th class="text-right">Total</th>
+              <th>Estado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of filteredOrders()" (click)="openDetail(order)" class="clickable-row">
+              <td>
+                <span class="order-number-text">{{ order.numeroPedido }}</span>
+              </td>
+              <td>
+                <div class="date-col">
+                  <span>{{ order.fecha | date:'mediumDate' }}</span>
+                  <span class="time-text">{{ order.fecha | date:'shortTime' }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="client-col">
+                  <span class="client-name">{{ order.clienteNombre }}</span>
+                  <span class="client-email">{{ order.clienteCorreo }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="items-summary-text">
+                  {{ order.items.length }} {{ order.items.length === 1 ? 'artículo' : 'artículos' }}
+                </span>
+              </td>
+              <td class="text-right font-semibold">
+                S/ {{ order.total | number:'1.2-2' }}
+              </td>
+              <td>
+                <span class="status-pill-badge" [ngClass]="order.estado.toLowerCase()">
+                  {{ order.estado }}
+                </span>
+              </td>
+              <td>
+                <div class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-action-view" (click)="openDetail(order)" title="Ver Detalle Compra">
+                    <span class="material-symbols-outlined">visibility</span>
+                  </button>
+                  <button 
+                    *ngIf="order.estado === 'PENDIENTE'" 
+                    class="btn-action-cancel" 
+                    (click)="cancelOrder(order.id)" 
+                    title="Cancelar Orden"
+                  >
+                    <span class="material-symbols-outlined">cancel</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="filteredOrders().length === 0">
+        <span class="material-symbols-outlined empty-icon">shopping_bag</span>
+        <h3>No se encontraron pedidos</h3>
+        <p>No hay órdenes de compra registradas con los filtros seleccionados.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DETAIL VIEW ================= -->
+  <div class="state-container detail-view" *ngIf="viewState() === 'detail' && selectedOrder()">
+    <div class="orders-header">
+      <div class="page-title-area">
+        <div class="title-with-back">
+          <button class="btn-back-circle" (click)="closeDetail()">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+          <div>
+            <h2>Pedido {{ selectedOrder()?.numeroPedido }}</h2>
+            <p>Registrado el {{ selectedOrder()?.fecha | date:'medium' }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-print" (click)="printInvoiceMock()">
+          <span class="material-symbols-outlined">print</span>
+          Imprimir Guía de Despacho
+        </button>
+      </div>
+    </div>
+
+    <div class="order-detail-grid">
+      <!-- Left Panel: Products List -->
+      <div class="detail-left">
+        <!-- Products list card -->
+        <div class="card purchased-items-card">
+          <h3>Artículos del Pedido</h3>
+          
+          <div class="items-list">
+            <div class="purchase-item-row" *ngFor="let item of selectedOrder()?.items">
+              <img [src]="item.imagen" alt="Thumbnail" class="item-thumb" />
+              <div class="item-meta">
+                <span class="item-name">{{ item.productoNombre }}</span>
+                <span class="item-sku">SKU: {{ item.sku }}</span>
+              </div>
+              <div class="item-qty-price">
+                <span class="qty-badge">{{ item.cantidad }}x</span>
+                <span class="unit-price">S/ {{ item.precio | number:'1.2-2' }}</span>
+                <span class="total-price">S/ {{ item.precio * item.cantidad | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Costs Reconcile Card -->
+        <div class="card cost-summary-card">
+          <h3>Resumen de Facturación</h3>
+          
+          <div class="cost-rows-list">
+            <div class="cost-row">
+              <span>Subtotal</span>
+              <span>S/ {{ selectedOrder()?.subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="cost-row">
+              <span>Costo de Envío</span>
+              <span>S/ {{ selectedOrder()?.envio | number:'1.2-2' }}</span>
+            </div>
+            <div class="cost-divider"></div>
+            <div class="cost-row grand-total">
+              <span>Importe Total</span>
+              <span class="text-emerald">S/ {{ selectedOrder()?.total | number:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Metadata & State Actions -->
+      <div class="detail-right">
+        
+        <!-- Action state card -->
+        <div class="card state-action-card">
+          <h3>Control de Estado</h3>
+          
+          <div class="state-action-content">
+            <div class="current-state-pill">
+              <span class="state-label">Estado Actual</span>
+              <span class="status-pill-badge large" [ngClass]="selectedOrder()?.estado?.toLowerCase() ?? ''">
+                {{ selectedOrder()?.estado }}
+              </span>
+            </div>
+
+            <!-- Dropdown to change status -->
+            <div class="form-group" *ngIf="selectedOrder()?.estado !== 'CANCELADO' && selectedOrder()?.estado !== 'ENTREGADO'">
+              <label class="form-label">Cambiar Estado a:</label>
+              <select 
+                [value]="selectedOrder()?.estado" 
+                (change)="updateStatus(selectedOrder()!.id, $event)"
+                class="form-input"
+              >
+                <option value="PENDIENTE">PENDIENTE (Nuevo)</option>
+                <option value="PROCESANDO">PROCESANDO (Empacando)</option>
+                <option value="ENVIADO">ENVIADO (En ruta de entrega)</option>
+                <option value="ENTREGADO">ENTREGADO (Completado)</option>
+              </select>
+            </div>
+
+            <button 
+              *ngIf="selectedOrder()?.estado === 'PENDIENTE'" 
+              class="btn-cancel-order" 
+              (click)="cancelOrder(selectedOrder()!.id)"
+            >
+              Cancelar Pedido por Falta Stock
+            </button>
+          </div>
+        </div>
+
+        <!-- Buyer details card -->
+        <div class="card client-detail-card">
+          <h3>Datos del Comprador</h3>
+          <div class="client-info-list">
+            <div class="info-item">
+              <span class="material-symbols-outlined">person</span>
+              <div>
+                <span class="info-label">Nombre del Cliente</span>
+                <span class="info-value">{{ selectedOrder()?.clienteNombre }}</span>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <span class="material-symbols-outlined">mail</span>
+              <div>
+                <span class="info-label">Correo de Contacto</span>
+                <span class="info-value">{{ selectedOrder()?.clienteCorreo }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dispatch card -->
+        <div class="card dispatch-detail-card">
+          <h3>Dirección e Instrucciones de Entrega</h3>
+          <div class="info-item borderless">
+            <span class="material-symbols-outlined">location_on</span>
+            <div>
+              <span class="info-label">Dirección de Envío</span>
+              <span class="info-value address-text">{{ selectedOrder()?.direccionEntrega }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment details card -->
+        <div class="card payment-detail-card">
+          <h3>Información de Pago</h3>
+          <div class="info-item borderless">
+            <span class="material-symbols-outlined">credit_card</span>
+            <div>
+              <span class="info-label">Método y Canal</span>
+              <span class="info-value font-semibold">{{ selectedOrder()?.metodoPago }} - Pasarela SOAP</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

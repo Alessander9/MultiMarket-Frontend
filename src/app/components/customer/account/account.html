@@ -1,0 +1,205 @@
+<div class="account-wrapper animate-fade-in">
+
+  <!-- GREETING PANEL -->
+  <div class="greeting-banner-box card">
+    <div class="greet-content">
+      <img [src]="customerService.profile().foto" alt="Profile" class="greet-avatar" />
+      <div>
+        <h2>¡Hola, {{ customerService.profile().nombres }}!</h2>
+        <p>Bienvenido de vuelta a tu portal de compras regional en MultiMarket</p>
+      </div>
+    </div>
+    
+    <div class="greet-badges" *ngIf="customerService.unreadNotificationsCount() > 0 || customerService.unreadChatsCount() > 0">
+      <div class="alert-badge-pill" *ngIf="customerService.unreadNotificationsCount() > 0" routerLink="/notifications">
+        <span class="material-symbols-outlined icon">notifications</span>
+        Tienes {{ customerService.unreadNotificationsCount() }} avisos nuevos
+      </div>
+      <div class="alert-badge-pill chat-alert" *ngIf="customerService.unreadChatsCount() > 0" routerLink="/chat">
+        <span class="material-symbols-outlined icon">chat</span>
+        {{ customerService.unreadChatsCount() }} mensajes pendientes
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI SUMMARY STATS GRID -->
+  <div class="kpi-stats-grid">
+    <div class="kpi-card card" routerLink="/orders">
+      <div class="kpi-icon-box orange">
+        <span class="material-symbols-outlined">local_shipping</span>
+      </div>
+      <div class="kpi-data">
+        <span class="kpi-lbl">Pedidos Activos</span>
+        <span class="kpi-val">{{ activeOrders().length }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card card" routerLink="/favorites">
+      <div class="kpi-icon-box red">
+        <span class="material-symbols-outlined">favorite</span>
+      </div>
+      <div class="kpi-data">
+        <span class="kpi-lbl">Mis Favoritos</span>
+        <span class="kpi-val">{{ customerService.favorites().length }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card card" routerLink="/chat">
+      <div class="kpi-icon-box green">
+        <span class="material-symbols-outlined">chat</span>
+      </div>
+      <div class="kpi-data">
+        <span class="kpi-lbl">Chats Activos</span>
+        <span class="kpi-val">{{ customerService.conversations().length }}</span>
+      </div>
+    </div>
+
+    <div class="kpi-card card" routerLink="/orders">
+      <div class="kpi-icon-box blue">
+        <span class="material-symbols-outlined">assignment_turned_in</span>
+      </div>
+      <div class="kpi-data">
+        <span class="kpi-lbl">Compras Entregadas</span>
+        <span class="kpi-val">{{ completedOrdersCount() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPLIT COLUMN LAYOUT -->
+  <div class="account-split-grid">
+    
+    <!-- LEFT PANEL: ACTIVE SHIPMENTS TRACKING -->
+    <div class="active-shipments-panel">
+      <div class="panel-header">
+        <h3>Pedidos en Tránsito</h3>
+        <a routerLink="/orders" class="btn-link">Ver todo mi historial</a>
+      </div>
+
+      <div class="shipments-list" *ngIf="activeOrders().length > 0">
+        <div class="shipment-kpi-card card" *ngFor="let order of activeOrders()">
+          <div class="ship-header">
+            <div>
+              <span class="order-id">{{ order.numeroPedido }}</span>
+              <span class="order-date">Fecha: {{ order.fecha | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <span class="status-badge" [ngClass]="getStatusClass(order.estado)">
+              {{ getStatusLabel(order.estado) }}
+            </span>
+          </div>
+
+          <div class="ship-vendor">
+            <strong>Tienda:</strong> {{ order.vendedorNombreTienda }}
+          </div>
+
+          <!-- Items thumbnails preview -->
+          <div class="ship-items-preview">
+            <div class="item-thumb-wrapper" *ngFor="let item of order.items">
+              <img [src]="item.imagen" alt="Thumbnail" class="item-thumb" />
+              <span class="item-qty-tag">x{{ item.cantidad }}</span>
+            </div>
+            <span class="item-price-sum">Total: S/ {{ order.total | number:'1.2-2' }}</span>
+          </div>
+
+          <!-- Progress courier bar -->
+          <div class="ship-progress-bar-container">
+            <div class="progress-bar-lbls">
+              <span>Pagado</span>
+              <span [class.active]="order.estado === 'PROCESANDO' || order.estado === 'ENVIADO'">Preparando</span>
+              <span [class.active]="order.estado === 'ENVIADO'">En camino</span>
+            </div>
+            <div class="progress-line-track">
+              <div class="progress-line-fill" 
+                   [style.width]="order.estado === 'PAGADO' ? '15%' : (order.estado === 'PROCESANDO' ? '50%' : '100%')"></div>
+            </div>
+          </div>
+
+          <div class="ship-actions">
+            <a [routerLink]="['/orders']" class="btn-track-action">
+              <span class="material-symbols-outlined font-sm">share_location</span>
+              Detalle de Despacho
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="shipments-empty-box card" *ngIf="activeOrders().length === 0">
+        <span class="material-symbols-outlined empty-box-icon">shopping_bag</span>
+        <h4>No tienes despachos en tránsito</h4>
+        <p>¿Buscas productos regionales o artesanías locales? Visita el catálogo y añade artículos a tu carrito.</p>
+        <a routerLink="/products" class="btn-catalog-go">Explorar Catálogo</a>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: PROFILE CARD & SHORTCUTS -->
+    <div class="profile-shortcuts-panel">
+      
+      <!-- MINI PROFILE CARD -->
+      <div class="card mini-profile-card">
+        <div class="mini-profile-header">
+          <img [src]="customerService.profile().foto" alt="Profile" class="avatar-mini" />
+          <div>
+            <h4>{{ customerService.profile().nombres }} {{ customerService.profile().apellidos }}</h4>
+            <p>{{ customerService.profile().correo }}</p>
+          </div>
+        </div>
+        
+        <div class="address-pref-box" *ngIf="customerService.addresses().length > 0">
+          <span class="material-symbols-outlined icon">home_pin</span>
+          <div>
+            <h5>Envío Predeterminado</h5>
+            <p *ngIf="customerService.addresses()[0] as addr">{{ addr.direccion }}, {{ addr.distrito }}</p>
+          </div>
+        </div>
+        
+        <a routerLink="/profile" class="btn-edit-profile-link">Administrar mi cuenta</a>
+      </div>
+
+      <!-- SHORTCUTS MENU -->
+      <div class="card shortcuts-menu-card">
+        <h4>Accesos Rápidos</h4>
+        
+        <div class="shortcut-links-list">
+          <a routerLink="/products" class="shortcut-link-row">
+            <span class="material-symbols-outlined shortcut-icon cyan">search</span>
+            <div>
+              <h5>Buscar Productos</h5>
+              <p>Descubre novedades de los mejores productores</p>
+            </div>
+            <span class="material-symbols-outlined arrow">chevron_right</span>
+          </a>
+
+          <a routerLink="/favorites" class="shortcut-link-row">
+            <span class="material-symbols-outlined shortcut-icon red">favorite</span>
+            <div>
+              <h5>Mis Favoritos</h5>
+              <p>Revisa la lista de artículos guardados</p>
+            </div>
+            <span class="material-symbols-outlined arrow">chevron_right</span>
+          </a>
+
+          <a routerLink="/cart" class="shortcut-link-row">
+            <span class="material-symbols-outlined shortcut-icon violet">shopping_cart</span>
+            <div>
+              <h5>Ver mi Carrito</h5>
+              <p>Procesa compras y gestiona artículos</p>
+            </div>
+            <span class="material-symbols-outlined arrow">chevron_right</span>
+          </a>
+
+          <a routerLink="/profile" class="shortcut-link-row">
+            <span class="material-symbols-outlined shortcut-icon orange">manage_accounts</span>
+            <div>
+              <h5>Configurar Cuenta</h5>
+              <p>Edita tu perfil, direcciones y preferencias</p>
+            </div>
+            <span class="material-symbols-outlined arrow">chevron_right</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

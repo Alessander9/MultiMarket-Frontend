@@ -49,6 +49,10 @@
             <span class="material-symbols-outlined nav-icon">storefront</span>
             <span class="nav-text">Vendedores</span>
           </li>
+          <li class="nav-item" [class.active]="activeSection() === 'tiendas'" (click)="selectSection('tiendas')">
+            <span class="material-symbols-outlined nav-icon">store</span>
+            <span class="nav-text">Tiendas</span>
+          </li>
           <li class="nav-item" [class.active]="activeSection() === 'productos'" (click)="selectSection('productos')">
             <span class="material-symbols-outlined nav-icon">inventory_2</span>
             <span class="nav-text">Productos</span>
@@ -247,14 +251,58 @@
       <!-- SECTION: DASHBOARD (MAIN RESUMEN)                  -->
       <!-- =================================================== -->
       <div *ngIf="!isLoading() && activeSection() === 'dashboard'" class="animate-fade-in section-block">
-        <section class="welcome-section">
-          <div>
-            <h2 class="welcome-title">Centro de Control Operacional</h2>
-            <p class="welcome-subtitle">Visión analítica del estado del negocio en tiempo real.</p>
+        <section class="dashboard-hero surface-card animate-fade-up">
+          <div class="dashboard-hero__copy">
+            <span class="hero-kicker">Centro de control</span>
+            <h2 class="welcome-title">Operaciones, ventas y salud del marketplace en un solo lugar</h2>
+            <p class="welcome-subtitle">
+              Vista ejecutiva para supervisar catálogo, pedidos, pagos, mensajería e integraciones con el backend.
+            </p>
+
+            <div class="hero-action-row">
+              <button class="hero-action-btn hero-action-btn--primary" (click)="selectSection('orders')">
+                <span class="material-symbols-outlined">shopping_bag</span>
+                Ver pedidos
+              </button>
+              <button class="hero-action-btn" (click)="selectSection('products')">
+                <span class="material-symbols-outlined">inventory_2</span>
+                Gestionar productos
+              </button>
+              <button class="hero-action-btn" (click)="selectSection('logs')">
+                <span class="material-symbols-outlined">terminal</span>
+                Revisar logs
+              </button>
+            </div>
           </div>
-          <div class="quick-stats-timestamp">
-            <span class="material-symbols-outlined">schedule</span>
-            <span>Tiempo real • Base de datos: SQL Server en Línea</span>
+
+          <div class="dashboard-hero__panel">
+            <div class="hero-status-card">
+              <span class="hero-status-label">Estado general</span>
+              <div class="hero-status-value">
+                <span class="hero-status-dot"></span>
+                <span>Operativo</span>
+              </div>
+              <p>MultiMarket sincronizado con backend, chat TCP y SQL Server.</p>
+            </div>
+
+            <div class="hero-snapshot-grid">
+              <div *ngFor="let item of dashboardHighlights()" class="hero-snapshot-card">
+                <span class="material-symbols-outlined hero-snapshot-icon">{{ item.icon }}</span>
+                <div class="hero-snapshot-body">
+                  <span class="hero-snapshot-title">{{ item.title }}</span>
+                  <strong class="hero-snapshot-value">{{ item.value }}</strong>
+                  <span class="hero-snapshot-sub">{{ item.sub }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="ops-strip">
+          <div *ngFor="let item of operationsPulse()" class="ops-pill surface-card">
+            <span class="ops-pill__label">{{ item.label }}</span>
+            <span class="ops-pill__value">{{ item.value }}</span>
+            <span class="ops-pill__hint">{{ item.hint }}</span>
           </div>
         </section>
 
@@ -892,6 +940,13 @@
                 <div class="detail-meta-item"><span>Calificación:</span><span>⭐ {{ selectedVendor()?.calificacionPromedio }} / 5.0</span></div>
               </div>
 
+              <div class="drawer-action-row">
+                <button class="action-btn highlight-btn" (click)="viewVendorProducts(selectedVendor()!)">
+                  <span class="material-symbols-outlined">inventory</span>
+                  <span>Ver productos de esta tienda</span>
+                </button>
+              </div>
+
               <h5 class="sub-block-title">Productos Registrados en su Catálogo</h5>
               <div class="table-scroll-wrapper">
                 <table class="dashboard-table">
@@ -915,6 +970,87 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================================================== -->
+      <!-- SECTION: TIENDAS (STORES)                            -->
+      <!-- =================================================== -->
+      <div *ngIf="!isLoading() && activeSection() === 'tiendas'" class="animate-fade-in section-block">
+        <div class="section-header-row">
+          <div>
+            <h2 class="welcome-title">Control y Monitoreo de Tiendas</h2>
+            <p class="welcome-subtitle">Supervisión integral de comercios y marcas registradas por los vendedores.</p>
+          </div>
+          <div class="header-action-group">
+            <button class="action-btn highlight-btn" (click)="selectSection('vendedores')">
+              <span class="material-symbols-outlined">storefront</span>
+              <span>Ir a Directorio</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stores Card Grid -->
+        <div class="stores-premium-grid">
+          <div class="store-premium-card animate-fade-in" *ngFor="let vendor of filteredVendors(); let i = index">
+            <!-- Store Banner -->
+            <div class="store-banner-cover" [style.background-image]="'url(' + vendor.banner + ')'">
+              <span class="rating-badge">⭐ {{ vendor.calificacionPromedio | number:'1.1-1' }}</span>
+              <div class="status-overlay-badge" [class.status-active]="vendor.activo" [class.status-suspended]="!vendor.activo">
+                {{ vendor.activo ? 'Habilitada' : 'Suspendida' }}
+              </div>
+            </div>
+
+            <!-- Store Logo & Avatar Container -->
+            <div class="store-logo-wrapper">
+              <img [src]="vendor.logo" class="store-logo-img" alt="{{ vendor.nombreTienda }} logo"/>
+            </div>
+
+            <!-- Card Content Body -->
+            <div class="store-card-body">
+              <h3 class="store-title">{{ vendor.nombreTienda }}</h3>
+              <p class="store-region">
+                <span class="material-symbols-outlined location-icon">location_on</span>
+                <span>{{ vendor.region }} &bull; {{ vendor.direccion }}</span>
+              </p>
+              
+              <p class="store-description">{{ vendor.descripcion }}</p>
+
+              <!-- Statistics & Products Counter -->
+              <div class="store-stats-row">
+                <div class="stat-item">
+                  <span class="stat-value">{{ getStoreProductCount(vendor.id) }}</span>
+                  <span class="stat-label">Productos</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ vendor.fechaCreacion.split(' ')[0] }}</span>
+                  <span class="stat-label">Registro</span>
+                </div>
+              </div>
+
+              <!-- Interactive Controls & Status Toggle -->
+              <div class="store-action-controls">
+                <div class="toggle-status-control">
+                  <span class="toggle-status-label">{{ vendor.activo ? 'Tienda Activa' : 'Tienda Suspendida' }}</span>
+                  <label class="switch-container">
+                    <input type="checkbox" [checked]="vendor.activo" (change)="toggleVendorActive(vendor)"/>
+                    <span class="switch-slider"></span>
+                  </label>
+                </div>
+
+                <div class="store-card-actions">
+                  <button (click)="viewVendorProducts(vendor)" class="store-action-btn view-products-btn" title="Ver Productos de esta Tienda">
+                    <span class="material-symbols-outlined">inventory</span>
+                    <span>Ver Productos</span>
+                  </button>
+                  <button (click)="selectedVendorId.set(vendor.id); selectSection('vendedores')" class="store-action-btn view-details-btn" title="Ficha del Vendedor">
+                    <span class="material-symbols-outlined">visibility</span>
+                    <span>Detalles</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1015,7 +1151,43 @@
       <!-- SECTION: PRODUCTOS                                  -->
       <!-- =================================================== -->
       <div *ngIf="!isLoading() && activeSection() === 'productos'" class="animate-fade-in section-block">
-        <div class="section-header-row">
+        <!-- Store Catalog Hero Banner (for filtered store view) -->
+        <div class="store-catalog-hero animate-fade-in" *ngIf="selectedProductsVendor()" [style.background-image]="'linear-gradient(rgba(15, 14, 25, 0.75), rgba(15, 14, 25, 0.95)), url(' + selectedProductsVendor()?.banner + ')'">
+          <div class="store-hero-left">
+            <div class="store-hero-logo-container">
+              <img [src]="selectedProductsVendor()?.logo" class="store-hero-logo" alt="logo"/>
+              <span class="store-hero-status-dot" [class.active]="selectedProductsVendor()?.activo"></span>
+            </div>
+            <div class="store-hero-info">
+              <div class="store-hero-tagline">
+                <span class="badge-store-premium">Tienda Regional</span>
+                <span class="badge-store-rating">
+                  <span class="material-symbols-outlined star-icon">star</span>
+                  <span>{{ selectedProductsVendor()?.calificacionPromedio | number:'1.1-1' }}</span>
+                </span>
+              </div>
+              <h2 class="store-hero-title">{{ selectedProductsVendor()?.nombreTienda }}</h2>
+              <p class="store-hero-location">
+                <span class="material-symbols-outlined icon">location_on</span>
+                <span>{{ selectedProductsVendor()?.region }} &bull; {{ selectedProductsVendor()?.direccion }}</span>
+              </p>
+              <p class="store-hero-desc">{{ selectedProductsVendor()?.descripcion }}</p>
+            </div>
+          </div>
+          <div class="store-hero-actions">
+            <button class="action-btn store-hero-btn-back" (click)="clearVendorFilter()">
+              <span class="material-symbols-outlined icon-back">arrow_back</span>
+              <span>Ver Catálogo Global</span>
+            </button>
+            <button class="action-btn highlight-btn" (click)="openCreateProduct()">
+              <span class="material-symbols-outlined">add_box</span>
+              <span>Añadir a esta Tienda</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Global Catalog Header Row (for unfiltered view) -->
+        <div class="section-header-row" *ngIf="!selectedProductsVendor()">
           <div>
             <h2 class="welcome-title">Catálogo de Productos Global</h2>
             <p class="welcome-subtitle">Catálogos de vendedores, monitoreo de precios y existencias.</p>

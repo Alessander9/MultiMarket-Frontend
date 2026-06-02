@@ -1,0 +1,301 @@
+<!-- Main App Wrapper with responsive Sidebar layout -->
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
+  
+  <!-- Backdrop for mobile sidebar -->
+  <div *ngIf="mobileSidebarOpen()" class="mobile-sidebar-backdrop animate-fade-in" (click)="toggleMobileSidebar()"></div>
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="app-sidebar" [class.mobile-open]="mobileSidebarOpen()">
+    <!-- Sidebar Brand Area -->
+    <div class="sidebar-brand-wrapper">
+      <div class="brand-logo-container">
+        <span class="material-symbols-outlined logo-icon">diamond</span>
+        <span class="brand-name" *ngIf="!sidebarCollapsed()">MultiMarket</span>
+      </div>
+      <div class="brand-badge-container" *ngIf="!sidebarCollapsed()">
+        <span class="seller-badge">VENDEDOR</span>
+      </div>
+    </div>
+
+    <!-- Active Store Quick view -->
+    <div class="store-mini-profile" *ngIf="!sidebarCollapsed()">
+      <img [src]="sellerService.storeProfile().logo" alt="Logo Tienda" class="store-mini-logo" />
+      <div class="store-mini-details">
+        <h4 class="store-mini-title">{{ sellerService.storeProfile().nombre }}</h4>
+        <span class="store-mini-region">
+          <span class="material-symbols-outlined geo-icon">location_on</span>
+          {{ sellerService.storeProfile().region }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar-nav">
+      <div class="menu-section-wrapper" *ngFor="let section of menuSections">
+        <span class="menu-section-title" *ngIf="!sidebarCollapsed()">{{ section.title }}</span>
+        <div class="menu-divider" *ngIf="sidebarCollapsed()"></div>
+
+        <ul class="menu-list">
+          <li class="menu-item" *ngFor="let item of section.items">
+            <a 
+              [routerLink]="item.route" 
+              routerLinkActive="active-menu-item" 
+              class="menu-link-btn"
+              [title]="item.label"
+            >
+              <span class="material-symbols-outlined menu-icon">{{ item.icon }}</span>
+              <span class="menu-label" *ngIf="!sidebarCollapsed()">{{ item.label }}</span>
+              
+              <!-- Dynamic Badge -->
+              <span 
+                class="menu-badge" 
+                *ngIf="item.badgeSignal && item.badgeSignal() > 0 && !sidebarCollapsed()"
+              >
+                {{ item.badgeSignal() }}
+              </span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-collapser-area" *ngIf="!mobileSidebarOpen()">
+      <button class="toggle-sidebar-btn" (click)="toggleSidebar()">
+        <span class="material-symbols-outlined">
+          {{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
+        </span>
+        <span class="toggle-text" *ngIf="!sidebarCollapsed()">Colapsar Panel</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN CONTAINER ================= -->
+  <div class="main-content-container">
+    
+    <!-- ================= HEADER ================= -->
+    <header class="app-header">
+      <!-- Left side: Hamburger and Global Search -->
+      <div class="header-left">
+        <button class="mobile-menu-btn" (click)="toggleMobileSidebar()">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+
+        <div class="header-search-bar">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input 
+            type="text" 
+            placeholder="Buscar en tu tienda (productos, pedidos, clientes...)" 
+            class="global-search-input"
+            (keyup)="handleSearch($event)"
+          />
+        </div>
+      </div>
+
+      <!-- Right side: Quick stats, Notification icons, User Profile -->
+      <div class="header-right">
+        
+        <!-- Quick stats shown on wide screens -->
+        <div class="header-stats-panel">
+          <div class="header-stat-item">
+            <span class="stat-label">Hoy</span>
+            <span class="stat-value text-emerald">S/ {{ sellerService.salesToday() | number:'1.2-2' }}</span>
+          </div>
+          <div class="header-divider"></div>
+          <div class="header-stat-item">
+            <span class="stat-label">Pendientes</span>
+            <span class="stat-value text-purple">{{ sellerService.pendingOrdersCount() }}</span>
+          </div>
+        </div>
+
+        <!-- Notification Trigger and Dropdown -->
+        <div class="header-action-wrapper">
+          <button 
+            class="header-action-btn" 
+            [class.active-btn]="showNotificationsDropdown()" 
+            (click)="toggleNotifications()"
+          >
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="action-badge bg-purple" *ngIf="sellerService.unreadNotificationsCount() > 0">
+              {{ sellerService.unreadNotificationsCount() }}
+            </span>
+          </button>
+
+          <!-- Notifications Dropdown -->
+          <div class="header-dropdown notifications-dropdown animate-fade-in" *ngIf="showNotificationsDropdown()">
+            <div class="dropdown-header">
+              <h3 class="dropdown-title">Notificaciones</h3>
+              <button class="mark-all-read-btn" (click)="markAllNotificationsRead()">
+                Marcar todo leido
+              </button>
+            </div>
+            <div class="dropdown-scroll-content">
+              <div 
+                *ngFor="let n of sellerService.notifications().slice(0, 5)" 
+                class="dropdown-item notification-item"
+                [class.item-unread]="!n.leido"
+              >
+                <div class="notif-icon-circle" [ngClass]="n.tipo.toLowerCase()">
+                  <span class="material-symbols-outlined">
+                    {{ n.tipo === 'PEDIDO' ? 'shopping_bag' : n.tipo === 'PAGO' ? 'payments' : n.tipo === 'CHAT' ? 'chat' : 'dns' }}
+                  </span>
+                </div>
+                <div class="notif-body">
+                  <h4 class="notif-item-title">{{ n.titulo }}</h4>
+                  <p class="notif-item-content">{{ n.contenido }}</p>
+                  <span class="notif-item-time">{{ n.fecha | date:'short' }}</span>
+                </div>
+                <button 
+                  *ngIf="!n.leido" 
+                  class="notif-read-check-btn" 
+                  (click)="markNotificationRead(n.id, $event)" 
+                  title="Marcar como leido"
+                >
+                  <span class="material-symbols-outlined">done</span>
+                </button>
+              </div>
+              <div *ngIf="sellerService.notifications().length === 0" class="dropdown-empty-state">
+                <span class="material-symbols-outlined empty-icon">notifications_off</span>
+                <p>No tienes notificaciones pendientes.</p>
+              </div>
+            </div>
+            <a routerLink="/seller/notifications" class="dropdown-view-all" (click)="closeAllDropdowns()">
+              Ver toda la bandeja
+            </a>
+          </div>
+        </div>
+
+        <!-- Messages Trigger and Dropdown (Chats) -->
+        <div class="header-action-wrapper">
+          <button 
+            class="header-action-btn" 
+            [class.active-btn]="showMessagesDropdown()" 
+            (click)="toggleMessages()"
+          >
+            <span class="material-symbols-outlined">chat</span>
+            <span class="action-badge bg-emerald" *ngIf="sellerService.unreadChatsCount() > 0">
+              {{ sellerService.unreadChatsCount() }}
+            </span>
+          </button>
+
+          <!-- Messages Dropdown -->
+          <div class="header-dropdown messages-dropdown animate-fade-in" *ngIf="showMessagesDropdown()">
+            <div class="dropdown-header">
+              <h3 class="dropdown-title">Mensajes de Clientes</h3>
+            </div>
+            <div class="dropdown-scroll-content">
+              <div 
+                *ngFor="let c of sellerService.conversations()" 
+                class="dropdown-item message-item"
+                [routerLink]="['/seller/chat']"
+                (click)="closeAllDropdowns()"
+              >
+                <img [src]="c.compradorAvatar" alt="Avatar" class="chat-item-avatar" />
+                <div class="chat-item-body">
+                  <div class="chat-item-header">
+                    <span class="chat-item-sender">{{ c.compradorNombre }}</span>
+                    <span class="chat-item-time">{{ c.fechaUltimoMensaje | date:'shortTime' }}</span>
+                  </div>
+                  <p class="chat-item-excerpt" [class.font-bold]="c.noLeidos > 0">
+                    {{ c.ultimoMensaje }}
+                  </p>
+                </div>
+                <span class="unread-dot bg-emerald" *ngIf="c.noLeidos > 0"></span>
+              </div>
+              <div *ngIf="sellerService.conversations().length === 0" class="dropdown-empty-state">
+                <span class="material-symbols-outlined empty-icon">mail_lock</span>
+                <p>No hay conversaciones activas.</p>
+              </div>
+            </div>
+            <a routerLink="/seller/chat" class="dropdown-view-all" (click)="closeAllDropdowns()">
+              Ir al Centro de Mensajería
+            </a>
+          </div>
+        </div>
+
+        <div class="header-divider-v"></div>
+
+        <!-- User Profile Dropdown -->
+        <div class="header-action-wrapper profile-trigger-wrapper">
+          <button class="profile-trigger-btn" (click)="toggleProfile()">
+            <div class="profile-avatar">
+              {{ sellerService.settings().cuenta.nombrePersonal.charAt(0) }}
+            </div>
+            <div class="profile-details-text">
+              <span class="profile-name">{{ sellerService.settings().cuenta.nombrePersonal }}</span>
+              <span class="profile-role">Propietario Tienda</span>
+            </div>
+            <span class="material-symbols-outlined drop-arrow">arrow_drop_down</span>
+          </button>
+
+          <!-- Profile Dropdown Menu -->
+          <div class="header-dropdown profile-dropdown animate-fade-in" *ngIf="showProfileDropdown()">
+            <div class="profile-dropdown-header">
+              <h4>{{ sellerService.settings().cuenta.nombrePersonal }}</h4>
+              <p>{{ sellerService.settings().cuenta.correo }}</p>
+            </div>
+            <div class="profile-dropdown-divider"></div>
+            <ul class="profile-dropdown-list">
+              <li>
+                <a routerLink="/seller/store" (click)="closeAllDropdowns()" class="profile-drop-link">
+                  <span class="material-symbols-outlined">storefront</span>
+                  Mi Tienda
+                </a>
+              </li>
+              <li>
+                <a routerLink="/seller/settings" (click)="closeAllDropdowns()" class="profile-drop-link">
+                  <span class="material-symbols-outlined">manage_accounts</span>
+                  Configuración Cuenta
+                </a>
+              </li>
+            </ul>
+            <div class="profile-dropdown-divider"></div>
+            <button class="profile-logout-btn" (click)="logout()">
+              <span class="material-symbols-outlined">logout</span>
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ================= MAIN BODY AREA ================= -->
+    <main class="page-body">
+      
+      <!-- BREADCRUMBS -->
+      <nav class="app-breadcrumb">
+        <ul class="breadcrumb-list">
+          <li class="breadcrumb-item" *ngFor="let crumb of breadcrumbs(); let last = last">
+            <a [routerLink]="crumb.url" class="breadcrumb-link" *ngIf="!last">{{ crumb.label }}</a>
+            <span class="breadcrumb-current" *ngIf="last">{{ crumb.label }}</span>
+            <span class="material-symbols-outlined breadcrumb-separator" *ngIf="!last">chevron_right</span>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- DYNAMIC SECTION CONTENT -->
+      <section class="main-component-viewport animate-fade-in">
+        <router-outlet></router-outlet>
+      </section>
+
+    </main>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <p>&copy; 2026 <strong>MultiMarket Seller Portal</strong>. Todos los derechos reservados.</p>
+      </div>
+      <div class="footer-right">
+        <div class="footer-status-pill">
+          <span class="status-dot-green animate-pulse"></span>
+          <span class="status-text">Tienda En Línea • Conexión Segura</span>
+        </div>
+        <div class="footer-meta">
+          <span>v2.1.0-prod</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+</div>

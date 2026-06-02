@@ -1,0 +1,252 @@
+<div class="inventory-wrapper animate-fade-in">
+  
+  <!-- Page Header -->
+  <div class="inventory-page-header">
+    <div class="page-title-area">
+      <h2>Gestión de Inventario</h2>
+      <p>Supervisa el stock disponible, audita movimientos de almacén y realiza ajustes manuales</p>
+    </div>
+    
+    <!-- Tab Controls -->
+    <div class="tab-controls">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeSubTab() === 'stock'" 
+        (click)="activeSubTab.set('stock')"
+      >
+        <span class="material-symbols-outlined font-sm">warehouse</span>
+        Stock Actual
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeSubTab() === 'movements'" 
+        (click)="activeSubTab.set('movements')"
+      >
+        <span class="material-symbols-outlined font-sm">history</span>
+        Movimientos
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeSubTab() === 'adjust'" 
+        (click)="activeSubTab.set('adjust')"
+      >
+        <span class="material-symbols-outlined font-sm">tune</span>
+        Realizar Ajuste
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Notification Alert -->
+  <div class="success-toast animate-fade-in" *ngIf="successMessage()">
+    <span class="material-symbols-outlined">check_circle</span>
+    <p>{{ successMessage() }}</p>
+  </div>
+
+  <!-- ================= STOCK ACTUAL TAB ================= -->
+  <div class="inventory-tab-content stock-tab" *ngIf="activeSubTab() === 'stock'">
+    <!-- Actions bar -->
+    <div class="actions-card card">
+      <div class="search-row">
+        <div class="filter-input-wrapper">
+          <span class="material-symbols-outlined">search</span>
+          <input 
+            type="text" 
+            placeholder="Buscar por producto o SKU..." 
+            [value]="searchProduct()" 
+            (input)="searchProduct.set($any($event.target).value)"
+            class="filter-input"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Stock Table -->
+    <div class="inventory-table-card card">
+      <div class="table-responsive">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>SKU</th>
+              <th>Categoría</th>
+              <th class="text-right">Precio</th>
+              <th class="text-right">Stock Actual</th>
+              <th>Estado Almacén</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prod of filteredStock()">
+              <td>
+                <div class="prod-cell">
+                  <img [src]="prod.imagenes[0]" alt="Producto" class="prod-thumb" />
+                  <span class="prod-title">{{ prod.nombre }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="sku-badge">{{ prod.sku }}</span>
+              </td>
+              <td>{{ prod.categoria }}</td>
+              <td class="text-right font-semibold">S/ {{ prod.precio | number:'1.2-2' }}</td>
+              <td class="text-right font-semibold">
+                <span 
+                  [class.text-red]="prod.stock === 0" 
+                  [class.text-yellow]="prod.stock > 0 && prod.stock <= 10"
+                >
+                  {{ prod.stock }} und
+                </span>
+              </td>
+              <td>
+                <span class="stock-status-pill" [ngClass]="prod.stock === 0 ? 'out' : (prod.stock <= 10 ? 'low' : 'ok')">
+                  {{ prod.stock === 0 ? 'Agotado' : (prod.stock <= 10 ? 'Stock Bajo' : 'Disponible') }}
+                </span>
+              </td>
+              <td>
+                <div class="actions-cell">
+                  <button 
+                    class="btn-adjust-quick" 
+                    (click)="adjustmentForm.patchValue({ productoId: prod.id }); activeSubTab.set('adjust')"
+                    title="Realizar ajuste de stock"
+                  >
+                    <span class="material-symbols-outlined">tune</span>
+                    Ajustar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= HISTORIAL MOVIMIENTOS TAB ================= -->
+  <div class="inventory-tab-content movements-tab" *ngIf="activeSubTab() === 'movements'">
+    <!-- Filters card -->
+    <div class="actions-card card">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="filter-label">Filtrar Tipo</label>
+          <select 
+            [value]="filterMvtType()" 
+            (change)="filterMvtType.set($any($event.target).value)"
+            class="filter-input"
+          >
+            <option value="ALL">Todos los Movimientos</option>
+            <option value="ENTRADA">ENTRADAS (Abastecimiento)</option>
+            <option value="SALIDA">SALIDAS (Ventas)</option>
+            <option value="AJUSTE">AJUSTES (Manuales)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Movements Table -->
+    <div class="inventory-table-card card">
+      <div class="table-responsive">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Producto</th>
+              <th>SKU</th>
+              <th class="text-right">Cantidad</th>
+              <th>Tipo</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let mvt of filteredMovements()">
+              <td>
+                <div class="date-col">
+                  <span>{{ mvt.fecha | date:'shortDate' }}</span>
+                  <span class="time-text">{{ mvt.fecha | date:'shortTime' }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="prod-title">{{ mvt.productoNombre }}</span>
+              </td>
+              <td>
+                <span class="sku-badge">{{ mvt.sku }}</span>
+              </td>
+              <td class="text-right font-semibold">
+                <span [class.text-emerald]="mvt.cantidad > 0" [class.text-red]="mvt.cantidad < 0">
+                  {{ mvt.cantidad > 0 ? '+' : '' }}{{ mvt.cantidad }}
+                </span>
+              </td>
+              <td>
+                <span class="mvt-type-badge" [ngClass]="mvt.tipo.toLowerCase()">
+                  {{ mvt.tipo }}
+                </span>
+              </td>
+              <td>
+                <span class="observation-text" [title]="mvt.observacion">{{ mvt.observacion }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= REGISTRAR AJUSTE TAB ================= -->
+  <div class="inventory-tab-content adjust-tab" *ngIf="activeSubTab() === 'adjust'">
+    <form [formGroup]="adjustmentForm" (ngSubmit)="onSubmitAdjustment()" class="adjustment-form card">
+      
+      <div class="form-grid">
+        
+        <!-- Seleccionar Producto -->
+        <div class="form-group full-width">
+          <label class="form-label" for="productoId">Seleccionar Producto *</label>
+          <select id="productoId" formControlName="productoId" class="form-input">
+            <option value="" disabled>Seleccione un producto del catálogo...</option>
+            <option *ngFor="let prod of sellerService.products()" [value]="prod.id">
+              {{ prod.nombre }} (SKU: {{ prod.sku }} - Stock: {{ prod.stock }})
+            </option>
+          </select>
+          <span class="validation-err" *ngIf="adjustmentForm.get('productoId')?.touched && adjustmentForm.get('productoId')?.invalid">
+            Debe seleccionar un producto.
+          </span>
+        </div>
+
+        <!-- Cantidad -->
+        <div class="form-group">
+          <label class="form-label" for="cantidad">Cantidad de Unidades *</label>
+          <input type="number" id="cantidad" formControlName="cantidad" class="form-input" />
+          <span class="validation-err" *ngIf="adjustmentForm.get('cantidad')?.touched && adjustmentForm.get('cantidad')?.invalid">
+            Ingrese una cantidad válida de unidades (mínimo 1).
+          </span>
+        </div>
+
+        <!-- Tipo Movimiento -->
+        <div class="form-group">
+          <label class="form-label" for="tipo">Tipo de Movimiento *</label>
+          <select id="tipo" formControlName="tipo" class="form-input">
+            <option value="ENTRADA">ENTRADA (Añadir al Stock)</option>
+            <option value="SALIDA">SALIDA (Retirar del Stock)</option>
+            <option value="AJUSTE">AJUSTE DIRECTO (Fijar Nuevo Total)</option>
+          </select>
+        </div>
+
+        <!-- Observación / Justificación -->
+        <div class="form-group full-width">
+          <label class="form-label" for="observacion">Observación y Justificación *</label>
+          <textarea id="observacion" formControlName="observacion" rows="4" class="form-input" placeholder="Ej. Ajuste físico por auditoría trimestral, mermas por empaque roto, etc."></textarea>
+          <span class="validation-err" *ngIf="adjustmentForm.get('observacion')?.touched && adjustmentForm.get('observacion')?.invalid">
+            La justificación es obligatoria (máx 250 caracteres).
+          </span>
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="activeSubTab.set('stock'); initForm()">Cancelar</button>
+        <button type="submit" class="btn-save" [disabled]="adjustmentForm.invalid || isLoading()">
+          {{ isLoading() ? 'Guardando Ajuste...' : 'Aplicar Ajuste Stock' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

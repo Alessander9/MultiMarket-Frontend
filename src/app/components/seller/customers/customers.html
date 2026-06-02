@@ -1,0 +1,200 @@
+<div class="customers-wrapper animate-fade-in">
+  
+  <!-- ================= LIST VIEW ================= -->
+  <div class="state-container list-view" *ngIf="viewState() === 'list'">
+    <div class="customers-header">
+      <div class="page-title-area">
+        <h2>Listado de Compradores</h2>
+        <p>Gestiona la cartera de clientes de tu tienda, revisa sus hábitos y acumulados de compra</p>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-card card">
+      <div class="filters-row">
+        <div class="filter-group flex-2">
+          <label class="filter-label">Buscar Cliente</label>
+          <div class="filter-input-wrapper">
+            <span class="material-symbols-outlined">search</span>
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre, correo, ciudad..." 
+              [value]="searchFilter()" 
+              (input)="searchFilter.set($any($event.target).value)"
+              class="filter-input"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customers Table -->
+    <div class="customers-table-card card">
+      <div class="table-responsive" *ngIf="filteredCustomers().length > 0">
+        <table class="customers-table">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Ciudad</th>
+              <th>Teléfono</th>
+              <th class="text-right">Compras Totales</th>
+              <th>Última Compra</th>
+              <th class="text-right">Monto Acumulado</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cust of filteredCustomers()" (click)="openDetail(cust)" class="clickable-row">
+              <td>
+                <div class="cust-info-cell">
+                  <div class="avatar-circle">
+                    {{ cust.nombre.charAt(0) }}
+                  </div>
+                  <div class="meta-info">
+                    <span class="cust-name">{{ cust.nombre }}</span>
+                    <span class="cust-email">{{ cust.correo }}</span>
+                  </div>
+                </div>
+              </td>
+              <td>{{ cust.ciudad }}</td>
+              <td>{{ cust.telefono }}</td>
+              <td class="text-right font-semibold">{{ cust.comprasTotales }} vts</td>
+              <td>{{ cust.ultimaCompraFecha | date:'mediumDate' }}</td>
+              <td class="text-right font-semibold text-emerald">
+                S/ {{ cust.montoAcumulado | number:'1.2-2' }}
+              </td>
+              <td>
+                <div class="actions-cell" (click)="$event.stopPropagation()">
+                  <button class="btn-action-view" (click)="openDetail(cust)" title="Ver Historial de Compras">
+                    <span class="material-symbols-outlined">history</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty state -->
+      <div class="empty-state" *ngIf="filteredCustomers().length === 0">
+        <span class="material-symbols-outlined empty-icon">groups</span>
+        <h3>No se encontraron compradores</h3>
+        <p>No hay registros de clientes que correspondan al filtro de búsqueda.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DETAIL VIEW ================= -->
+  <div class="state-container detail-view animate-fade-in" *ngIf="viewState() === 'detail' && selectedCustomer()">
+    <div class="customers-header">
+      <div class="page-title-area">
+        <div class="title-with-back">
+          <button class="btn-back-circle" (click)="closeDetail()">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+          <div>
+            <h2>Historial de {{ selectedCustomer()?.nombre }}</h2>
+            <p>Cliente registrado en MultiMarket</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="customer-detail-grid">
+      <!-- Left Panel: Purchases history -->
+      <div class="detail-left">
+        <div class="card history-orders-card">
+          <h3>Historial de Pedidos Realizados</h3>
+          
+          <div class="table-responsive" *ngIf="customerOrdersHistory().length > 0">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Nº Pedido</th>
+                  <th>Fecha</th>
+                  <th class="text-right">Monto</th>
+                  <th>Estado</th>
+                  <th>Canal Pago</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let order of customerOrdersHistory()">
+                  <td>
+                    <span class="order-num">{{ order.numeroPedido }}</span>
+                  </td>
+                  <td>{{ order.fecha | date:'mediumDate' }}</td>
+                  <td class="text-right font-semibold">S/ {{ order.total | number:'1.2-2' }}</td>
+                  <td>
+                    <span class="status-pill-badge" [ngClass]="order.estado.toLowerCase()">
+                      {{ order.estado }}
+                    </span>
+                  </td>
+                  <td>{{ order.metodoPago }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="empty-history-state" *ngIf="customerOrdersHistory().length === 0">
+            <span class="material-symbols-outlined empty-icon">shopping_bag</span>
+            <p>Este comprador no tiene pedidos registrados para esta tienda.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Contact & Totals -->
+      <div class="detail-right">
+        
+        <!-- Totals Card -->
+        <div class="card totals-spent-card">
+          <h3>Resumen de Consumo</h3>
+          <div class="hero-totals-rows">
+            <div class="spent-block">
+              <span class="spent-label">Monto Total Acumulado</span>
+              <h2 class="spent-val text-emerald">S/ {{ selectedCustomer()?.montoAcumulado | number:'1.2-2' }}</h2>
+            </div>
+            <div class="divider-line"></div>
+            <div class="spent-block">
+              <span class="spent-label">Transacciones Completadas</span>
+              <h2 class="spent-val">{{ selectedCustomer()?.comprasTotales }} compras</h2>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact details card -->
+        <div class="card profile-info-card">
+          <h3>Datos Personales</h3>
+          <div class="profile-info-list">
+            
+            <div class="info-item">
+              <span class="material-symbols-outlined">mail</span>
+              <div>
+                <span class="info-label">Correo Registrado</span>
+                <span class="info-value">{{ selectedCustomer()?.correo }}</span>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <span class="material-symbols-outlined">phone</span>
+              <div>
+                <span class="info-label">Teléfono</span>
+                <span class="info-value">{{ selectedCustomer()?.telefono }}</span>
+              </div>
+            </div>
+
+            <div class="info-item borderless">
+              <span class="material-symbols-outlined">location_on</span>
+              <div>
+                <span class="info-label">Ciudad / Región</span>
+                <span class="info-value">{{ selectedCustomer()?.ciudad }}</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,49 @@
+<div class="fav-wrapper animate-fade-in">
+  
+  <div class="fav-page-header">
+    <div class="page-title-area">
+      <h2>Mis Productos Favoritos</h2>
+      <p>Guarda y compara los artículos que te interesan antes de realizar tu compra</p>
+    </div>
+  </div>
+
+  <!-- Grid listing favorites -->
+  <div class="fav-grid" *ngIf="favoritedProductsList().length > 0">
+    
+    <div 
+      *ngFor="let prod of favoritedProductsList()" 
+      class="fav-item-card card"
+      [routerLink]="['/products', prod.id]"
+    >
+      <div class="item-thumb-wrapper">
+        <img [src]="prod.imagenes[0]" alt="Producto" class="item-img" />
+        <button class="btn-remove-fav" (click)="removeFromFavorites(prod.id, $event)" title="Quitar de favoritos">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+
+      <div class="item-details">
+        <span class="item-cat">{{ prod.categoria }}</span>
+        <h4 class="item-title">{{ prod.nombre }}</h4>
+        <span class="sku-text">SKU: {{ prod.sku }}</span>
+
+        <div class="price-action-row">
+          <div class="price-val">S/ {{ prod.precio | number:'1.2-2' }}</div>
+          <button class="btn-buy" [disabled]="prod.stock === 0" (click)="addToCart(prod, $event)">
+            Comprar
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Empty state -->
+  <div class="fav-empty-state card" *ngIf="favoritedProductsList().length === 0">
+    <span class="material-symbols-outlined empty-icon">heart_broken</span>
+    <h3>No tienes favoritos guardados</h3>
+    <p>Navega en el catálogo de productos y haz clic en el corazón para guardar tus artículos predilectos aquí.</p>
+    <a routerLink="/products" class="btn-browse-catalog">Explorar Catálogo</a>
+  </div>
+
+</div>

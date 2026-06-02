@@ -1,0 +1,187 @@
+<div class="catalog-wrapper animate-fade-in">
+
+  <!-- Loading console -->
+  <div class="skeleton-catalog" *ngIf="isLoading()">
+    <div class="sk-sidebar animate-pulse"></div>
+    <div class="sk-grid-catalog animate-pulse"></div>
+  </div>
+
+  <div class="catalog-content" *ngIf="!isLoading()">
+    
+    <!-- Sidebar Filters Area -->
+    <aside class="catalog-filters-sidebar card">
+      <div class="sidebar-header-row">
+        <h3>Filtros de Búsqueda</h3>
+        <button class="btn-reset-filters" (click)="clearFilters()">Limpiar</button>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="filter-section">
+        <h4>Categoría</h4>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="catalog-cat" [checked]="selectedCategory() === 'ALL'" (click)="selectedCategory.set('ALL')" />
+            <span>Todas</span>
+          </label>
+          <label class="radio-label" *ngFor="let cat of categoriesList()">
+            <input type="radio" name="catalog-cat" [checked]="selectedCategory() === cat" (click)="selectedCategory.set(cat)" />
+            <span>{{ cat }}</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Price limits -->
+      <div class="filter-section">
+        <h4>Precio (S/)</h4>
+        <div class="price-inputs-row">
+          <input 
+            type="number" 
+            placeholder="Mín" 
+            [value]="priceMin() || ''" 
+            (input)="priceMin.set($any($event.target).value ? +$any($event.target).value : null)"
+            class="price-limit-input"
+          />
+          <span>-</span>
+          <input 
+            type="number" 
+            placeholder="Máx" 
+            [value]="priceMax() || ''" 
+            (input)="priceMax.set($any($event.target).value ? +$any($event.target).value : null)"
+            class="price-limit-input"
+          />
+        </div>
+      </div>
+
+      <!-- Availability -->
+      <div class="filter-section">
+        <h4>Disponibilidad</h4>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'ALL'" (click)="selectedAvailability.set('ALL')" />
+            <span>Todos</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'IN_STOCK'" (click)="selectedAvailability.set('IN_STOCK')" />
+            <span>Solo en Stock</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'OUT_STOCK'" (click)="selectedAvailability.set('OUT_STOCK')" />
+            <span>Agotados</span>
+          </label>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Products Showcase -->
+    <main class="catalog-products-main">
+      <!-- Public Store Catalog Hero Banner (for filtered store view) -->
+      <div class="public-store-hero animate-fade-in" *ngIf="selectedVendorId() !== null" [style.background-image]="'linear-gradient(rgba(15, 14, 25, 0.82), rgba(15, 14, 25, 0.98)), url(' + (selectedVendor()?.banner || 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=1000') + ')'">
+        <div class="store-hero-left">
+          <div class="store-hero-logo-container">
+            <img [src]="selectedVendor()?.logo" class="store-hero-logo" alt="logo"/>
+            <span class="store-hero-status-dot active"></span>
+          </div>
+          <div class="store-hero-info">
+            <div class="store-hero-tagline">
+              <span class="badge-store-premium">Tienda Oficial</span>
+              <span class="badge-store-rating" *ngIf="selectedVendor()?.calificacionPromedio">
+                <span class="material-symbols-outlined star-icon">star</span>
+                <span>{{ selectedVendor()?.calificacionPromedio | number:'1.1-1' }}</span>
+              </span>
+            </div>
+            <h2 class="store-hero-title">{{ selectedVendorLabel() }}</h2>
+            <p class="store-hero-location" *ngIf="selectedVendor()?.region">
+              <span class="material-symbols-outlined icon">location_on</span>
+              <span>{{ selectedVendor()?.region }} &bull; {{ selectedVendor()?.direccion }}</span>
+            </p>
+            <p class="store-hero-desc" *ngIf="selectedVendor()?.descripcion">{{ selectedVendor()?.descripcion }}</p>
+          </div>
+        </div>
+        <div class="store-hero-actions">
+          <button class="btn-reset-filters" (click)="clearFilters()">
+            <span class="material-symbols-outlined icon-back">close</span>
+            <span>Ver Catálogo Global</span>
+          </button>
+          <a [routerLink]="['/chat']" [queryParams]="{ vendorId: selectedVendorId() }" class="btn-store-contact">
+            <span class="material-symbols-outlined">chat</span>
+            <span>Preguntar</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Search top bar stats & sorting -->
+      <div class="catalog-header-bar">
+        <div class="results-meta">
+          Encontrados: <strong>{{ filteredCatalogProducts().length }}</strong> productos
+          <span *ngIf="selectedVendorId() !== null"> de {{ selectedVendorLabel() }}</span>
+          <span *ngIf="searchQuery()"> para "{{ searchQuery() }}"</span>
+        </div>
+
+        <div class="sorting-controls">
+          <label class="sort-label" for="sortSelect">Ordenar por:</label>
+          <select id="sortSelect" [value]="sortBy()" (change)="sortBy.set($any($event.target).value)" class="sort-input">
+            <option value="sales">Más destacados</option>
+            <option value="priceAsc">Menor precio</option>
+            <option value="priceDesc">Mayor precio</option>
+            <option value="newest">Más recientes</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Grid Cards Products -->
+      <div class="catalog-grid" *ngIf="filteredCatalogProducts().length > 0">
+        <div 
+          *ngFor="let prod of filteredCatalogProducts()" 
+          class="product-card card animate-fade-in"
+          [routerLink]="['/products', prod.id]"
+        >
+          <div class="card-thumb-wrapper">
+            <img [src]="prod.imagenes[0]" alt="Producto" class="card-img" />
+            <button 
+              class="btn-fav-overlap" 
+              [class.favorited]="customerService.isFavorite(prod.id)"
+              (click)="toggleFavorite(prod.id, $event)"
+              title="Añadir a favoritos"
+            >
+              <span class="material-symbols-outlined">favorite</span>
+            </button>
+            <span class="stock-warn" *ngIf="prod.stock > 0 && prod.stock <= 10">¡Últimas unidades!</span>
+            <span class="stock-out" *ngIf="prod.stock === 0">Agotado</span>
+          </div>
+
+          <div class="card-details">
+            <span class="card-cat">{{ prod.categoriaNombre || 'Gourmet' }}</span>
+            <h4 class="card-title">{{ prod.nombre }}</h4>
+            <div class="card-rating-vts">
+              <span class="material-symbols-outlined star">star</span>
+              <strong>4.8</strong>
+              <span class="count">• 80 vts</span>
+            </div>
+
+            <div class="card-price-action">
+              <div class="price-value">S/ {{ prod.precio | number:'1.2-2' }}</div>
+              <button 
+                class="btn-add-cart" 
+                [disabled]="prod.stock === 0" 
+                (click)="addToCart(prod, $event)"
+                title="Añadir al Carrito"
+              >
+                <span class="material-symbols-outlined font-sm">shopping_cart</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="catalog-empty-state card" *ngIf="filteredCatalogProducts().length === 0">
+        <span class="material-symbols-outlined empty-icon">sentiment_dissatisfied</span>
+        <h3>No se encontraron resultados</h3>
+        <p>Pruebe limpiando los filtros seleccionados o modificando la consulta de búsqueda.</p>
+        <button class="btn-clear-empty" (click)="clearFilters()">Limpiar todos los filtros</button>
+      </div>
+    </main>
+
+  </div>
+
+</div>

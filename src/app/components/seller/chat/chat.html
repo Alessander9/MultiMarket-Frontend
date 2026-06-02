@@ -1,0 +1,131 @@
+<div class="chat-wrapper card animate-fade-in">
+  
+  <!-- Left Side: Conversation threads list -->
+  <aside class="chat-sidebar">
+    <div class="chat-sidebar-header">
+      <h3>Chats Recientes</h3>
+      <div class="search-contact-wrapper">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" placeholder="Buscar comprador..." class="search-contact-input" />
+      </div>
+    </div>
+
+    <div class="threads-list">
+      <div 
+        *ngFor="let c of sellerService.conversations()" 
+        class="thread-row" 
+        [class.active]="activeConvId() === c.id"
+        (click)="selectConversation(c.id)"
+      >
+        <img [src]="c.compradorAvatar" alt="Avatar" class="thread-avatar" />
+        
+        <div class="thread-details">
+          <div class="thread-header-row">
+            <span class="thread-name">{{ c.compradorNombre }}</span>
+            <span class="thread-time">{{ c.fechaUltimoMensaje | date:'shortTime' }}</span>
+          </div>
+          
+          <div class="thread-body-row">
+            <p class="thread-excerpt" [class.unread-text]="c.noLeidos > 0">
+              {{ c.ultimoMensaje }}
+            </p>
+            <span class="thread-badge" *ngIf="c.noLeidos > 0">{{ c.noLeidos }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Side: Active Conversation History -->
+  <main class="chat-main">
+    
+    <!-- Active Chat selected -->
+    <div class="active-chat-content-wrapper" *ngIf="activeConversation(); else noActiveChat">
+      
+      <!-- Chat Header -->
+      <header class="chat-main-header">
+        <div class="buyer-details">
+          <img [src]="activeConversation()?.compradorAvatar" alt="Avatar" class="active-avatar" />
+          <div class="buyer-info">
+            <h4 class="active-name">{{ activeConversation()?.compradorNombre }}</h4>
+            <span class="active-email">{{ activeConversation()?.compradorCorreo }}</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <span class="online-indicator">
+            <span class="dot-green"></span>
+            Comprador Activo
+          </span>
+        </div>
+      </header>
+
+      <!-- Message History List -->
+      <div class="chat-messages-container" #chatScrollContainer>
+        <div class="messages-list">
+          
+          <div 
+            *ngFor="let msg of activeConversation()?.mensajes" 
+            class="message-bubble-wrapper"
+            [class.mine]="msg.remitente === 'VENDEDOR'"
+            [class.theirs]="msg.remitente === 'COMPRADOR'"
+          >
+            <div class="message-bubble">
+              <p class="msg-text">{{ msg.contenido }}</p>
+              <div class="msg-meta">
+                <span class="msg-time">{{ msg.fecha | date:'shortTime' }}</span>
+                <span class="material-symbols-outlined check-icon" *ngIf="msg.remitente === 'VENDEDOR'">
+                  {{ msg.leido ? 'done_all' : 'done' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div class="message-bubble-wrapper theirs" *ngIf="isSending()">
+            <div class="message-bubble typing">
+              <span class="dot-typing"></span>
+              <span class="dot-typing"></span>
+              <span class="dot-typing"></span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer Message Input Controls -->
+      <footer class="chat-main-footer">
+        <div class="input-panel">
+          <input 
+            type="text" 
+            placeholder="Escribe un mensaje de respuesta..." 
+            [ngModel]="messageText()" 
+            (ngModelChange)="messageText.set($event)"
+            (keypress)="onKeyPress($event)"
+            class="chat-text-input"
+            [disabled]="isSending()"
+          />
+          
+          <button 
+            class="btn-send-message" 
+            (click)="sendMessage()"
+            [disabled]="!messageText().trim() || isSending()"
+          >
+            <span class="material-symbols-outlined">send</span>
+          </button>
+        </div>
+      </footer>
+
+    </div>
+
+    <!-- Empty State: No conversation selected -->
+    <ng-template #noActiveChat>
+      <div class="chat-empty-state">
+        <span class="material-symbols-outlined chat-empty-icon">chat</span>
+        <h3>Bandeja de Entrada</h3>
+        <p>Selecciona una conversación del panel izquierdo para comenzar a chatear con los compradores.</p>
+      </div>
+    </ng-template>
+
+  </main>
+
+</div>

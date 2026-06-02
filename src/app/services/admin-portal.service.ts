@@ -1,5 +1,7 @@
-import { Injectable, signal } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, signal, inject } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of, tap, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 // ==========================================
 // Strongly Typed Interfaces for the 17 Modules
@@ -156,6 +158,30 @@ export interface JsonXmlExportLog {
   providedIn: 'root'
 })
 export class AdminPortalService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = environment.apiUrl;
+
+  private normalizeProduct(product: any): AdminProduct {
+    return {
+      ...product,
+      precio: Number(product?.precio ?? 0),
+      stock: Number(product?.stock ?? 0),
+      peso: Number(product?.peso ?? 0),
+      vendedorNombre: product?.vendedorNombre ?? product?.tiendaNombre,
+      imagenes: product?.imagenes ? product.imagenes.map((img: any) => typeof img === 'string' ? img : img?.url).filter(Boolean) : []
+    };
+  }
+
+  private normalizeOrder(order: any): AdminOrder {
+    return {
+      ...order,
+      subtotal: Number(order?.subtotal ?? 0),
+      impuesto: Number(order?.impuesto ?? 0),
+      costoEnvio: Number(order?.costoEnvio ?? 0),
+      total: Number(order?.total ?? 0),
+      vendedorNombre: order?.vendedorNombre ?? order?.vendedorTienda
+    };
+  }
 
   // ==========================================
   // In-Memory Databases (Angular Signals)
@@ -177,7 +203,24 @@ export class AdminPortalService {
   readonly vendors = signal<AdminVendor[]>([
     { id: 1, nombreTienda: 'Cafetería del Centro', descripcion: 'Los mejores cafés orgánicos de Cusco tostados al natural.', region: 'Cusco', direccion: 'Portal de Panes 123', logo: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-01', calificacionPromedio: 4.8 },
     { id: 2, nombreTienda: 'Chocolates El Ceibo', descripcion: 'Cacao fino de aroma cosechado por comunidades locales.', region: 'Amazonas', direccion: 'Jr. Triunfo 456', logo: 'https://images.unsplash.com/photo-1548907040-4d42b52125e0?w=100', banner: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=600', activo: true, fechaCreacion: '2026-05-12', calificacionPromedio: 4.7 },
-    { id: 3, nombreTienda: 'Artesanías Andinas', descripcion: 'Textiles, cerámicas y platería hechos a mano.', region: 'Puno', direccion: 'Av. Floral 890', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-15', calificacionPromedio: 4.5 }
+    { id: 3, nombreTienda: 'Artesanías Andinas', descripcion: 'Textiles, cerámicas y platería hechos a mano.', region: 'Puno', direccion: 'Av. Floral 890', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-15', calificacionPromedio: 4.5 },
+    { id: 4, nombreTienda: 'Ferretería Cleo', descripcion: 'Líderes en distribución de herramientas manuales, eléctricas, materiales de construcción, cerrajería, iluminación y acabados para el hogar. Más de 15 años brindando soluciones confiables a maestros de obra, talleres industriales, artesanos y familias de Lima Norte.', region: 'Lima', direccion: 'Av. Alfredo Mendiola 3540, Los Olivos, Lima', logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100', banner: 'https://images.unsplash.com/photo-1513828722001-c22dbf88279e?w=600', activo: true, fechaCreacion: '2026-05-25', calificacionPromedio: 4.9 },
+    { id: 5, nombreTienda: 'Cusco Premium Café', descripcion: 'Café premium seleccionado artesanalmente de los valles del Cusco.', region: 'Cusco', direccion: 'Av. Sol 420, Cusco', logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
+    { id: 6, nombreTienda: 'Dulce Amazonía', descripcion: 'Barras artesanales de chocolate con frutas exóticas del Amazonas.', region: 'Amazonas', direccion: 'Chachapoyas 789', logo: 'https://images.unsplash.com/photo-1548907040-4d42b52125e0?w=100', banner: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 },
+    { id: 7, nombreTienda: 'Textil Cusco Imperial', descripcion: 'Chompas, mantas y chalinas tejidas con fina alpaca baby.', region: 'Cusco', direccion: 'Calle Hatun Rumiyoc 210, Cusco', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.6 },
+    { id: 8, nombreTienda: 'Apícola del Bosque', descripcion: 'Miel de abeja 100% pura recolectada de flores silvestres del norte.', region: 'Lambayeque', direccion: 'Av. Balta 654, Chiclayo', logo: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100', banner: 'https://images.unsplash.com/photo-1471943033881-a17e6a14e3d1?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 },
+    { id: 9, nombreTienda: 'Cerámicas Pucará', descripcion: 'Toritos de Pucará y artesanías pintadas a mano de alta calidad.', region: 'Puno', direccion: 'Jr. Lima 321, Puno', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.5 },
+    { id: 10, nombreTienda: 'Café San Martín Gourmet', descripcion: 'Café de alta calidad con notas dulces y afrutadas de Moyobamba.', region: 'San Martín', direccion: 'Jr. San Martín 150, Moyobamba', logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
+    { id: 11, nombreTienda: 'Chocolates Quillabamba', descripcion: 'Chocolate orgánico al 70% elaborado con cacao chuncho premium.', region: 'Cusco', direccion: 'Calle Espinar 450, Cusco', logo: 'https://images.unsplash.com/photo-1548907040-4d42b52125e0?w=100', banner: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 },
+    { id: 12, nombreTienda: 'Orfebrería del Sur', descripcion: 'Joyas de plata de 950 hechas por experimentados plateros.', region: 'Arequipa', direccion: 'Calle Santa Catalina 111, Arequipa', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.6 },
+    { id: 13, nombreTienda: 'Textil Altiplano', descripcion: 'Prendas típicas de abrigo tejidas con lana pura de oveja y alpaca.', region: 'Puno', direccion: 'Jr. Deustua 550, Puno', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.5 },
+    { id: 14, nombreTienda: 'Miel de La Libertad', descripcion: 'Miel pura y derivados apícolas como polen y jalea real.', region: 'La Libertad', direccion: 'Av. Larco 880, Trujillo', logo: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100', banner: 'https://images.unsplash.com/photo-1471943033881-a17e6a14e3d1?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 },
+    { id: 15, nombreTienda: 'Ferretería Norte', descripcion: 'Amplio catálogo de herramientas eléctricas profesionales y acabados.', region: 'Piura', direccion: 'Av. Grau 1200, Piura', logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100', banner: 'https://images.unsplash.com/photo-1513828722001-c22dbf88279e?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.6 },
+    { id: 16, nombreTienda: 'Café Chanchamayo', descripcion: 'Café cultivado en la selva central con un aroma inconfundible.', region: 'Junín', direccion: 'Av. Tarma 340, La Merced', logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
+    { id: 17, nombreTienda: 'Granos Cajamarca', descripcion: 'Café gourmet producido bajo sombra en fincas cajamarquinas.', region: 'Cajamarca', direccion: 'Jr. Comercio 560, Cajamarca', logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
+    { id: 18, nombreTienda: 'Artesanías de Piura', descripcion: 'Trabajos finos de filigrana de plata de Catacaos.', region: 'Piura', direccion: 'Jr. Comercio Catacaos 220', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.6 },
+    { id: 19, nombreTienda: 'Textil Alpaca Real', descripcion: 'Colección de chompas de alpaca y accesorios de moda sostenible.', region: 'Arequipa', direccion: 'Calle Mercaderes 305, Arequipa', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
+    { id: 20, nombreTienda: 'Miel Andina', descripcion: 'Miel multifloral orgánica de los valles sagrados.', region: 'Cusco', direccion: 'Urubamba Sector Central, Cusco', logo: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100', banner: 'https://images.unsplash.com/photo-1471943033881-a17e6a14e3d1?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 }
   ]);
 
   readonly categories = signal<AdminCategory[]>([
@@ -185,7 +228,8 @@ export class AdminPortalService {
     { id: 2, nombre: 'Chocolate', descripcion: 'Barras de chocolate, bombones y cacao en polvo.', activa: true },
     { id: 3, nombre: 'Artesanías', descripcion: 'Cerámicas, platería, retablos y manualidades tradicionales.', activa: true },
     { id: 4, nombre: 'Textiles', descripcion: 'Mantados, chalinas, chompas de alpaca y prendas típicas.', activa: true },
-    { id: 5, nombre: 'Miel', descripcion: 'Miel de abeja pura y derivados apícolas.', activa: true }
+    { id: 5, nombre: 'Miel', descripcion: 'Miel de abeja pura y derivados apícolas.', activa: true },
+    { id: 6, nombre: 'Ferretería', descripcion: 'Herramientas manuales, eléctricas y accesorios de construcción.', activa: true }
   ]);
 
   readonly products = signal<AdminProduct[]>([
@@ -193,7 +237,27 @@ export class AdminPortalService {
     { id: 2, nombre: 'Chocolate Amargo 70%', descripcion: 'Chocolate de origen fino de aroma con notas de frutos secos.', sku: 'CHO-AMA-070', categoriaId: 2, vendedorId: 2, precio: 12.50, stock: 120, peso: 0.10, activo: true, fechaCreacion: '2026-05-13', imagenes: ['https://images.unsplash.com/photo-1548907040-4d42b52125e0?w=300'] },
     { id: 3, nombre: 'Retablo Ayacuchano Mediano', descripcion: 'Escena tradicional andina tallada a mano en madera y pasta.', sku: 'ART-RET-AY2', categoriaId: 3, vendedorId: 3, precio: 85.00, stock: 8, peso: 1.20, activo: true, fechaCreacion: '2026-05-16', imagenes: ['https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=300'] },
     { id: 4, nombre: 'Chalina de Alpaca Baby', descripcion: 'Chalina tejida con pura alpaca suave y abrigadora.', sku: 'TEX-CHA-ALP', categoriaId: 4, vendedorId: 3, precio: 120.00, stock: 3, peso: 0.25, activo: true, fechaCreacion: '2026-05-18', imagenes: ['https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=300'] },
-    { id: 5, nombre: 'Miel de Abeja Silvestre', descripcion: 'Miel cosechada en bosques del norte totalmente cruda.', sku: 'MIE-SIL-001', categoriaId: 5, vendedorId: 1, precio: 22.00, stock: 50, peso: 0.60, activo: true, fechaCreacion: '2026-05-20', imagenes: ['https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300'] }
+    { id: 5, nombre: 'Miel de Abeja Silvestre', descripcion: 'Miel cosechada en bosques del norte totalmente cruda.', sku: 'MIE-SIL-001', categoriaId: 5, vendedorId: 1, precio: 22.00, stock: 50, peso: 0.60, activo: true, fechaCreacion: '2026-05-20', imagenes: ['https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300'] },
+    { id: 101, nombre: 'Taladro Percutor DeWalt 20V Max', descripcion: 'Taladro percutor inalámbrico Brushless de alta potencia. Incluye 2 baterías de litio, cargador y maletín.', sku: 'FER-TAL-DEW-20V', categoriaId: 6, vendedorId: 4, precio: 489.00, stock: 25, peso: 2.40, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] },
+    { id: 102, nombre: 'Juego de Herramientas Stanley (110 piezas)', descripcion: 'Completo maletín de herramientas mecánicas de acero cromo vanadio.', sku: 'FER-JUE-STA-110P', categoriaId: 6, vendedorId: 4, precio: 299.90, stock: 15, peso: 6.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
+    { id: 103, nombre: 'Amoladora Angular Bosch 4 1/2" 850W', descripcion: 'Amoladora angular profesional Bosch GWS 850 con empuñadura auxiliar ergonómica.', sku: 'FER-AMO-BOS-4.5', categoriaId: 6, vendedorId: 4, precio: 249.00, stock: 18, peso: 1.90, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] },
+    { id: 104, nombre: 'Caja de Herramientas Tramontina Plástica 20"', descripcion: 'Caja portaherramientas plástica de alta resistencia con cierres metálicos.', sku: 'FER-CAJ-TRA-20', categoriaId: 6, vendedorId: 4, precio: 69.90, stock: 40, peso: 2.00, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
+    { id: 105, nombre: 'Cerradura Digital Inteligente Yale YDF40', descripcion: 'Cerradura biométrica digital para puertas de madera o metal.', sku: 'FER-CER-YAL-DIG', categoriaId: 6, vendedorId: 4, precio: 389.00, stock: 12, peso: 1.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
+    { id: 106, nombre: 'Set de Destornilladores Imantados Stanley (6 piezas)', descripcion: 'Destornilladores profesionales con mangos ergonómicos trilobulares.', sku: 'FER-SET-DES-IM6', categoriaId: 6, vendedorId: 4, precio: 39.90, stock: 80, peso: 0.80, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
+    { id: 107, nombre: 'Pintura Látex CPP Pato Premium - Blanco', descripcion: 'Pintura látex premium de alta lavabilidad y excelente cubrimiento.', sku: 'FER-PIN-PAT-BL4', categoriaId: 6, vendedorId: 4, precio: 189.00, stock: 30, peso: 22.00, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300'] },
+    { id: 108, nombre: 'Candado de Acero Blindado Forte 60mm', descripcion: 'Candado de máxima seguridad blindado con cuerpo de bronce.', sku: 'FER-CAN-FOR-60', categoriaId: 6, vendedorId: 4, precio: 59.90, stock: 55, peso: 0.60, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
+    { id: 109, nombre: 'Rotomartillo SDS Plus Makita 800W', descripcion: 'Rotomartillo profesional con tres modos de operación Makita.', sku: 'FER-ROT-MAK-800W', categoriaId: 6, vendedorId: 4, precio: 679.00, stock: 8, peso: 3.20, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] },
+    { id: 110, nombre: 'Martillo de Uña Tramontina Acero Carbono', descripcion: 'Martillo de carpintero con cabeza forjada de alta dureza.', sku: 'FER-MAR-TRA-AC', categoriaId: 6, vendedorId: 4, precio: 29.90, stock: 100, peso: 0.70, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
+    { id: 111, nombre: 'Wincha Métrica Stanley Powerlock 8m', descripcion: 'Cinta métrica profesional con revestimiento antidesgaste.', sku: 'FER-WIN-STA-8M', categoriaId: 6, vendedorId: 4, precio: 42.00, stock: 65, peso: 0.40, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
+    { id: 112, nombre: 'Linterna LED Recargable de Alta Potencia', descripcion: 'Linterna táctica metálica recargable mediante puerto USB.', sku: 'FER-LIN-LED-REC', categoriaId: 6, vendedorId: 4, precio: 49.90, stock: 90, peso: 0.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
+    { id: 113, nombre: 'Juego de Llaves Mixtas Stanley (12 piezas)', descripcion: 'Set de llaves combinadas corona y boca de acero pulido.', sku: 'FER-JUE-LLA-MIX12', categoriaId: 6, vendedorId: 4, precio: 119.00, stock: 22, peso: 1.80, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
+    { id: 114, nombre: 'Sierra Circular Black+Decker 1500W', descripcion: 'Sierra circular con disco de carburo y guía de precisión.', sku: 'FER-SIE-BDE-1500W', categoriaId: 6, vendedorId: 4, precio: 319.00, stock: 14, peso: 4.10, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] },
+    { id: 115, nombre: 'Cable Eléctrico Indeco Nro 12 THW (100m)', descripcion: 'Rollo de cable de cobre recocido con cubierta de PVC retardante.', sku: 'FER-CAB-IND-12R', categoriaId: 6, vendedorId: 4, precio: 219.00, stock: 40, peso: 3.80, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
+    { id: 116, nombre: 'Set de Brochas Atlas Premium (3 piezas)', descripcion: 'Brochas profesionales de fibra fina sintética para acabados.', sku: 'FER-BRO-ATL-S3', categoriaId: 6, vendedorId: 4, precio: 24.50, stock: 110, peso: 0.30, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300'] },
+    { id: 117, nombre: 'Cinta Aisladora 3M Temflex (Caja 10 und)', descripcion: 'Cinta de vinilo de alta flexibilidad para aislamiento eléctrico.', sku: 'FER-CIN-3M-TEM10', categoriaId: 6, vendedorId: 4, precio: 35.00, stock: 150, peso: 0.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
+    { id: 118, nombre: 'Nivel de Burbuja de Aluminio Stanley 24"', descripcion: 'Nivel profesional resistente a impactos y deformaciones.', sku: 'FER-NIV-STA-24', categoriaId: 6, vendedorId: 4, precio: 55.00, stock: 35, peso: 0.80, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
+    { id: 119, nombre: 'Candado de Combinación TSA Yale Latón', descripcion: 'Candado programable de 3 dígitos homologado para equipaje.', sku: 'FER-CAN-YAL-TSA', categoriaId: 6, vendedorId: 4, precio: 45.00, stock: 10, peso: 0.10, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
+    { id: 120, nombre: 'Compresora de Aire Truper 24 Litros 2.5HP', descripcion: 'Compresora de aire monofásica lubricada para uso constante.', sku: 'FER-COM-TRU-24L', categoriaId: 6, vendedorId: 4, precio: 499.00, stock: 6, peso: 18.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] }
   ]);
 
   readonly inventoryMovements = signal<InventoryMovement[]>([
@@ -296,6 +360,65 @@ export class AdminPortalService {
   ]);
 
   // ==========================================
+  // BACKEND-FED READ METHODS
+  // ==========================================
+
+  loadCategories(): Observable<AdminCategory[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/categorias`).pipe(
+      map(categories => categories.map(cat => ({
+        id: cat.id,
+        nombre: cat.nombre,
+        descripcion: cat.descripcion,
+        activa: cat.activa ?? true
+      }))),
+      tap(categories => this.categories.set(categories))
+    );
+  }
+
+  loadProducts(): Observable<AdminProduct[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/productos`).pipe(
+      map(products => products.map(product => this.normalizeProduct(product))),
+      tap(products => this.products.set(products))
+    );
+  }
+
+  loadOrders(): Observable<AdminOrder[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/pedidos/tienda`).pipe(
+      map(orders => orders.map(order => this.normalizeOrder(order))),
+      tap(orders => this.orders.set(orders))
+    );
+  }
+
+  loadNotifications(): Observable<AdminNotification[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/notificaciones`).pipe(
+      map(notifs => notifs.map(notif => ({
+        id: notif.id,
+        titulo: notif.titulo ?? notif.mensaje ?? 'Notificación',
+        mensaje: notif.mensaje ?? notif.contenido ?? '',
+        tipo: notif.tipo ?? 'SISTEMA',
+        destinatarios: notif.destinatarios ?? 'TODOS',
+        fechaCreacion: notif.fechaCreacion ?? notif.fecha ?? new Date().toISOString().split('T')[0]
+      }))),
+      tap(notifs => this.notifications.set(notifs))
+    );
+  }
+
+  loadChats(): Observable<AdminChat[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones`).pipe(
+      map(chats => chats.map(chat => ({
+        id: chat.id,
+        fechaCreacion: chat.fechaCreacion,
+        activa: chat.activa,
+        compradorCorreo: chat.compradorCorreo,
+        vendedorNombre: chat.vendedorTienda ?? chat.vendedorNombreTienda,
+        ultimoMensaje: chat.ultimoMensaje ?? '',
+        mensajes: []
+      }))),
+      tap(chats => this.chats.set(chats))
+    );
+  }
+
+  // ==========================================
   // In-Memory CRUD Operations (Reactive Signals)
   // ==========================================
 
@@ -324,81 +447,129 @@ export class AdminPortalService {
   }
 
   // Vendors CRUD
-  addVendor(vendor: Partial<AdminVendor>): void {
-    const newId = this.vendors().length > 0 ? Math.max(...this.vendors().map(v => v.id)) + 1 : 1;
-    const fullVendor: AdminVendor = {
-      id: newId,
-      nombreTienda: vendor.nombreTienda || 'Tienda Nueva',
-      descripcion: vendor.descripcion || 'Sin descripción',
-      region: vendor.region || 'Lima',
-      direccion: vendor.direccion || 'Calle Sin Nombre 123',
-      logo: vendor.logo || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100',
-      banner: vendor.banner || 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600',
-      activo: vendor.activo !== undefined ? vendor.activo : true,
-      fechaCreacion: new Date().toISOString().split('T')[0],
-      calificacionPromedio: 5.0
-    };
-    this.vendors.update(list => [...list, fullVendor]);
+  addVendor(vendor: Partial<AdminVendor>): Observable<AdminVendor> {
+    return this.http.post<any>(`${this.baseUrl}/vendedores`, vendor).pipe(
+      map(created => {
+        const fullVendor: AdminVendor = {
+          id: created.id,
+          nombreTienda: created.nombreTienda,
+          descripcion: created.descripcion,
+          region: created.region,
+          direccion: created.direccion,
+          logo: created.logo,
+          banner: created.banner,
+          activo: created.activo ?? true,
+          fechaCreacion: created.fechaCreacion ?? new Date().toISOString().split('T')[0],
+          calificacionPromedio: created.calificacionPromedio ?? 5
+        };
+        this.vendors.update(list => [...list, fullVendor]);
+        return fullVendor;
+      })
+    );
   }
 
-  updateVendor(id: number, updated: Partial<AdminVendor>): void {
-    this.vendors.update(list => list.map(v => v.id === id ? { ...v, ...updated } : v));
+  updateVendor(id: number, updated: Partial<AdminVendor>): Observable<AdminVendor> {
+    return this.http.put<any>(`${this.baseUrl}/vendedores/${id}`, updated).pipe(
+      map(result => {
+        const fullVendor: AdminVendor = {
+          id: result.id ?? id,
+          nombreTienda: result.nombreTienda,
+          descripcion: result.descripcion,
+          region: result.region,
+          direccion: result.direccion,
+          logo: result.logo,
+          banner: result.banner,
+          activo: result.activo ?? true,
+          fechaCreacion: result.fechaCreacion ?? new Date().toISOString().split('T')[0],
+          calificacionPromedio: result.calificacionPromedio ?? 5
+        };
+        this.vendors.update(list => list.map(v => v.id === id ? fullVendor : v));
+        return fullVendor;
+      })
+    );
   }
 
-  deleteVendor(id: number): void {
-    this.vendors.update(list => list.filter(v => v.id !== id));
+  deleteVendor(id: number): Observable<void> {
+    return this.http.put<any>(`${this.baseUrl}/vendedores/${id}/desactivar`, null, {
+      params: new HttpParams().set('activo', 'false')
+    }).pipe(
+      tap(() => {
+        this.vendors.update(list => list.map(v => v.id === id ? { ...v, activo: false } : v));
+      }),
+      map(() => void 0)
+    );
   }
 
   // Categories CRUD
-  addCategory(cat: Partial<AdminCategory>): void {
-    const newId = this.categories().length > 0 ? Math.max(...this.categories().map(c => c.id)) + 1 : 1;
-    const fullCat: AdminCategory = {
-      id: newId,
-      nombre: cat.nombre || 'Categoría Nueva',
-      descripcion: cat.descripcion || 'Sin descripción',
-      activa: cat.activa !== undefined ? cat.activa : true
-    };
-    this.categories.update(list => [...list, fullCat]);
+  addCategory(cat: Partial<AdminCategory>): Observable<AdminCategory> {
+    return this.http.post<any>(`${this.baseUrl}/categorias`, cat).pipe(
+      map(created => {
+        const fullCat: AdminCategory = {
+          id: created.id,
+          nombre: created.nombre,
+          descripcion: created.descripcion,
+          activa: created.activa ?? true
+        };
+        this.categories.update(list => [...list, fullCat]);
+        return fullCat;
+      })
+    );
   }
 
-  updateCategory(id: number, updated: Partial<AdminCategory>): void {
-    this.categories.update(list => list.map(c => c.id === id ? { ...c, ...updated } : c));
+  updateCategory(id: number, updated: Partial<AdminCategory>): Observable<AdminCategory> {
+    return this.http.put<any>(`${this.baseUrl}/categorias/${id}`, updated).pipe(
+      map(result => {
+        const fullCat: AdminCategory = {
+          id: result.id ?? id,
+          nombre: result.nombre,
+          descripcion: result.descripcion,
+          activa: result.activa ?? true
+        };
+        this.categories.update(list => list.map(c => c.id === id ? fullCat : c));
+        return fullCat;
+      })
+    );
   }
 
-  deleteCategory(id: number): void {
-    this.categories.update(list => list.filter(c => c.id !== id));
+  deleteCategory(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/categorias/${id}`).pipe(
+      tap(() => {
+        this.categories.update(list => list.filter(c => c.id !== id));
+      })
+    );
   }
 
   // Products CRUD
-  addProduct(prod: Partial<AdminProduct>): void {
-    const newId = this.products().length > 0 ? Math.max(...this.products().map(p => p.id)) + 1 : 1;
-    const fullProd: AdminProduct = {
-      id: newId,
-      nombre: prod.nombre || 'Producto Nuevo',
-      descripcion: prod.descripcion || 'Sin descripción',
-      sku: prod.sku || 'SKU-NUEVO-' + newId,
-      categoriaId: prod.categoriaId || 1,
-      vendedorId: prod.vendedorId || 1,
-      precio: prod.precio || 10.00,
-      stock: prod.stock || 10,
-      peso: prod.peso || 0.10,
-      activo: prod.activo !== undefined ? prod.activo : true,
-      fechaCreacion: new Date().toISOString().split('T')[0],
-      imagenes: prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes : ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300']
-    };
-    this.products.update(list => [...list, fullProd]);
-
-    // Registrar ingreso inicial en movimientos de inventario
-    this.addInventoryMovement(fullProd.id, fullProd.nombre, fullProd.stock, 'ENTRADA', 'Ingreso inicial al crear producto.');
+  addProduct(prod: Partial<AdminProduct>): Observable<AdminProduct> {
+    return this.http.post<any>(`${this.baseUrl}/productos`, prod).pipe(
+      map(created => {
+        const fullProd = this.normalizeProduct(created);
+        this.products.update(list => [...list, fullProd]);
+        return fullProd;
+      })
+    );
   }
 
-  updateProduct(id: number, updated: Partial<AdminProduct>): void {
-    this.products.update(list => list.map(p => p.id === id ? { ...p, ...updated } : p));
+  updateProduct(id: number, updated: Partial<AdminProduct>): Observable<AdminProduct> {
+    return this.http.put<any>(`${this.baseUrl}/productos/${id}`, updated).pipe(
+      map(result => {
+        const fullProd = this.normalizeProduct(result);
+        this.products.update(list => list.map(p => p.id === id ? fullProd : p));
+        return fullProd;
+      })
+    );
   }
 
-  deleteProduct(id: number): void {
-    this.products.update(list => list.filter(p => p.id !== id));
+  deleteProduct(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/productos/${id}`).pipe(
+      tap(() => {
+        this.products.update(list => list.filter(p => p.id !== id));
+      })
+    );
   }
+
+  // Chat / Notifications / Orders / Inventory remain partially mocked because the backend
+  // does not expose the same admin-level management endpoints for every UI action yet.
 
   // Inventory Adjustments & Movements
   addInventoryMovement(productoId: number, productoNombre: string, cantidad: number, tipo: 'ENTRADA' | 'SALIDA' | 'DEVOLUCION' | 'AJUSTE', obs: string): void {

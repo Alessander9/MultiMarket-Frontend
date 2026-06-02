@@ -1,0 +1,66 @@
+<div class="notifications-wrapper animate-fade-in">
+  
+  <div class="notif-page-header">
+    <div class="page-title-area">
+      <h2>Notificaciones</h2>
+      <p>Entérate al instante de novedades sobre tus pedidos, pagos verídicos, chats y ofertas exclusivas</p>
+    </div>
+    
+    <button class="btn-mark-read" 
+            (click)="markAllAsRead()" 
+            *ngIf="customerService.unreadNotificationsCount() > 0">
+      <span class="material-symbols-outlined">done_all</span>
+      Marcar todas como leídas
+    </button>
+  </div>
+
+  <div class="card notif-list-card" *ngIf="customerService.notifications().length > 0">
+    <div class="notif-row" 
+         *ngFor="let notif of customerService.notifications()" 
+         [class.unread]="!notif.leido"
+         (click)="toggleNotificationRead(notif)">
+      
+      <!-- Icon indicator -->
+      <div class="notif-icon-box" [ngClass]="getIconClass(notif.tipo)">
+        <span class="material-symbols-outlined">{{ getIcon(notif.tipo) }}</span>
+      </div>
+
+      <!-- Description content -->
+      <div class="notif-content-area">
+        <div class="notif-headline">
+          <h4>{{ notif.titulo }}</h4>
+          <span class="notif-time">{{ notif.fecha | date:'medium' }}</span>
+        </div>
+        <p class="notif-details">{{ notif.contenido }}</p>
+        
+        <!-- Redirect hooks based on notification type -->
+        <div class="notif-quick-actions" *ngIf="notif.tipo === 'PEDIDO'">
+          <a routerLink="/orders" class="quick-link">Hacer Seguimiento de mi Orden</a>
+        </div>
+        <div class="notif-quick-actions" *ngIf="notif.tipo === 'CHAT'">
+          <a routerLink="/chat" class="quick-link">Ver Mensajes Recibidos</a>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="notif-actions-box">
+        <span class="unread-dot-indicator" *ngIf="!notif.leido" title="Marcar como leída"></span>
+        <button class="btn-delete-notif" 
+                (click)="deleteNotification(notif.id, $event)" 
+                title="Eliminar notificación">
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="card notif-empty-state" *ngIf="customerService.notifications().length === 0">
+    <span class="material-symbols-outlined empty-bell">notifications_off</span>
+    <h3>Bandeja sin notificaciones</h3>
+    <p>¡Todo al día! No tienes notificaciones pendientes o recibidas en este momento.</p>
+    <a routerLink="/products" class="btn-browse-shop">Ver Novedades del Catálogo</a>
+  </div>
+
+</div>

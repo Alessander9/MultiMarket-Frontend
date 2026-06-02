@@ -1,0 +1,209 @@
+<div class="settings-wrapper animate-fade-in">
+  
+  <div class="settings-page-header">
+    <div class="page-title-area">
+      <h2>Configuración del Sistema</h2>
+      <p>Administra tus credenciales de seguridad, datos del propietario y preferencias de la tienda</p>
+    </div>
+    
+    <!-- Tab Controls -->
+    <div class="tab-controls">
+      <button 
+        class="tab-btn" 
+        [class.active]="activeSettingTab() === 'account'" 
+        (click)="activeSettingTab.set('account')"
+      >
+        <span class="material-symbols-outlined font-sm">person</span>
+        Cuenta Propietario
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeSettingTab() === 'security'" 
+        (click)="activeSettingTab.set('security')"
+      >
+        <span class="material-symbols-outlined font-sm">shield</span>
+        Seguridad y 2FA
+      </button>
+      <button 
+        class="tab-btn" 
+        [class.active]="activeSettingTab() === 'preferences'" 
+        (click)="activeSettingTab.set('preferences')"
+      >
+        <span class="material-symbols-outlined font-sm">tune</span>
+        Preferencias
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast alerts -->
+  <div class="feedback-toast animate-fade-in" *ngIf="feedback()">
+    <span class="material-symbols-outlined">check_circle</span>
+    <p>{{ feedback() }}</p>
+  </div>
+
+  <!-- ================= ACCOUNT TAB ================= -->
+  <div class="settings-tab-content account-tab" *ngIf="activeSettingTab() === 'account'">
+    <form [formGroup]="accountForm" (ngSubmit)="onSubmitAccount()" class="settings-form card">
+      <h3>Datos del Propietario de la Tienda</h3>
+      
+      <div class="form-grid">
+        
+        <!-- Nombre personal -->
+        <div class="form-group">
+          <label class="form-label" for="nombrePersonal">Nombre del Propietario *</label>
+          <input type="text" id="nombrePersonal" formControlName="nombrePersonal" class="form-input" />
+          <span class="validation-err" *ngIf="accountForm.get('nombrePersonal')?.touched && accountForm.get('nombrePersonal')?.invalid">
+            El nombre es obligatorio.
+          </span>
+        </div>
+
+        <!-- Cargo -->
+        <div class="form-group">
+          <label class="form-label" for="cargo">Cargo / Rol Comercial *</label>
+          <input type="text" id="cargo" formControlName="cargo" class="form-input" />
+        </div>
+
+        <!-- Correo personal -->
+        <div class="form-group">
+          <label class="form-label" for="correo">Correo de Acceso Principal *</label>
+          <input type="email" id="correo" formControlName="correo" class="form-input" />
+          <span class="validation-err" *ngIf="accountForm.get('correo')?.touched && accountForm.get('correo')?.invalid">
+            Ingrese un correo electrónico válido.
+          </span>
+        </div>
+
+        <!-- Teléfono personal -->
+        <div class="form-group">
+          <label class="form-label" for="telefono">Teléfono *</label>
+          <input type="text" id="telefono" formControlName="telefono" class="form-input" />
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-save" [disabled]="accountForm.invalid || isSaving()">
+          {{ isSaving() ? 'Guardando...' : 'Actualizar Datos Cuenta' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ================= SECURITY TAB ================= -->
+  <div class="settings-tab-content security-tab" *ngIf="activeSettingTab() === 'security'">
+    
+    <!-- Change Password Form -->
+    <form [formGroup]="passwordForm" (ngSubmit)="onSubmitPassword()" class="settings-form card">
+      <h3>Cambiar Contraseña de Acceso</h3>
+      
+      <div class="form-grid">
+        
+        <!-- Password actual -->
+        <div class="form-group full-width">
+          <label class="form-label" for="oldPassword">Contraseña Actual *</label>
+          <input type="password" id="oldPassword" formControlName="oldPassword" class="form-input" />
+        </div>
+
+        <!-- Nueva password -->
+        <div class="form-group">
+          <label class="form-label" for="newPassword">Nueva Contraseña *</label>
+          <input type="password" id="newPassword" formControlName="newPassword" class="form-input" />
+          <span class="validation-err" *ngIf="passwordForm.get('newPassword')?.touched && passwordForm.get('newPassword')?.invalid">
+            Mínimo 6 caracteres.
+          </span>
+        </div>
+
+        <!-- Confirmar password -->
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirmar Nueva Contraseña *</label>
+          <input type="password" id="confirmPassword" formControlName="confirmPassword" class="form-input" />
+          <span class="validation-err" *ngIf="passwordForm.errors?.['mismatch'] && passwordForm.get('confirmPassword')?.touched">
+            Las contraseñas nuevas no coinciden.
+          </span>
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-save" [disabled]="passwordForm.invalid || isSaving()">
+          {{ isSaving() ? 'Procesando...' : 'Cambiar Contraseña' }}
+        </button>
+      </div>
+    </form>
+
+    <!-- 2FA card -->
+    <div class="card security-extra-card">
+      <div class="security-extra-content">
+        <div class="info-area">
+          <h3>Autenticación en Dos Pasos (2FA)</h3>
+          <p>Añade una capa de seguridad extra obligando a ingresar un token temporal (OTP) generado en tu celular mediante Google Authenticator al iniciar sesión.</p>
+        </div>
+        
+        <div class="action-area">
+          <button 
+            class="btn-toggle-2fa" 
+            [class.active]="sellerService.settings().seguridad.dobleFactor"
+            (click)="toggle2fa()"
+          >
+            {{ sellerService.settings().seguridad.dobleFactor ? 'Desactivar 2FA' : 'Activar 2FA' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= PREFERENCES TAB ================= -->
+  <div class="settings-tab-content preferences-tab" *ngIf="activeSettingTab() === 'preferences'">
+    <div class="card preferences-card">
+      <h3>Canales y Notificaciones</h3>
+      
+      <div class="preferences-list">
+        
+        <!-- Notificaciones Email -->
+        <div class="pref-row">
+          <div class="pref-text">
+            <h4>Notificaciones de Pedidos por Email</h4>
+            <p>Recibe un correo instantáneo cuando un comprador registre una orden de compra exitosa.</p>
+          </div>
+          <div class="pref-toggle">
+            <input 
+              type="checkbox" 
+              [checked]="sellerService.settings().preferencias.notificacionesEmail" 
+              (change)="updatePreference('notificacionesEmail', $event)" 
+            />
+          </div>
+        </div>
+
+        <!-- Notificaciones Chat -->
+        <div class="pref-row">
+          <div class="pref-text">
+            <h4>Notificaciones de Chat Activo</h4>
+            <p>Recibe notificaciones en tu bandeja y notificaciones push web cuando un comprador te envíe un mensaje.</p>
+          </div>
+          <div class="pref-toggle">
+            <input 
+              type="checkbox" 
+              [checked]="sellerService.settings().preferencias.notificacionesChat" 
+              (change)="updatePreference('notificacionesChat', $event)" 
+            />
+          </div>
+        </div>
+
+        <div class="divider-line"></div>
+
+        <!-- Timezone and Language specs -->
+        <div class="pref-static-row">
+          <span class="label">Idioma Integrado</span>
+          <span class="value font-semibold">Español (Castellano)</span>
+        </div>
+
+        <div class="pref-static-row">
+          <span class="label">Zona Horaria Comercial</span>
+          <span class="value font-mono">{{ sellerService.settings().preferencias.zonaHoraria }}</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface Product {
@@ -15,6 +16,7 @@ export interface Product {
   categoriaId: number;
   vendedorId?: number;
   vendedorNombre?: string;
+  tiendaNombre?: string;
   categoriaNombre?: string;
   imagenes?: any[];
 }
@@ -32,6 +34,17 @@ export interface Category {
 export class ProductService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
+
+  private normalizeProduct(product: any): Product {
+    return {
+      ...product,
+      precio: Number(product?.precio ?? 0),
+      stock: Number(product?.stock ?? 0),
+      peso: Number(product?.peso ?? 0),
+      vendedorNombre: product?.vendedorNombre ?? product?.tiendaNombre,
+      tiendaNombre: product?.tiendaNombre ?? product?.vendedorNombre
+    };
+  }
 
   // Categories Endpoints
   getCategories(): Observable<Category[]> {
@@ -56,19 +69,29 @@ export class ProductService {
 
   // Products Endpoints
   getProducts(): Observable<Product[]> {
-    return this.http.get<Product[]>(`${this.baseUrl}/productos`);
+    return this.http.get<any[]>(`${this.baseUrl}/productos`).pipe(
+      // Backend returns tiendaNombre; UI may still read vendedorNombre.
+      // Keep both names in the normalized payload.
+      map(products => products.map(product => this.normalizeProduct(product)))
+    );
   }
 
   getProduct(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.baseUrl}/productos/${id}`);
+    return this.http.get<any>(`${this.baseUrl}/productos/${id}`).pipe(
+      map(product => this.normalizeProduct(product))
+    );
   }
 
   createProduct(request: any): Observable<Product> {
-    return this.http.post<Product>(`${this.baseUrl}/productos`, request);
+    return this.http.post<any>(`${this.baseUrl}/productos`, request).pipe(
+      map(product => this.normalizeProduct(product))
+    );
   }
 
   updateProduct(id: number, request: any): Observable<Product> {
-    return this.http.put<Product>(`${this.baseUrl}/productos/${id}`, request);
+    return this.http.put<any>(`${this.baseUrl}/productos/${id}`, request).pipe(
+      map(product => this.normalizeProduct(product))
+    );
   }
 
   deactivateProduct(id: number): Observable<void> {
@@ -101,7 +124,9 @@ export class ProductService {
       params = params.set('maxPrecio', searchParams.maxPrecio.toString());
     }
 
-    return this.http.get<Product[]>(`${this.baseUrl}/productos/buscar`, { params });
+    return this.http.get<any[]>(`${this.baseUrl}/productos/buscar`, { params }).pipe(
+      map(products => products.map(product => this.normalizeProduct(product)))
+    );
   }
 
   // Images CRUD

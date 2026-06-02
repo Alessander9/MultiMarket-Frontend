@@ -1,0 +1,489 @@
+<div class="checkout-wrapper animate-fade-in">
+
+  <!-- STEP PROGRESS BAR -->
+  <div class="checkout-steps-nav" *ngIf="currentStep() < 4">
+    <div class="step-nav-item" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
+      <span class="step-num">1</span>
+      <span class="step-lbl">Dirección</span>
+    </div>
+    <div class="step-line" [class.filled]="currentStep() > 1"></div>
+    <div class="step-nav-item" [class.active]="currentStep() >= 2" [class.completed]="currentStep() > 2">
+      <span class="step-num">2</span>
+      <span class="step-lbl">Revisión</span>
+    </div>
+    <div class="step-line" [class.filled]="currentStep() > 2"></div>
+    <div class="step-nav-item" [class.active]="currentStep() >= 3" [class.completed]="currentStep() > 3">
+      <span class="step-num">3</span>
+      <span class="step-lbl">Pago Seguro</span>
+    </div>
+  </div>
+
+  <div class="checkout-split-grid" *ngIf="currentStep() < 4">
+    
+    <!-- LEFT PANEL: ACTION STEPS -->
+    <div class="checkout-main-panel">
+
+      <!-- STEP 1: ADDRESS -->
+      <div class="card checkout-card" *ngIf="currentStep() === 1">
+        <h3 class="card-title">
+          <span class="material-symbols-outlined icon-violet">location_on</span>
+          ¿Dónde entregamos tu compra?
+        </h3>
+        <p class="card-subtitle">Selecciona una de tus direcciones registradas o agrega una nueva dirección de despacho</p>
+
+        <!-- Addresses List -->
+        <div class="address-cards-grid" *ngIf="!showNewAddressForm()">
+          <div class="address-item-card" 
+               *ngFor="let addr of customerService.addresses()" 
+               [class.selected]="selectedAddressId() === addr.id"
+               (click)="selectAddress(addr.id)">
+            <div class="addr-header">
+              <span class="addr-badge" *ngIf="addr.predeterminada">Predeterminada</span>
+              <span class="material-symbols-outlined select-icon">check_circle</span>
+            </div>
+            <h4 class="addr-ref">{{ addr.nombreReferencia }}</h4>
+            <p class="addr-text">{{ addr.direccion }}</p>
+            <p class="addr-region">{{ addr.distrito }}, {{ addr.provincia }} - {{ addr.departamento }}</p>
+            <span class="addr-zip">CP: {{ addr.codigoPostal }}</span>
+          </div>
+
+          <div class="address-item-card add-new-trigger" (click)="showNewAddressForm.set(true)">
+            <span class="material-symbols-outlined add-icon">add_location_alt</span>
+            <span class="add-text">Agregar Nueva Dirección</span>
+          </div>
+        </div>
+
+        <!-- Add Address Form -->
+        <div class="new-address-form-box" *ngIf="showNewAddressForm()">
+          <div class="form-header">
+            <h4>Registrar nueva dirección de despacho</h4>
+            <button class="btn-text-only" (click)="showNewAddressForm.set(false)">Volver a mis direcciones</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Etiqueta de Referencia (Ej: Casa, Oficina de mi Novio) *</label>
+              <input type="text" [(ngModel)]="newAddress.nombreReferencia" placeholder="Mi Casa / Trabajo" />
+            </div>
+
+            <div class="form-group">
+              <label>Departamento *</label>
+              <input type="text" [(ngModel)]="newAddress.departamento" />
+            </div>
+
+            <div class="form-group">
+              <label>Provincia *</label>
+              <input type="text" [(ngModel)]="newAddress.provincia" />
+            </div>
+
+            <div class="form-group">
+              <label>Distrito *</label>
+              <input type="text" [(ngModel)]="newAddress.distrito" placeholder="Ej: Miraflores" />
+            </div>
+
+            <div class="form-group">
+              <label>Código Postal</label>
+              <input type="text" [(ngModel)]="newAddress.codigoPostal" placeholder="Ej: 15074" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Dirección (Calle, Av, Número, Dpto) *</label>
+              <input type="text" [(ngModel)]="newAddress.direccion" placeholder="Av. Arequipa 1234, Dpto 402" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Referencia de entrega</label>
+              <input type="text" [(ngModel)]="newAddress.referencia" placeholder="Frente al colegio, portón negro" />
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="check-container">
+                <input type="checkbox" [(ngModel)]="newAddress.predeterminada" />
+                <span class="checkmark"></span>
+                Establecer como dirección predeterminada
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-cancel" (click)="showNewAddressForm.set(false)">Cancelar</button>
+            <button class="btn-save-addr" (click)="saveNewAddress()">Guardar y Seleccionar</button>
+          </div>
+        </div>
+
+        <div class="wizard-footer-nav" *ngIf="!showNewAddressForm()">
+          <div></div>
+          <button class="btn-wizard-next" (click)="goToStep(2)">
+            Continuar a Revisión
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: CONFIRMATION / REVIEW -->
+      <div class="card checkout-card" *ngIf="currentStep() === 2">
+        <h3 class="card-title">
+          <span class="material-symbols-outlined icon-violet">shopping_bag</span>
+          Confirma tu pedido
+        </h3>
+        <p class="card-subtitle">Verifica los productos de tu carrito y la dirección de envío seleccionada</p>
+
+        <!-- Address review block -->
+        <div class="delivery-review-block">
+          <div class="review-details">
+            <span class="material-symbols-outlined icon">local_shipping</span>
+            <div>
+              <h5>Dirección de Despacho Seleccionada</h5>
+              <p *ngIf="getSelectedAddress() as addr">
+                <strong>{{ addr.nombreReferencia }}</strong> - {{ addr.direccion }}, {{ addr.distrito }} (CP: {{ addr.codigoPostal }})
+              </p>
+            </div>
+          </div>
+          <button class="btn-text-only" (click)="goToStep(1)">Cambiar dirección</button>
+        </div>
+
+        <div class="review-items-list">
+          <h5>Productos en tu pedido ({{ customerService.cartCount() }})</h5>
+          <div class="review-item-row" *ngFor="let item of customerService.cart()">
+            <img [src]="item.imagen" alt="Thumbnail" class="row-thumb" />
+            <div class="row-meta">
+              <h6>{{ item.nombre }}</h6>
+              <span class="vendor">Vendido por: {{ item.vendedorNombre }}</span>
+              <span class="qty">Cant: {{ item.cantidad }}</span>
+            </div>
+            <span class="row-price">S/ {{ item.precio * item.cantidad | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="wizard-footer-nav">
+          <button class="btn-wizard-back" (click)="goToStep(1)">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver a Dirección
+          </button>
+          <button class="btn-wizard-next" (click)="goToStep(3)">
+            Ir al Pago
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: SECURE PAYMENT -->
+      <div class="card checkout-card" *ngIf="currentStep() === 3">
+        <h3 class="card-title">
+          <span class="material-symbols-outlined icon-violet">lock</span>
+          Pago 100% Seguro
+        </h3>
+        <p class="card-subtitle">Todas las transacciones son encriptadas y protegidas bajo estándares bancarios</p>
+
+        <!-- Payment selector grid -->
+        <div class="payment-methods-tabs">
+          <button class="pay-tab stripe-tab-btn" [class.active]="selectedPaymentMethod() === 'STRIPE'" (click)="selectedPaymentMethod.set('STRIPE')">
+            <span class="material-symbols-outlined tab-icon stripe-purple">lock_open</span>
+            Stripe (Tarjetas)
+          </button>
+          <button class="pay-tab" [class.active]="selectedPaymentMethod() === 'VISA'" (click)="selectedPaymentMethod.set('VISA')">
+            <span class="material-symbols-outlined tab-icon">credit_card</span>
+            Visa
+          </button>
+          <button class="pay-tab" [class.active]="selectedPaymentMethod() === 'MASTERCARD'" (click)="selectedPaymentMethod.set('MASTERCARD')">
+            <span class="material-symbols-outlined tab-icon">payments</span>
+            Mastercard
+          </button>
+          <button class="pay-tab" [class.active]="selectedPaymentMethod() === 'YAPE'" (click)="selectedPaymentMethod.set('YAPE')">
+            <span class="material-symbols-outlined tab-icon">phone_android</span>
+            Yape
+          </button>
+          <button class="pay-tab" [class.active]="selectedPaymentMethod() === 'PLIN'" (click)="selectedPaymentMethod.set('PLIN')">
+            <span class="material-symbols-outlined tab-icon">qr_code_2</span>
+            Plin
+          </button>
+          <button class="pay-tab" [class.active]="selectedPaymentMethod() === 'TRANSFERENCIA'" (click)="selectedPaymentMethod.set('TRANSFERENCIA')">
+            <span class="material-symbols-outlined tab-icon">account_balance</span>
+            Bcp / Interbank
+          </button>
+        </div>
+
+        <!-- Form Payment Area -->
+        <div class="payment-fields-container">
+          
+          <!-- Stripe Payments Elements Simulation -->
+          <div class="stripe-pay-box animate-fade-in" *ngIf="selectedPaymentMethod() === 'STRIPE'">
+            <div class="stripe-sandbox-header">
+              <span class="sandbox-badge">Modo de Pruebas</span>
+              <span class="sandbox-desc">Simula transacciones de pago con tarjetas de crédito de prueba de Stripe.</span>
+            </div>
+
+            <!-- Stripe Error display -->
+            <div class="stripe-error-banner animate-shake" *ngIf="stripeError() as err">
+              <span class="material-symbols-outlined">error</span>
+              <p>{{ err }}</p>
+            </div>
+
+            <!-- Stripe Success Animation Loader -->
+            <div class="stripe-success-loader animate-scale-up" *ngIf="stripeSuccessState()">
+              <div class="success-checkmark-circle">
+                <span class="material-symbols-outlined check-icon">check_circle</span>
+              </div>
+              <h4>¡Pago Autorizado por Stripe!</h4>
+              <p>Registrando pedido en base de datos...</p>
+            </div>
+
+            <!-- Sleek Form Grid -->
+            <div class="payment-form-grid" *ngIf="!stripeSuccessState()">
+              <div class="form-group full-width">
+                <label class="stripe-input-lbl">Número de Tarjeta (Stripe Test Card) *</label>
+                <div class="stripe-input-wrapper">
+                  <span class="material-symbols-outlined input-icon">credit_card</span>
+                  <input type="text" [(ngModel)]="paymentDetails.cardNumber" placeholder="4242 4242 4242 4242" maxlength="19" class="stripe-field" />
+                  <span class="card-brand-badge" *ngIf="paymentDetails.cardNumber.startsWith('4')">Visa</span>
+                </div>
+              </div>
+              <div class="form-group full-width">
+                <label class="stripe-input-lbl">Titular de la Tarjeta *</label>
+                <div class="stripe-input-wrapper">
+                  <span class="material-symbols-outlined input-icon">person</span>
+                  <input type="text" [(ngModel)]="paymentDetails.cardHolder" placeholder="Juan Pérez Soto" class="stripe-field" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="stripe-input-lbl">Vencimiento *</label>
+                <div class="stripe-input-wrapper">
+                  <span class="material-symbols-outlined input-icon">calendar_month</span>
+                  <input type="text" [(ngModel)]="paymentDetails.cardExpiry" placeholder="MM/AA" maxlength="5" class="stripe-field" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="stripe-input-lbl">CVC / CVV *</label>
+                <div class="stripe-input-wrapper">
+                  <span class="material-symbols-outlined input-icon">lock</span>
+                  <input type="password" [(ngModel)]="paymentDetails.cardCvv" placeholder="•••" maxlength="4" class="stripe-field" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick fill options (Stripe SandBox Feature) -->
+            <div class="stripe-helper-shortcuts" *ngIf="!stripeSuccessState()">
+              <span class="shortcut-title">Tarjetas de prueba rápidas:</span>
+              <div class="shortcut-buttons">
+                <button type="button" class="btn-stripe-shortcut success" (click)="fillStripeTestCard('success')">
+                  <span class="dot"></span> Aprobada (4242)
+                </button>
+                <button type="button" class="btn-stripe-shortcut error" (click)="fillStripeTestCard('declined')">
+                  <span class="dot"></span> Declinada (4000)
+                </button>
+                <button type="button" class="btn-stripe-shortcut warn" (click)="fillStripeTestCard('expired')">
+                  <span class="dot"></span> Expirada (4242-45)
+                </button>
+              </div>
+            </div>
+
+            <div class="stripe-pci-footer" *ngIf="!stripeSuccessState()">
+              <span class="material-symbols-outlined shield-icon">verified_user</span>
+              <span>Procesado de forma segura por Stripe. Conexión SSL de 256 bits y cifrado AES.</span>
+            </div>
+          </div>
+          
+          <!-- Visa / Mastercard Inputs -->
+          <div class="card-inputs-box" *ngIf="selectedPaymentMethod() === 'VISA' || selectedPaymentMethod() === 'MASTERCARD'">
+            <div class="payment-form-grid">
+              <div class="form-group full-width">
+                <label>Número de Tarjeta *</label>
+                <input type="text" [(ngModel)]="paymentDetails.cardNumber" placeholder="4111 2222 3333 4444" maxlength="19" />
+              </div>
+              <div class="form-group full-width">
+                <label>Nombre del Titular (como figura en la tarjeta) *</label>
+                <input type="text" [(ngModel)]="paymentDetails.cardHolder" placeholder="JUAN PEREZ SOTO" />
+              </div>
+              <div class="form-group">
+                <label>Fecha de Vencimiento *</label>
+                <input type="text" [(ngModel)]="paymentDetails.cardExpiry" placeholder="MM/AA" maxlength="5" />
+              </div>
+              <div class="form-group">
+                <label>Código de Seguridad (CVV) *</label>
+                <input type="password" [(ngModel)]="paymentDetails.cardCvv" placeholder="123" maxlength="4" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Yape/Plin QR codes and number -->
+          <div class="mobile-pay-box" *ngIf="selectedPaymentMethod() === 'YAPE' || selectedPaymentMethod() === 'PLIN'">
+            <div class="qr-content-split">
+              <div class="qr-image-wrapper">
+                <img src="https://images.unsplash.com/photo-1595079676339-1534801ad6cf?w=200&q=80" alt="QR Code Mock" class="qr-mock" />
+                <span class="qr-instructions">Escanea este código QR desde tu app oficial de Yape/Plin</span>
+              </div>
+              <div class="mobile-form">
+                <h5>Paga con {{ selectedPaymentMethod() === 'YAPE' ? 'Yape' : 'Plin' }}</h5>
+                <p>También puedes ingresar directamente tu número celular registrado en la aplicación:</p>
+                <div class="form-group">
+                  <label>Número de Celular *</label>
+                  <input *ngIf="selectedPaymentMethod() === 'YAPE'" type="text" 
+                         [(ngModel)]="paymentDetails.yapeNumber" 
+                         placeholder="999 888 777" 
+                         maxlength="9" />
+                  <input *ngIf="selectedPaymentMethod() === 'PLIN'" type="text" 
+                         [(ngModel)]="paymentDetails.plinNumber" 
+                         placeholder="999 888 777" 
+                         maxlength="9" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bank Transfer instructions -->
+          <div class="bank-transfer-box" *ngIf="selectedPaymentMethod() === 'TRANSFERENCIA'">
+            <h5>Instrucciones de Transferencia Bancaria</h5>
+            <p>Realiza la transferencia desde la app de tu banco a cualquiera de nuestras cuentas oficiales y sube una captura del comprobante:</p>
+            <div class="accounts-list">
+              <div class="account-card">
+                <strong>BCP Soles:</strong> 191-98765432-0-12 <br/>
+                <strong>CCI BCP:</strong> 002-191-0098765432012-58
+              </div>
+              <div class="account-card">
+                <strong>BBVA Soles:</strong> 0011-0145-0200345678 <br/>
+                <strong>CCI BBVA:</strong> 001-100-0110145020034-56
+              </div>
+            </div>
+            <div class="form-group mt-16">
+              <label>Número de Operación o ID de Referencia del Depósito *</label>
+              <input type="text" [(ngModel)]="paymentDetails.transferReceipt" placeholder="Ej: OP-7721831" />
+            </div>
+          </div>
+
+        </div>
+
+        <div class="wizard-footer-nav">
+          <button class="btn-wizard-back" (click)="goToStep(2)">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver a Revisión
+          </button>
+          
+          <button class="btn-wizard-confirm" [disabled]="isSubmitting()" (click)="confirmPayment()">
+            <span *ngIf="!isSubmitting()">Pagar S/ {{ customerService.cartTotal() | number:'1.2-2' }}</span>
+            <span *ngIf="isSubmitting() && selectedPaymentMethod() === 'STRIPE' && !stripeSuccessState()" class="spinner-inline">
+              Conectando con Stripe...
+            </span>
+            <span *ngIf="isSubmitting() && selectedPaymentMethod() === 'STRIPE' && stripeSuccessState()" class="spinner-inline">
+              Creando Pedido...
+            </span>
+            <span *ngIf="isSubmitting() && selectedPaymentMethod() !== 'STRIPE'" class="spinner-inline">Procesando Pago Seguro...</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: BILLING SUMMARY -->
+    <div class="checkout-sidebar-panel">
+      <div class="card summary-checkout-card">
+        <h4>Resumen de Compra</h4>
+        
+        <div class="summary-details">
+          <div class="summary-row">
+            <span>Productos ({{ customerService.cartCount() }})</span>
+            <span>S/ {{ customerService.cartSubtotal() | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Costo de Envío</span>
+            <span class="text-emerald" *ngIf="customerService.cartSubtotal() >= 150">Gratis</span>
+            <span *ngIf="customerService.cartSubtotal() < 150">S/ {{ customerService.cartShipping() | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Impuestos (18% IGV inc.)</span>
+            <span>S/ {{ customerService.cartTax() | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="divider-line"></div>
+
+          <div class="summary-row total">
+            <span>Total a Pagar</span>
+            <span class="text-emerald">S/ {{ customerService.cartTotal() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="security-badges">
+          <div class="badge-item">
+            <span class="material-symbols-outlined text-emerald">gpp_good</span>
+            <div>
+              <h6>Garantía MultiMarket</h6>
+              <p>Tu dinero está seguro hasta que recibas y califiques el producto.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STEP 4: SUCCESS SUMMARY -->
+  <div class="checkout-success-view animate-scale-up" *ngIf="currentStep() === 4 && createdOrder() as order">
+    <div class="card success-receipt-card">
+      <div class="success-icon-area">
+        <span class="material-symbols-outlined check-success">check_circle</span>
+      </div>
+      
+      <h2>¡Gracias por tu compra!</h2>
+      <p class="success-lead">Tu pedido ha sido procesado exitosamente con el número de orden <strong>{{ order.numeroPedido }}</strong></p>
+      
+      <div class="receipt-split">
+        <div class="receipt-col">
+          <h5>Detalles del Despacho</h5>
+          <p><strong>Vendedor:</strong> {{ order.vendedorNombreTienda }}</p>
+          <p><strong>Destino:</strong> {{ order.direccionEntrega?.direccion }}, {{ order.direccionEntrega?.distrito }} - {{ order.direccionEntrega?.departamento }}</p>
+          <p><strong>Método de Pago:</strong> {{ order.metodoPago }}</p>
+          <p><strong>Fecha:</strong> {{ order.fecha | date:'medium' }}</p>
+        </div>
+
+        <div class="receipt-col pricing">
+          <h5>Resumen de Pago</h5>
+          <div class="price-row">
+            <span>Subtotal:</span>
+            <span>S/ {{ order.subtotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="price-row">
+            <span>Envío:</span>
+            <span>S/ {{ order.envio | number:'1.2-2' }}</span>
+          </div>
+          <div class="price-row">
+            <span>Impuestos:</span>
+            <span>S/ {{ order.impuesto | number:'1.2-2' }}</span>
+          </div>
+          <div class="price-row grand-total">
+            <span>Total Cargado:</span>
+            <span class="text-emerald">S/ {{ order.total | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="delivery-progress-preview">
+        <h5>Estado del Despacho</h5>
+        <div class="progress-steps">
+          <div class="progress-step completed">
+            <span class="dot"></span>
+            <span class="label">Pagado</span>
+          </div>
+          <div class="progress-step active">
+            <span class="dot"></span>
+            <span class="label">En Preparación</span>
+          </div>
+          <div class="progress-step">
+            <span class="dot"></span>
+            <span class="label">En Camino</span>
+          </div>
+          <div class="progress-step">
+            <span class="dot"></span>
+            <span class="label">Entregado</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="success-actions">
+        <a routerLink="/products" class="btn-secondary-action">Seguir Comprando</a>
+        <a routerLink="/orders" class="btn-primary-action">Hacer Seguimiento de mi Compra</a>
+      </div>
+    </div>
+  </div>
+
+</div>

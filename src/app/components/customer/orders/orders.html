@@ -1,0 +1,210 @@
+<div class="orders-wrapper animate-fade-in">
+  
+  <div class="orders-page-header">
+    <div class="page-title-area">
+      <h2>Mis Pedidos y Compras</h2>
+      <p>Sigue el estado de tus despachos en tiempo real e inspecciona tus compras anteriores</p>
+    </div>
+  </div>
+
+  <!-- TABS BAR -->
+  <div class="orders-tabs-bar">
+    <button class="orders-tab-btn" 
+            [class.active]="activeTab() === 'active'" 
+            (click)="activeTab.set('active'); selectedOrderId.set(getActiveOrders()[0]?.id || null)">
+      <span class="material-symbols-outlined tab-icon">local_shipping</span>
+      Pedidos Activos ({{ getActiveOrders().length }})
+    </button>
+    <button class="orders-tab-btn" 
+            [class.active]="activeTab() === 'history'" 
+            (click)="activeTab.set('history'); selectedOrderId.set(getHistoricOrders()[0]?.id || null)">
+      <span class="material-symbols-outlined tab-icon">history</span>
+      Historial de Compras ({{ getHistoricOrders().length }})
+    </button>
+  </div>
+
+  <!-- SPLIT CONTENT GRID -->
+  <div class="orders-split-grid" *ngIf="customerService.orders().length > 0">
+    
+    <!-- LEFT PANEL: ORDERS LIST -->
+    <div class="orders-list-panel">
+      
+      <!-- Active Orders List -->
+      <div class="orders-list-box" *ngIf="activeTab() === 'active'">
+        <div class="order-summary-row" 
+             *ngFor="let order of getActiveOrders()" 
+             [class.active]="selectedOrderId() === order.id"
+             (click)="selectOrder(order.id)">
+          <div class="row-top">
+            <span class="order-num">{{ order.numeroPedido }}</span>
+            <span class="order-date">{{ order.fecha | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <h4 class="vendor-title">{{ order.vendedorNombreTienda }}</h4>
+          <div class="row-bottom">
+            <span class="order-total">S/ {{ order.total | number:'1.2-2' }}</span>
+            <span class="status-badge" [ngClass]="getStatusClass(order.estado)">
+              {{ getStatusLabel(order.estado) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="empty-tab-state card" *ngIf="getActiveOrders().length === 0">
+          <span class="material-symbols-outlined state-icon">check_circle</span>
+          <h5>No tienes pedidos activos en tránsito</h5>
+          <p>Todos tus despachos han sido entregados o no has realizado compras recientes.</p>
+          <a routerLink="/products" class="btn-goto-shop">Ver Productos</a>
+        </div>
+      </div>
+
+      <!-- Historic Orders List -->
+      <div class="orders-list-box" *ngIf="activeTab() === 'history'">
+        <div class="order-summary-row" 
+             *ngFor="let order of getHistoricOrders()" 
+             [class.active]="selectedOrderId() === order.id"
+             (click)="selectOrder(order.id)">
+          <div class="row-top">
+            <span class="order-num">{{ order.numeroPedido }}</span>
+            <span class="order-date">{{ order.fecha | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <h4 class="vendor-title">{{ order.vendedorNombreTienda }}</h4>
+          <div class="row-bottom">
+            <span class="order-total">S/ {{ order.total | number:'1.2-2' }}</span>
+            <span class="status-badge" [ngClass]="getStatusClass(order.estado)">
+              {{ getStatusLabel(order.estado) }}
+            </span>
+          </div>
+        </div>
+
+        <div class="empty-tab-state card" *ngIf="getHistoricOrders().length === 0">
+          <span class="material-symbols-outlined state-icon">history_toggle_off</span>
+          <h5>Historial vacío</h5>
+          <p>Aún no has registrado transacciones finalizadas en la plataforma.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT PANEL: DETAILED RECEIPT & TIMELINE -->
+    <div class="order-detail-panel" *ngIf="getSelectedOrder() as order">
+      <div class="card detail-card animate-scale-up">
+        
+        <div class="detail-header">
+          <div>
+            <h3>Detalle de Pedido {{ order.numeroPedido }}</h3>
+            <span class="detail-date">Realizado el {{ order.fecha | date:'medium' }}</span>
+          </div>
+          <span class="status-badge lg" [ngClass]="getStatusClass(order.estado)">
+            {{ getStatusLabel(order.estado) }}
+          </span>
+        </div>
+
+        <!-- Timeline Segment -->
+        <div class="tracking-timeline-box">
+          <h4>Seguimiento del Despacho</h4>
+          <div class="vertical-timeline">
+            <div class="timeline-step" 
+                 *ngFor="let track of order.seguimiento" 
+                 [class.completed]="track.completado" 
+                 [class.pending]="!track.completado">
+              <div class="step-bullet">
+                <span class="material-symbols-outlined bullet-icon" *ngIf="track.completado">check</span>
+              </div>
+              <div class="step-content">
+                <div class="step-meta">
+                  <span class="step-desc">{{ track.descripcion }}</span>
+                  <span class="step-date" *ngIf="track.fecha">{{ track.fecha | date:'short' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Products table -->
+        <div class="detail-items-table">
+          <h4>Artículos Comprados</h4>
+          <div class="table-rows">
+            <div class="table-item-row" *ngFor="let item of order.items">
+              <img [src]="item.imagen" alt="Thumbnail" class="item-thumb" />
+              <div class="item-info">
+                <h5>{{ item.nombre }}</h5>
+                <span class="item-sku">SKU: {{ item.sku }}</span>
+                <span class="item-qty">Cantidad: {{ item.cantidad }}</span>
+              </div>
+              <div class="item-prices">
+                <span class="item-unit">S/ {{ item.precio | number:'1.2-2' }} c/u</span>
+                <span class="item-sub">S/ {{ item.precio * item.cantidad | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery & Payment summary info -->
+        <div class="delivery-billing-summary">
+          <div class="summary-col">
+            <h5>Dirección de Despacho</h5>
+            <p *ngIf="order.direccionEntrega as addr">
+              {{ addr.direccion }} <br/>
+              {{ addr.distrito }} - {{ addr.departamento }}
+            </p>
+          </div>
+          <div class="summary-col">
+            <h5>Información de Pago</h5>
+            <p>
+              <strong>Método:</strong> {{ order.metodoPago }} <br/>
+              <strong>Estado:</strong> Pagado con éxito.
+            </p>
+          </div>
+        </div>
+
+        <!-- Totals summary block -->
+        <div class="billing-totals-panel">
+          <div class="billing-row">
+            <span>Subtotal:</span>
+            <span>S/ {{ order.subtotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="billing-row">
+            <span>Envío:</span>
+            <span>S/ {{ order.envio | number:'1.2-2' }}</span>
+          </div>
+          <div class="billing-row">
+            <span>Impuestos (18% IGV inc.):</span>
+            <span>S/ {{ order.impuesto | number:'1.2-2' }}</span>
+          </div>
+          <div class="divider-line"></div>
+          <div class="billing-row total">
+            <span>Total del Pedido:</span>
+            <span class="text-emerald">S/ {{ order.total | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <!-- Action panel footer -->
+        <div class="detail-actions-footer">
+          <a [routerLink]="['/chat']" class="btn-chat-vendor" title="Chatear con el vendedor sobre esta orden">
+            <span class="material-symbols-outlined">chat</span>
+            Contactar Vendedor
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty Detail State -->
+    <div class="order-detail-panel empty-detail-box" *ngIf="!selectedOrderId()">
+      <div class="card empty-panel-card">
+        <span class="material-symbols-outlined large-icon">receipt_long</span>
+        <h4>Selecciona un pedido</h4>
+        <p>Haz clic en cualquiera de las órdenes a la izquierda para inspeccionar los despachos, artículos, pagos y tiempos.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Entirely Empty State -->
+  <div class="card empty-orders-main-state" *ngIf="customerService.orders().length === 0">
+    <span class="material-symbols-outlined large-icon">shopping_cart_checkout</span>
+    <h3>No has realizado ninguna compra todavía</h3>
+    <p>Empieza a explorar los maravillosos catálogos regionales y realiza tu primer pedido 100% seguro hoy mismo.</p>
+    <a routerLink="/products" class="btn-primary-action">Explorar Catálogo</a>
+  </div>
+
+</div>

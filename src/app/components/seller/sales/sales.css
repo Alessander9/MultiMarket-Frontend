@@ -1,0 +1,278 @@
+/* --- SALES AND REPORTING COMPONENT CSS --- */
+.sales-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sales-page-header {
+  border-bottom: 1px solid var(--outline-variant);
+  padding-bottom: 20px;
+}
+
+.page-title-area h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--on-surface);
+  letter-spacing: -0.5px;
+}
+
+.page-title-area p {
+  font-size: 13px;
+  color: var(--on-surface-variant);
+  margin-top: 4px;
+}
+
+/* KPI GRID */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.5px;
+}
+
+.kpi-card h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--on-surface);
+  letter-spacing: -0.5px;
+}
+
+.kpi-trend {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.text-emerald {
+  color: var(--tertiary);
+}
+
+.card {
+  background-color: var(--surface-container);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+}
+
+/* CHARTS ROW */
+.charts-row {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.comparison-chart-card h3, .categories-share-card h3, .sales-log-card h3 {
+  font-size: 14.5px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--outline-variant);
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  color: var(--on-surface);
+}
+
+/* PURE CSS BAR CHART */
+.bar-chart-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  height: 180px;
+  padding-top: 20px;
+  position: relative;
+}
+
+.bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48px;
+  height: 100%;
+  justify-content: flex-end;
+  position: relative;
+  cursor: pointer;
+}
+
+.bar-fill {
+  width: 24px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.3s ease;
+}
+
+.bar-item:hover .bar-fill {
+  filter: brightness(1.2);
+  transform: scaleY(1.05);
+}
+
+.bar-item.active .bar-fill {
+  box-shadow: 0 0 12px var(--primary);
+}
+
+.bar-label {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.bar-tooltip {
+  position: absolute;
+  top: -24px;
+  background-color: var(--surface-container-highest);
+  border: 1px solid var(--outline-variant);
+  color: var(--on-surface);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.bar-item:hover .bar-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* PROGRESS LIST IN SHARE CARD */
+.progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.row-title {
+  width: 90px;
+  font-size: 13px;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+
+.progress-bar-wrapper {
+  flex: 1;
+  height: 6px;
+  background-color: var(--surface-container-low);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+}
+
+.progress-bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+}
+
+.row-val {
+  width: 32px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* TRANSACTION LOG CARD */
+.sales-log-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.sales-log-card h3 {
+  padding: 20px 24px 0;
+  border: none;
+  margin-bottom: 12px;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.sales-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.sales-log-table th {
+  padding: 14px 24px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1.5px solid var(--outline-variant);
+}
+
+.sales-log-table td {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--outline-variant);
+  vertical-align: middle;
+  font-size: 13.5px;
+}
+
+.sales-log-table tr:last-child td {
+  border-bottom: none;
+}
+
+.order-num {
+  font-weight: 700;
+  color: var(--primary);
+  font-family: var(--font-mono);
+}
+
+.client-name {
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+/* Conciliation status */
+.conciliated-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.conciliated-badge.ok {
+  background-color: rgba(52, 211, 153, 0.08);
+  color: var(--tertiary);
+  border: 1px solid rgba(52, 211, 153, 0.15);
+}
+
+.conciliated-badge.void {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: var(--error);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}

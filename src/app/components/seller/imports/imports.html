@@ -1,0 +1,124 @@
+<div class="imports-wrapper animate-fade-in">
+  
+  <div class="imports-page-header">
+    <div class="page-title-area">
+      <h2>Importador de Catálogo XML</h2>
+      <p>Carga de forma masiva tus productos y actualizaciones de inventario mediante esquemas XML estandarizados</p>
+    </div>
+  </div>
+
+  <div class="imports-grid">
+    <!-- File Upload Section -->
+    <div class="card upload-card">
+      <h3>Nueva Carga Masiva</h3>
+      
+      <!-- Upload area -->
+      <div class="file-drop-area" [class.file-selected]="selectedFile() !== null">
+        <span class="material-symbols-outlined upload-icon">upload_file</span>
+        <p class="drop-text" *ngIf="selectedFile() === null">Arrastra tu archivo .xml aquí o haz clic para examinar</p>
+        <p class="drop-text selected-text" *ngIf="selectedFile() !== null">
+          <strong>Archivo seleccionado:</strong> {{ selectedFile()?.name }} ({{ selectedFile()?.size }} bytes)
+        </p>
+        <input type="file" (change)="onFileSelected($event)" accept=".xml" class="hidden-file-input" [disabled]="isUploading()" />
+      </div>
+
+      <!-- Action feedback -->
+      <div class="feedback-msg info animate-fade-in" *ngIf="uploadFeedback()">
+        <span class="spinner-sm"></span>
+        <p>{{ uploadFeedback() }}</p>
+      </div>
+
+      <div class="feedback-msg error animate-fade-in" *ngIf="uploadError()">
+        <span class="material-symbols-outlined">error</span>
+        <p>{{ uploadError() }}</p>
+      </div>
+
+      <!-- Trigger buttons -->
+      <div class="upload-actions">
+        <button class="btn-clear-selection" (click)="selectedFile.set(null); uploadError.set(null)" [disabled]="selectedFile() === null || isUploading()">
+          Limpiar
+        </button>
+        <button class="btn-submit-upload" (click)="triggerUpload()" [disabled]="selectedFile() === null || isUploading()">
+          {{ isUploading() ? 'Procesando...' : 'Iniciar Importación' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Instructions / Specifications -->
+    <div class="card specs-card">
+      <h3>Esquema XML de Integración</h3>
+      <p class="specs-intro">Para garantizar que la importación se ejecute sin errores, asegúrese de cumplir con la estructura SOAP/XML requerida por el backend MultiMarket:</p>
+      
+      <div class="code-spec-container">
+<pre class="code-box"><code>&lt;catalogo&gt;
+  &lt;producto&gt;
+    &lt;nombre&gt;Café Premium 1kg&lt;/nombre&gt;
+    &lt;descripcion&gt;Aroma intenso...&lt;/descripcion&gt;
+    &lt;sku&gt;CAF-PRE-1KG&lt;/sku&gt;
+    &lt;precio&gt;59.90&lt;/precio&gt;
+    &lt;stock&gt;50&lt;/stock&gt;
+    &lt;peso&gt;1.00&lt;/peso&gt;
+  &lt;/producto&gt;
+&lt;/catalogo&gt;</code></pre>
+      </div>
+
+      <ul class="specs-list">
+        <li>El campo <strong>SKU</strong> debe ser único en tu catálogo. Si ya existe, se actualizará el stock y el precio de forma automática.</li>
+        <li>El campo <strong>Precio</strong> y <strong>Peso</strong> deben expresarse con puntos decimales obligatorios.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Historical logs list -->
+  <div class="card history-logs-card">
+    <h3>Historial de Procesamiento Masivo</h3>
+    
+    <div class="table-responsive">
+      <table class="history-logs-table">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Archivo</th>
+            <th>Procesados</th>
+            <th class="text-emerald">Creados</th>
+            <th class="text-purple">Actualizados</th>
+            <th class="text-red">Fallidos</th>
+            <th>Estado</th>
+            <th>Detalles de Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of sellerService.xmlImports()">
+            <td>
+              <div class="date-col">
+                <span>{{ log.fecha | date:'mediumDate' }}</span>
+                <span class="time-text">{{ log.fecha | date:'shortTime' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="file-name-text">{{ log.archivoNombre }}</span>
+            </td>
+            <td class="font-semibold">{{ log.registrosProcesados }}</td>
+            <td class="font-semibold text-emerald">{{ log.registrosCreados }}</td>
+            <td class="font-semibold text-purple">{{ log.registrosActualizados }}</td>
+            <td class="font-semibold text-red">{{ log.registrosFallidos }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="log.estado.toLowerCase()">
+                {{ log.estado }}
+              </span>
+            </td>
+            <td>
+              <div class="errors-trace-wrapper" *ngIf="log.detallesErrores && log.detallesErrores.length > 0">
+                <ul class="errors-list-bullet">
+                  <li *ngFor="let err of log.detallesErrores">{{ err }}</li>
+                </ul>
+              </div>
+              <span class="text-muted" *ngIf="!log.detallesErrores || log.detallesErrores.length === 0">Sin errores</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

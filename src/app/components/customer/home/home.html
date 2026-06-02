@@ -1,0 +1,207 @@
+<div class="home-wrapper">
+  
+  <!-- Loading skeleton loader -->
+  <div class="skeleton-home-loader" *ngIf="isLoading()">
+    <div class="sk-hero animate-pulse"></div>
+    <div class="sk-grid">
+      <div class="sk-card animate-pulse" *ngFor="let i of [1,2,3,4]"></div>
+    </div>
+  </div>
+
+  <!-- Main Storefront Content -->
+  <div class="home-content animate-fade-in" *ngIf="!isLoading()">
+    
+    <!-- ================= HERO PROMOTION CAROUSEL ================= -->
+    <div class="hero-carousel-wrapper">
+      <div class="carousel-slide">
+        <img [src]="promos[promoIndex()].img" alt="Promoción" class="slide-bg-img" />
+        <div class="slide-overlay-content">
+          <span class="slide-tag">Tendencias Locales</span>
+          <h1 class="slide-title">{{ promos[promoIndex()].title }}</h1>
+          <p class="slide-desc">{{ promos[promoIndex()].subtitle }}</p>
+          <button class="btn-slide-action" (click)="selectPromoCat(promos[promoIndex()].cat)">
+            {{ promos[promoIndex()].buttonText }}
+            <span class="material-symbols-outlined font-sm">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Dots controls -->
+      <div class="carousel-dots-row">
+        <span 
+          *ngFor="let promo of promos; let idx = index" 
+          class="carousel-dot" 
+          [class.active]="promoIndex() === idx"
+          (click)="promoIndex.set(idx)"
+        ></span>
+      </div>
+    </div>
+
+    <!-- ================= CATEGORIES CIRCULAR BUBBLE BAR (MERCADOLIBRE STYLE) ================= -->
+    <section class="home-section categories-section">
+      <h3 class="section-title">Categorías Destacadas</h3>
+      <p class="section-subtitle">Busca entre las categorías más populares del marketplace</p>
+      
+      <div class="categories-bubbles-row">
+        <a [routerLink]="['/products']" [queryParams]="{ category: 'Café' }" class="cat-bubble-card">
+          <div class="cat-bubble-circle bg-coffee">
+            <span class="material-symbols-outlined">coffee</span>
+          </div>
+          <h4>Café Gourmet</h4>
+        </a>
+
+        <a [routerLink]="['/products']" [queryParams]="{ category: 'Chocolate' }" class="cat-bubble-card">
+          <div class="cat-bubble-circle bg-cacao">
+            <span class="material-symbols-outlined">bakery_dining</span>
+          </div>
+          <h4>Cacao</h4>
+        </a>
+
+        <a [routerLink]="['/products']" [queryParams]="{ category: 'Miel' }" class="cat-bubble-card">
+          <div class="cat-bubble-circle bg-miel">
+            <span class="material-symbols-outlined">hive</span>
+          </div>
+          <h4>Miel Pura</h4>
+        </a>
+
+        <a [routerLink]="['/products']" [queryParams]="{ category: 'Artesanías' }" class="cat-bubble-card">
+          <div class="cat-bubble-circle bg-art">
+            <span class="material-symbols-outlined">brush</span>
+          </div>
+          <h4>Artesanías</h4>
+        </a>
+
+        <a [routerLink]="['/products']" [queryParams]="{ category: 'Textiles' }" class="cat-bubble-card">
+          <div class="cat-bubble-circle bg-apparel">
+            <span class="material-symbols-outlined">apparel</span>
+          </div>
+          <h4>Textiles</h4>
+        </a>
+
+        <a [routerLink]="['/products']" [queryParams]="{ category: 'Ferretería' }" class="cat-bubble-card">
+          <div class="cat-bubble-circle bg-iron">
+            <span class="material-symbols-outlined">build</span>
+          </div>
+          <h4>Ferretería</h4>
+        </a>
+      </div>
+    </section>
+
+    <!-- ================= OFFICIAL STORES SHOWCASE (TIENDAS OFICIALES) ================= -->
+    <section class="home-section vendors-section">
+      <div class="section-header-row">
+        <div>
+          <h3 class="section-title">Tiendas Oficiales</h3>
+          <p class="section-subtitle">Compra directamente a las mejores marcas y productores del país</p>
+        </div>
+        <a routerLink="/stores" class="btn-view-all-prod">Ver todas las tiendas</a>
+      </div>
+
+      <div class="home-stores-grid">
+        <div class="home-store-card card" *ngFor="let vendor of portalService.vendors().slice(0, 4)">
+          <!-- Banner bg -->
+          <div class="home-store-banner" [style.background-image]="'url(' + vendor.banner + ')'">
+            <span class="home-store-rating-badge">
+              <span class="material-symbols-outlined star-icon">star</span>
+              <span>{{ vendor.calificacionPromedio | number:'1.1-1' }}</span>
+            </span>
+          </div>
+          
+          <!-- Store logo overlap -->
+          <div class="home-store-logo-wrapper">
+            <img [src]="vendor.logo" alt="Logo" class="home-store-logo-img" />
+          </div>
+
+          <div class="home-store-card-body">
+            <h4>{{ vendor.nombreTienda }}</h4>
+            <span class="home-store-region">
+              <span class="material-symbols-outlined geo-pin">location_on</span>
+              {{ vendor.region }}
+            </span>
+            <p class="home-store-desc">{{ vendor.descripcion }}</p>
+            <button type="button" (click)="browseVendor(vendor.id, vendor.nombreTienda)" class="btn-home-store-visit highlight-btn">
+              Visitar Tienda
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= RECOMMENDED PRODUCTS GRID (MERCADOLIBRE STYLE) ================= -->
+    <section class="home-section products-showcase-section">
+      <div class="section-header-row">
+        <div>
+          <h3 class="section-title">Recomendados para ti</h3>
+          <p class="section-subtitle">Las mejores ofertas y productos de alta calidad del catálogo</p>
+        </div>
+        <a routerLink="/products" class="btn-view-all-prod">Ver catálogo completo</a>
+      </div>
+
+      <div class="products-showcase-grid">
+        
+        <div 
+          *ngFor="let prod of portalService.products().slice(0, 8)" 
+          class="product-item-card card animate-fade-in"
+          [routerLink]="['/products', prod.id]"
+        >
+          <!-- Thumb container -->
+          <div class="item-thumb-wrapper">
+            <img [src]="prod.imagenes[0]" alt="Producto" class="item-img" />
+            <button 
+              class="btn-fav-card-overlap" 
+              [class.favorited]="customerService.isFavorite(prod.id)"
+              (click)="toggleFavorite(prod.id, $event)"
+              title="Añadir a favoritos"
+            >
+              <span class="material-symbols-outlined">favorite</span>
+            </button>
+            <span class="out-stock-label" *ngIf="prod.stock === 0">Agotado</span>
+          </div>
+
+          <!-- Product Details -->
+          <div class="item-details">
+            <span class="item-cat">{{ prod.categoriaNombre || 'Gourmet' }}</span>
+            <h4 class="item-title">{{ prod.nombre }}</h4>
+            
+            <div class="item-footer-rating">
+              <span class="material-symbols-outlined star">star</span>
+              <strong>{{ 4.5 + (prod.id % 6) / 10 | number:'1.1-1' }}</strong>
+              <span class="rating-vts"> • Tienda Oficial</span>
+            </div>
+
+            <!-- Installment simulated pricing (MercadoLibre style!) -->
+            <div class="price-action-row">
+              <div class="price-block">
+                <div class="actual-price">
+                  <span class="currency">S/</span>
+                  <span class="val">{{ prod.precio | number:'1.2-2' }}</span>
+                </div>
+                <div class="installment-text">
+                  en 12x <span class="text-emerald">S/ {{ prod.precio / 12 | number:'1.2-2' }} sin interés</span>
+                </div>
+                <div class="free-shipping-text text-emerald" *ngIf="prod.precio >= 150">
+                  Envío gratis
+                </div>
+              </div>
+              
+              <button 
+                class="btn-card-buy" 
+                [disabled]="prod.stock === 0" 
+                (click)="addToCart(prod, $event)"
+                title="Añadir al Carrito"
+              >
+                <span class="material-symbols-outlined">shopping_cart</span>
+              </button>
+            </div>
+
+            <!-- Brand indicator -->
+            <span class="item-brand-seller">Por {{ getVendorName(prod.vendedorId) }}</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+</div>

@@ -1,0 +1,101 @@
+<div class="stores-wrapper animate-fade-in">
+
+  <!-- HERO HEADER -->
+  <div class="stores-hero-banner">
+    <div class="hero-blur-overlay"></div>
+    <div class="hero-text-content">
+      <span class="hero-kicker">Mercado de Productores</span>
+      <h1>Tiendas Oficiales en MultiMarket</h1>
+      <p>Compra con total garantía directamente a los mejores artesanos, agricultores y ferreteros locales del país.</p>
+    </div>
+  </div>
+
+  <!-- SEARCH & FILTER BAR -->
+  <div class="stores-filter-bar card">
+    <div class="search-input-box">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input 
+        type="text" 
+        placeholder="Buscar por nombre de tienda, descripción o región..." 
+        [(ngModel)]="searchQuery"
+        class="stores-search-input"
+      />
+    </div>
+
+    <div class="region-filter-box">
+      <label for="regionSelect">Región:</label>
+      <select id="regionSelect" [(ngModel)]="selectedRegion" class="region-select">
+        <option value="ALL">Todas las regiones</option>
+        <option *ngFor="let reg of regionsList()" [value]="reg">{{ reg }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- SKELETON LOADER -->
+  <div class="stores-skeleton" *ngIf="isLoading()">
+    <div class="sk-store-card animate-pulse" *ngFor="let i of [1,2,3,4]"></div>
+  </div>
+
+  <!-- STORES CARD GRID -->
+  <div class="stores-grid animate-fade-in" *ngIf="!isLoading() && filteredStores().length > 0">
+    <div class="store-dir-card card" *ngFor="let vendor of filteredStores()">
+      
+      <!-- Store Banner Header -->
+      <div class="store-dir-banner" [style.background-image]="'url(' + vendor.banner + ')'">
+        <span class="rating-badge-premium">
+          <span class="material-symbols-outlined star-icon">star</span>
+          <span>{{ vendor.calificacionPromedio | number:'1.1-1' }}</span>
+        </span>
+        <span class="region-badge-premium">
+          <span class="material-symbols-outlined pin-icon">location_on</span>
+          <span>{{ vendor.region }}</span>
+        </span>
+      </div>
+
+      <!-- Overlapping Avatar Logo -->
+      <div class="store-dir-logo-container">
+        <img [src]="vendor.logo" alt="{{ vendor.nombreTienda }} logo" class="store-dir-logo" />
+      </div>
+
+      <!-- Card Body Content -->
+      <div class="store-dir-body">
+        <h3 class="store-dir-title">{{ vendor.nombreTienda }}</h3>
+        <p class="store-dir-address">{{ vendor.direccion }}</p>
+        <p class="store-dir-desc">{{ vendor.descripcion }}</p>
+
+        <!-- Stats row -->
+        <div class="store-dir-stats">
+          <div class="stat-bubble">
+            <span class="material-symbols-outlined">schedule</span>
+            <span>Desde {{ vendor.fechaCreacion.split(' ')[0] }}</span>
+          </div>
+          <div class="stat-bubble bg-purple">
+            <span class="material-symbols-outlined">verified</span>
+            <span>Garantía Justa</span>
+          </div>
+        </div>
+
+        <div class="store-dir-actions">
+          <button (click)="visitStore(vendor.id, vendor.nombreTienda)" class="btn-visit-store highlight-btn">
+            <span class="material-symbols-outlined">inventory</span>
+            <span>Ver Productos</span>
+          </button>
+          <a [routerLink]="['/chat']" [queryParams]="{ vendorId: vendor.id }" class="btn-chat-store">
+            <span class="material-symbols-outlined">chat</span>
+            <span>Preguntar</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="stores-empty card animate-scale-up" *ngIf="!isLoading() && filteredStores().length === 0">
+    <span class="material-symbols-outlined empty-icon">storefront</span>
+    <h3>No se encontraron tiendas oficiales</h3>
+    <p>Prueba modificando los criterios de búsqueda o seleccionando otra región.</p>
+    <button (click)="searchQuery.set(''); selectedRegion.set('ALL')" class="btn-reset-empty highlight-btn">Ver todas las tiendas</button>
+  </div>
+
+</div>

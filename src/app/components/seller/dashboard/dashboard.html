@@ -1,0 +1,398 @@
+<!-- Loading Overlay -->
+<div class="loading-overlay" *ngIf="isLoading()">
+  <div class="spinner"></div>
+  <p>Cargando panel de control...</p>
+</div>
+
+<!-- Main Dashboard Container -->
+<div class="dashboard-wrapper animate-fade-in" *ngIf="!isLoading()">
+  
+  <!-- Error Alert Banner -->
+  <div class="error-banner" *ngIf="errorMessage()">
+    <span class="material-symbols-outlined">error</span>
+    <p>{{ errorMessage() }}</p>
+    <button class="close-error-btn" (click)="errorMessage.set(null)">×</button>
+  </div>
+
+  <!-- ================= TOP KPI GRID ================= -->
+  <div class="kpi-grid">
+    
+    <!-- Ventas Hoy -->
+    <div class="kpi-card accent-emerald">
+      <div class="kpi-icon-circle bg-emerald-dim text-emerald">
+        <span class="material-symbols-outlined">payments</span>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Ventas Hoy</span>
+        <h2 class="kpi-value">S/ 2,540.00</h2>
+        <span class="kpi-trend trend-up">
+          <span class="material-symbols-outlined">trending_up</span>
+          +12.4% vs ayer
+        </span>
+      </div>
+    </div>
+
+    <!-- Ventas Mes -->
+    <div class="kpi-card accent-emerald">
+      <div class="kpi-icon-circle bg-emerald-dim text-emerald">
+        <span class="material-symbols-outlined">analytics</span>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Ventas Mes</span>
+        <h2 class="kpi-value">S/ 32,500.00</h2>
+        <span class="kpi-trend trend-up">
+          <span class="material-symbols-outlined">trending_up</span>
+          +24.1% vs mes ant.
+        </span>
+      </div>
+    </div>
+
+    <!-- Pedidos Pendientes -->
+    <div class="kpi-card accent-purple">
+      <div class="kpi-icon-circle bg-purple-dim text-purple">
+        <span class="material-symbols-outlined">shopping_bag</span>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Pedidos Pendientes</span>
+        <h2 class="kpi-value">{{ sellerService.pendingOrdersCount() }}</h2>
+        <span class="kpi-trend trend-down" *ngIf="sellerService.pendingOrdersCount() > 5">
+          <span class="material-symbols-outlined">error</span>
+          Acción requerida
+        </span>
+        <span class="kpi-trend trend-neutral" *ngIf="sellerService.pendingOrdersCount() <= 5">
+          <span class="material-symbols-outlined">done</span>
+          Bajo control
+        </span>
+      </div>
+    </div>
+
+    <!-- Pedidos Entregados -->
+    <div class="kpi-card accent-purple">
+      <div class="kpi-icon-circle bg-purple-dim text-purple">
+        <span class="material-symbols-outlined">local_shipping</span>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Pedidos Entregados</span>
+        <h2 class="kpi-value">132</h2>
+        <span class="kpi-trend trend-up">
+          <span class="material-symbols-outlined">trending_up</span>
+          98.2% efectividad
+        </span>
+      </div>
+    </div>
+
+    <!-- Productos Activos -->
+    <div class="kpi-card">
+      <div class="kpi-icon-circle bg-neutral-dim">
+        <span class="material-symbols-outlined">inventory_2</span>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Productos Activos</span>
+        <h2 class="kpi-value">{{ sellerService.activeProductsCount() }}</h2>
+        <span class="kpi-trend trend-neutral">
+          De {{ sellerService.products().length }} cargados
+        </span>
+      </div>
+    </div>
+
+    <!-- Clientes Nuevos -->
+    <div class="kpi-card">
+      <div class="kpi-icon-circle bg-neutral-dim">
+        <span class="material-symbols-outlined">person_add</span>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Clientes Nuevos</span>
+        <h2 class="kpi-value">25</h2>
+        <span class="kpi-trend trend-up">
+          <span class="material-symbols-outlined">arrow_upward</span>
+          +8 este mes
+        </span>
+      </div>
+    </div>
+
+    <!-- Conversaciones Activas -->
+    <div class="kpi-card accent-emerald">
+      <div class="kpi-icon-circle bg-emerald-dim text-emerald">
+        <span class="material-symbols-outlined">chat</span>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Chat Activos</span>
+        <h2 class="kpi-value">{{ sellerService.conversations().length }}</h2>
+        <span class="kpi-trend trend-up" *ngIf="sellerService.unreadChatsCount() > 0">
+          <span class="material-symbols-outlined">mail</span>
+          {{ sellerService.unreadChatsCount() }} sin leer
+        </span>
+        <span class="kpi-trend trend-neutral" *ngIf="sellerService.unreadChatsCount() === 0">
+          <span class="material-symbols-outlined">done_all</span>
+          Al día
+        </span>
+      </div>
+    </div>
+
+    <!-- Calificación Tienda -->
+    <div class="kpi-card accent-yellow">
+      <div class="kpi-icon-circle bg-yellow-dim text-yellow">
+        <span class="material-symbols-outlined">star</span>
+      </div>
+      <div class="kpi-content">
+        <span class="kpi-label">Calificación</span>
+        <h2 class="kpi-value">4.8 <span class="rating-max">/ 5.0</span></h2>
+        <span class="kpi-trend text-yellow">
+          <span class="material-symbols-outlined font-sm">grade</span>
+          95 excelentes
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= MIDDLE AREA: CHART & ALERTS ================= -->
+  <div class="middle-grid">
+    
+    <!-- Premium Interactive Chart Panel -->
+    <div class="chart-panel card">
+      <div class="panel-header">
+        <div class="panel-header-left">
+          <h3 class="panel-title">Rendimiento Comercial</h3>
+          <p class="panel-subtitle">Ventas y Pedidos de los últimos 30 días</p>
+        </div>
+        <div class="chart-toggles">
+          <button 
+            class="chart-toggle-btn" 
+            [class.active]="activeChartTab() === 'sales'"
+            (click)="activeChartTab.set('sales')"
+          >
+            Ventas (S/)
+          </button>
+          <button 
+            class="chart-toggle-btn" 
+            [class.active]="activeChartTab() === 'orders'"
+            (click)="activeChartTab.set('orders')"
+          >
+            Pedidos
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-body">
+        <!-- SVG Vector-Based Premium Graph (Sales / Orders) -->
+        <div class="svg-chart-container">
+          <svg viewBox="0 0 600 200" class="svg-graph" preserveAspectRatio="none">
+            <!-- Grid Lines -->
+            <line x1="0" y1="50" x2="600" y2="50" class="chart-grid-line" />
+            <line x1="0" y1="100" x2="600" y2="100" class="chart-grid-line" />
+            <line x1="0" y1="150" x2="600" y2="150" class="chart-grid-line" />
+            <line x1="0" y1="200" x2="600" y2="200" class="chart-grid-line" />
+
+            <!-- Sales Path (Violet gradient) -->
+            <defs>
+              <linearGradient id="violet-gradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.4" />
+                <stop offset="100%" stop-color="var(--primary)" stop-opacity="0.0" />
+              </linearGradient>
+              <linearGradient id="emerald-gradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--tertiary)" stop-opacity="0.4" />
+                <stop offset="100%" stop-color="var(--tertiary)" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            <!-- Sales Line & Area -->
+            <path 
+              *ngIf="activeChartTab() === 'sales'"
+              d="M0,160 Q60,120 120,150 T240,80 T360,110 T480,40 T600,60 L600,200 L0,200 Z" 
+              fill="url(#violet-gradient)"
+            />
+            <path 
+              *ngIf="activeChartTab() === 'sales'"
+              d="M0,160 Q60,120 120,150 T240,80 T360,110 T480,40 T600,60" 
+              fill="none" 
+              stroke="var(--primary)" 
+              stroke-width="3"
+            />
+
+            <!-- Orders Line & Area -->
+            <path 
+              *ngIf="activeChartTab() === 'orders'"
+              d="M0,140 Q60,150 120,100 T240,110 T360,70 T480,90 T600,30 L600,200 L0,200 Z" 
+              fill="url(#emerald-gradient)"
+            />
+            <path 
+              *ngIf="activeChartTab() === 'orders'"
+              d="M0,140 Q60,150 120,100 T240,110 T360,70 T480,90 T600,30" 
+              fill="none" 
+              stroke="var(--tertiary)" 
+              stroke-width="3"
+            />
+
+            <!-- Interaction Nodes -->
+            <circle cx="240" cy="80" r="5" fill="var(--primary)" stroke="var(--background)" stroke-width="2" *ngIf="activeChartTab() === 'sales'" />
+            <circle cx="480" cy="40" r="5" fill="var(--primary)" stroke="var(--background)" stroke-width="2" *ngIf="activeChartTab() === 'sales'" />
+            <circle cx="600" cy="60" r="5" fill="var(--primary)" stroke="var(--background)" stroke-width="2" *ngIf="activeChartTab() === 'sales'" />
+            
+            <circle cx="360" cy="70" r="5" fill="var(--tertiary)" stroke="var(--background)" stroke-width="2" *ngIf="activeChartTab() === 'orders'" />
+            <circle cx="600" cy="30" r="5" fill="var(--tertiary)" stroke="var(--background)" stroke-width="2" *ngIf="activeChartTab() === 'orders'" />
+          </svg>
+        </div>
+
+        <!-- Chart Timeline Labels -->
+        <div class="chart-timeline-labels">
+          <span>01 May</span>
+          <span>08 May</span>
+          <span>15 May</span>
+          <span>22 May</span>
+          <span>29 May</span>
+          <span>Hoy</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Alerts Panel -->
+    <div class="alerts-panel card">
+      <div class="panel-header">
+        <div>
+          <h3 class="panel-title">Notificaciones & Alertas</h3>
+          <p class="panel-subtitle">Tareas prioritarias para atención</p>
+        </div>
+      </div>
+
+      <div class="alerts-filter-chips">
+        <button class="chip" [class.active]="selectedAlertFilter() === 'ALL'" (click)="selectedAlertFilter.set('ALL')">Todas</button>
+        <button class="chip" [class.active]="selectedAlertFilter() === 'STOCK'" (click)="selectedAlertFilter.set('STOCK')">Stock Bajo</button>
+        <button class="chip" [class.active]="selectedAlertFilter() === 'ORDERS'" (click)="selectedAlertFilter.set('ORDERS')">Pedidos</button>
+        <button class="chip" [class.active]="selectedAlertFilter() === 'CHAT'" (click)="selectedAlertFilter.set('CHAT')">Chat</button>
+      </div>
+
+      <div class="alerts-list">
+        <div 
+          *ngFor="let alert of filteredAlerts" 
+          class="alert-item" 
+          [ngClass]="alert.severity"
+        >
+          <div class="alert-icon-wrapper">
+            <span class="material-symbols-outlined">
+              {{ alert.type === 'STOCK' ? 'warning' : alert.type === 'ORDERS' ? 'hourglass_top' : 'chat' }}
+            </span>
+          </div>
+          <div class="alert-info">
+            <span class="alert-title">{{ alert.title }}</span>
+            <p class="alert-message">{{ alert.message }}</p>
+          </div>
+          <a [routerLink]="alert.actionRoute" class="alert-action-btn-link">
+            {{ alert.actionText }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= BOTTOM ROW: TOP SELLING & RECENT ORDERS ================= -->
+  <div class="bottom-grid">
+    
+    <!-- Top Selling Products -->
+    <div class="top-products-card card">
+      <div class="panel-header">
+        <div>
+          <h3 class="panel-title">Productos Más Vendidos</h3>
+          <p class="panel-subtitle">Por volumen de ventas de este mes</p>
+        </div>
+        <a routerLink="/seller/products" class="panel-action-link">Ver todo</a>
+      </div>
+
+      <div class="top-products-list">
+        
+        <div class="top-prod-row" *ngFor="let prod of sellerService.products().slice(0, 4); let i = index">
+          <div class="rank-badge">{{ i + 1 }}</div>
+          <img [src]="prod.imagenes[0]" alt="Producto" class="top-prod-thumb" />
+          <div class="top-prod-meta">
+            <h4 class="top-prod-name">{{ prod.nombre }}</h4>
+            <span class="top-prod-sku">{{ prod.sku }}</span>
+          </div>
+          <div class="top-prod-sales">
+            <span class="sales-number">{{ 80 - (i * 15) }} vts</span>
+            <span class="sales-money">S/ {{ (80 - (i * 15)) * prod.precio | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="recent-orders-card card">
+      <div class="panel-header">
+        <div>
+          <h3 class="panel-title">Últimos Pedidos Recibidos</h3>
+          <p class="panel-subtitle">Despacha tus órdenes lo antes posible</p>
+        </div>
+        <a routerLink="/seller/orders" class="panel-action-link">Ir a Pedidos</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="recent-orders-table">
+          <thead>
+            <tr>
+              <th>Pedido</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of sellerService.orders().slice(0, 4)">
+              <td>
+                <div class="order-id-col">
+                  <span class="order-num">{{ order.numeroPedido }}</span>
+                  <span class="order-date">{{ order.fecha | date:'shortTime' }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="client-col">
+                  <span class="client-name">{{ order.clienteNombre }}</span>
+                  <span class="client-email">{{ order.clienteCorreo }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="order-total-val">S/ {{ order.total | number:'1.2-2' }}</span>
+              </td>
+              <td>
+                <span 
+                  class="status-pill-badge" 
+                  [ngClass]="order.estado.toLowerCase()"
+                >
+                  {{ order.estado }}
+                </span>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button 
+                    *ngIf="order.estado === 'PENDIENTE' || order.estado === 'PROCESANDO'" 
+                    class="btn-action-primary" 
+                    (click)="shipOrder(order.id)" 
+                    title="Marcar como Enviado"
+                  >
+                    <span class="material-symbols-outlined font-sm">local_shipping</span>
+                    Despachar
+                  </button>
+                  <button 
+                    *ngIf="order.estado === 'PENDIENTE'" 
+                    class="btn-action-secondary" 
+                    (click)="cancelOrder(order.id)" 
+                    title="Cancelar Pedido"
+                  >
+                    Cancelar
+                  </button>
+                  <a [routerLink]="['/seller/orders']" class="btn-action-view" title="Ver Detalle">
+                    <span class="material-symbols-outlined font-sm">visibility</span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>

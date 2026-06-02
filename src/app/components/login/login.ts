@@ -52,7 +52,7 @@ export class Login {
         if (roles.includes('ADMIN')) {
           this.router.navigate(['/admin/dashboard']);
         } else if (roles.includes('VENDEDOR')) {
-          this.router.navigate(['/productos']); // Vendedors manage inventory
+          this.router.navigate(['/seller/dashboard']); // Vendedores manage their shop portal
         } else {
           this.router.navigate(['/productos']); // Buyers browse products
         }

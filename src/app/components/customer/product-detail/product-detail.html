@@ -1,0 +1,161 @@
+<div class="detail-wrapper animate-fade-in" *ngIf="product(); else noProductState">
+  
+  <!-- Navigation header -->
+  <div class="detail-navigation-bar">
+    <a routerLink="/products" class="btn-back">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Regresar al catálogo
+    </a>
+  </div>
+
+  <!-- Main Split Details -->
+  <div class="detail-main-grid">
+    
+    <!-- Left: Gallery Media -->
+    <div class="detail-gallery card">
+      <div class="gallery-large-view">
+        <img [src]="product()?.imagenes?.[0]" alt="Producto" class="gallery-main-img" />
+        <span class="stock-badgeAgout" *ngIf="product()?.stock === 0">Agotado</span>
+      </div>
+      <div class="gallery-thumbs">
+        <div class="thumb active">
+          <img [src]="product()?.imagenes?.[0]" alt="Thumbnail" />
+        </div>
+        <div class="thumb">
+          <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=100" alt="Thumbnail mock" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Specs and Actions -->
+    <div class="detail-specs card">
+      <div class="specs-header-row">
+        <span class="specs-category-tag">{{ product()?.categoria }}</span>
+        <button 
+          class="btn-fav-detail" 
+          [class.active]="isFavorited()"
+          (click)="toggleFavorite()"
+          title="Añadir a Favoritos"
+        >
+          <span class="material-symbols-outlined">
+            {{ isFavorited() ? 'favorite' : 'favorite' }}
+          </span>
+          {{ isFavorited() ? 'Favorito' : 'Añadir Favorito' }}
+        </button>
+      </div>
+
+      <h2 class="specs-title">{{ product()?.nombre }}</h2>
+      
+      <!-- Seller Rating Row -->
+      <div class="specs-rating-row">
+        <div class="star-rating">
+          <span class="material-symbols-outlined star">star</span>
+          <strong>4.8</strong> (95 valoraciones)
+        </div>
+        <span class="divider-dot">•</span>
+        <div class="seller-ref">
+          Vendido por: 
+          <a [routerLink]="['/products']" [queryParams]="{ category: product()?.categoria }" class="seller-shop-link">
+            Café Altomayo Gourmet
+          </a>
+        </div>
+      </div>
+
+      <!-- Price Hero card -->
+      <div class="price-hero-card">
+        <span class="price-label">Precio Regular</span>
+        <div class="price-value-row">
+          <span class="currency">S/</span>
+          <span class="val">{{ product()?.precio | number:'1.2-2' }}</span>
+        </div>
+        <p class="shipping-info">🚚 Envío gratis en Lima en compras mayores a S/ 150</p>
+      </div>
+
+      <!-- Specifications tech list -->
+      <div class="tech-specifications-list">
+        <div class="tech-row">
+          <span>Código SKU de Referencia</span>
+          <strong class="font-mono">{{ product()?.sku }}</strong>
+        </div>
+        <div class="tech-row">
+          <span>Peso del Producto</span>
+          <strong>{{ product()?.peso }} kg</strong>
+        </div>
+        <div class="tech-row">
+          <span>Disponibilidad Almacén</span>
+          <strong [class.text-red]="product()?.stock === 0" [class.text-yellow]="product()!.stock > 0 && product()!.stock <= 10">
+            {{ product()?.stock === 0 ? 'Agotado' : product()?.stock + ' unidades disponibles' }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="specs-divider"></div>
+
+      <!-- Quantity Selector if in stock -->
+      <div class="purchase-qty-picker-row" *ngIf="product()!.stock > 0">
+        <span class="qty-label">Cantidad:</span>
+        <div class="qty-controls-box">
+          <button class="btn-qty-mod" [disabled]="purchaseQty() === 1" (click)="incrementQty(-1)">-</button>
+          <span class="qty-display">{{ purchaseQty() }}</span>
+          <button class="btn-qty-mod" [disabled]="purchaseQty() === product()?.stock" (click)="incrementQty(1)">+</button>
+        </div>
+        <span class="stock-max-text">(Máximo disponible: {{ product()?.stock }})</span>
+      </div>
+
+      <!-- CTA Action Buttons -->
+      <div class="specs-actions-panel">
+        <button class="btn-cta-buy" [disabled]="product()?.stock === 0" (click)="buyNow()">
+          Comprar Ahora
+        </button>
+        <button class="btn-cta-add" [disabled]="product()?.stock === 0" (click)="addToCart()">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          Añadir al Carrito
+        </button>
+        <button class="btn-cta-chat" (click)="chatWithVendor()">
+          <span class="material-symbols-outlined">chat</span>
+          Preguntar al Vendedor
+        </button>
+      </div>
+
+      <div class="specs-divider"></div>
+
+      <!-- Product Description -->
+      <div class="specs-desc-block">
+        <h4>Descripción del Producto</h4>
+        <p class="desc-text">{{ product()?.descripcion }}</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= RELATED PRODUCTS SECTION ================= -->
+  <section class="related-section" *ngIf="relatedProducts().length > 0">
+    <h3>Productos Similares Recomendados</h3>
+    <p class="related-sub">Completa tu compra con otros artículos de la misma categoría</p>
+    
+    <div class="related-grid">
+      <div 
+        *ngFor="let rel of relatedProducts()" 
+        class="related-card card"
+        [routerLink]="['/products', rel.id]"
+      >
+        <img [src]="rel.imagenes[0]" alt="Thumbnail" class="related-thumb" />
+        <div class="related-details">
+          <h4 class="related-title">{{ rel.nombre }}</h4>
+          <span class="related-price">S/ {{ rel.precio | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Product not found state -->
+<ng-template #noProductState>
+  <div class="detail-empty-state card">
+    <span class="material-symbols-outlined empty-icon">sentiment_dissatisfied</span>
+    <h3>Producto no encontrado</h3>
+    <p>El producto solicitado no existe en la base de datos de MultiMarket o fue dado de baja.</p>
+    <a routerLink="/products" class="btn-back-catalog">Ir al catálogo de productos</a>
+  </div>
+</ng-template>

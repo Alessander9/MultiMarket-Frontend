@@ -1,0 +1,139 @@
+<div class="sales-wrapper animate-fade-in">
+  
+  <div class="sales-page-header">
+    <div class="page-title-area">
+      <h2>Ventas y Reportes Comerciales</h2>
+      <p>Analiza tus ingresos, rendimiento de catálogo de productos y volumen transaccional</p>
+    </div>
+  </div>
+
+  <!-- KPI Grid -->
+  <div class="kpi-grid">
+    <div class="kpi-card card">
+      <span class="kpi-label">Ingresos del Día</span>
+      <h3>S/ 2,540.00</h3>
+      <span class="kpi-trend text-emerald">+12.4% vs ayer</span>
+    </div>
+
+    <div class="kpi-card card">
+      <span class="kpi-label">Ingresos Mensuales</span>
+      <h3>S/ 32,500.00</h3>
+      <span class="kpi-trend text-emerald">+24.1% vs mes ant.</span>
+    </div>
+
+    <div class="kpi-card card">
+      <span class="kpi-label">Ticket Promedio</span>
+      <h3>S/ 115.30</h3>
+      <span class="kpi-trend text-emerald">+2.5% vs prom.</span>
+    </div>
+
+    <div class="kpi-card card">
+      <span class="kpi-label">Ingresos del Año</span>
+      <h3>S/ 180,420.00</h3>
+      <span class="kpi-trend text-emerald">Objetivo 85%</span>
+    </div>
+  </div>
+
+  <!-- Charts Breakdown -->
+  <div class="charts-row">
+    <!-- Monthly comparison pure CSS bar chart -->
+    <div class="card comparison-chart-card">
+      <h3>Comparativa de Ventas Mensuales (S/)</h3>
+      <div class="bar-chart-container">
+        <div class="bar-item">
+          <div class="bar-fill" style="height: 45%; background-color: var(--outline-variant);"></div>
+          <span class="bar-label">Ene</span>
+          <span class="bar-tooltip">S/ 15,200</span>
+        </div>
+        <div class="bar-item">
+          <div class="bar-fill" style="height: 55%; background-color: var(--outline-variant);"></div>
+          <span class="bar-label">Feb</span>
+          <span class="bar-tooltip">S/ 18,400</span>
+        </div>
+        <div class="bar-item">
+          <div class="bar-fill" style="height: 62%; background-color: var(--outline-variant);"></div>
+          <span class="bar-label">Mar</span>
+          <span class="bar-tooltip">S/ 21,200</span>
+        </div>
+        <div class="bar-item">
+          <div class="bar-fill" style="height: 70%; background-color: var(--outline-variant);"></div>
+          <span class="bar-label">Abr</span>
+          <span class="bar-tooltip">S/ 24,500</span>
+        </div>
+        <div class="bar-item">
+          <div class="bar-fill active" style="height: 90%; background-color: var(--primary);"></div>
+          <span class="bar-label">May</span>
+          <span class="bar-tooltip">S/ 32,500</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category share -->
+    <div class="card categories-share-card">
+      <h3>Ingresos por Categoría</h3>
+      <div class="progress-list">
+        <div class="progress-row">
+          <span class="row-title">Café</span>
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar" style="width: 75%; background-color: var(--primary);"></div>
+          </div>
+          <span class="row-val">75%</span>
+        </div>
+
+        <div class="progress-row">
+          <span class="row-title">Chocolate</span>
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar" style="width: 15%; background-color: var(--tertiary);"></div>
+          </div>
+          <span class="row-val">15%</span>
+        </div>
+
+        <div class="progress-row">
+          <span class="row-title">Miel</span>
+          <div class="progress-bar-wrapper">
+            <div class="progress-bar" style="width: 10%; background-color: #fbbf24;"></div>
+          </div>
+          <span class="row-val">10%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Transaction log table -->
+  <div class="sales-log-card card">
+    <h3>Transacciones de Ventas del Día</h3>
+    <div class="table-responsive">
+      <table class="sales-log-table">
+        <thead>
+          <tr>
+            <th>Nº Pedido</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Método Pago</th>
+            <th class="text-right">Monto</th>
+            <th>Estado Conciliación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of sellerService.orders()">
+            <td>
+              <span class="order-num">{{ order.numeroPedido }}</span>
+            </td>
+            <td>{{ order.fecha | date:'shortTime' }}</td>
+            <td>
+              <span class="client-name">{{ order.clienteNombre }}</span>
+            </td>
+            <td>{{ order.metodoPago }}</td>
+            <td class="text-right font-semibold">S/ {{ order.total | number:'1.2-2' }}</td>
+            <td>
+              <span class="conciliated-badge" [ngClass]="order.estado === 'CANCELADO' ? 'void' : 'ok'">
+                {{ order.estado === 'CANCELADO' ? 'ANULADO' : 'CONCILIADO' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

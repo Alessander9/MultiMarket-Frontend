@@ -1,54 +1,54 @@
-/* CSS variables defining the Obsidian Artisans theme for MultiMarket */
+/* Global design system for MultiMarket */
 :root {
-  --background: #09090b;
-  --surface: #0c0c0f;
-  --surface-container: #121215;
-  --surface-container-low: #0f0f12;
-  --surface-container-high: #18181b;
-  --surface-container-highest: #1e1e22;
-  --surface-dim: #0c0c0f;
-  --surface-bright: #18181b;
+  --background: #07080b;
+  --background-elevated: #0b0d12;
+  --surface: #0f1116;
+  --surface-container: #131824;
+  --surface-container-low: #10131a;
+  --surface-container-high: #171d27;
+  --surface-container-highest: #1d2430;
+  --surface-dim: #090b10;
+  --surface-bright: #1b2230;
 
-  /* Theme Accents (Violet & Emerald) */
-  --primary: #a78bfa;
-  --primary-container: #7c3aed;
+  --primary: #b9a3ff;
+  --primary-container: #6d4aff;
   --primary-fixed: #ede9fe;
-  --primary-fixed-dim: #c4b5fd;
-  --on-primary: #0a0012;
-  --on-primary-container: #ede9fe;
-  
-  --secondary: #71717a;
-  --secondary-container: #27272a;
-  --on-secondary: #09090b;
-  
-  --tertiary: #34d399;
-  --tertiary-container: #065f46;
-  --on-tertiary: #001a12;
-  
-  /* Neutral Foregrounds */
-  --on-background: #fafafa;
-  --on-surface: #fafafa;
-  --on-surface-variant: #a1a1aa;
-  
-  /* Borders and Outlines */
-  --outline: #52525b;
-  --outline-variant: #27272a;
-  
-  /* Alert / Error states */
-  --error: #ef4444;
-  --error-container: #3b1111;
-  --on-error: #1a0000;
-  
-  /* Spacings and Borders */
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  --primary-fixed-dim: #d8c7ff;
+  --on-primary: #09030f;
+  --on-primary-container: #f6f0ff;
+
+  --secondary: #8b93a7;
+  --secondary-container: #202838;
+  --on-secondary: #eef2ff;
+
+  --tertiary: #44d7a8;
+  --tertiary-container: #0b5a43;
+  --on-tertiary: #02160f;
+
+  --on-background: #f6f7fb;
+  --on-surface: #f6f7fb;
+  --on-surface-variant: #b1b8ca;
+
+  --outline: #64708a;
+  --outline-variant: #232b3a;
+
+  --error: #fb7185;
+  --error-container: #34111a;
+  --on-error: #1f040a;
+
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
-  
-  --font-sans: 'Geist', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.24);
+  --shadow-strong: 0 30px 80px rgba(0, 0, 0, 0.42);
+
+  --font-sans: 'Geist', 'Inter', 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: 'Geist Mono', SFMono-Regular, Consolas, monospace;
 }
 
-/* Global Reset & Base Styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -61,16 +61,51 @@ html, body {
   background-color: var(--background);
   color: var(--on-background);
   overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
 }
 
-/* Premium Selection Styles */
+body {
+  background:
+    radial-gradient(circle at top left, rgba(109, 74, 255, 0.18), transparent 30%),
+    radial-gradient(circle at top right, rgba(68, 215, 168, 0.11), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%),
+    var(--background);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 ::selection {
   background-color: var(--primary);
   color: var(--on-primary);
 }
 
-/* Custom Scrollbar for sleek premium look */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -89,7 +124,20 @@ html, body {
   background: var(--secondary);
 }
 
-/* Utility Animations */
+.surface-panel,
+.card,
+.dashboard-block-card,
+.login-card,
+.nav-dropdown,
+.megamenu-panel,
+.header-dropdown,
+.profile-dropdown,
+.store-premium-card,
+.kpi-card,
+.chat-window-card {
+  box-shadow: var(--shadow-soft);
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -101,6 +149,59 @@ html, body {
   }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-up {
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.app-page-shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.surface-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 24%), var(--surface-container);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-soft);
+}
+
+.surface-card--muted {
+  background: var(--surface-container-low);
+}
+
+.soft-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, var(--outline-variant), transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

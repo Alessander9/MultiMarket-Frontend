@@ -1,0 +1,95 @@
+<div class="cart-wrapper animate-fade-in">
+  
+  <div class="cart-page-header">
+    <div class="page-title-area">
+      <h2>Mi Carrito de Compras</h2>
+      <p>Revisa los artículos seleccionados, ajusta las cantidades y continúa con tu compra segura</p>
+    </div>
+    <button class="btn-clear-cart" (click)="clearCart()" *ngIf="customerService.cart().length > 0">
+      <span class="material-symbols-outlined font-sm">remove_shopping_cart</span>
+      Vaciar Carrito
+    </button>
+  </div>
+
+  <div class="cart-split-grid" *ngIf="customerService.cart().length > 0">
+    <!-- Left: Items list -->
+    <div class="cart-items-panel">
+      <div class="card items-list-card">
+        <div class="cart-item-row" *ngFor="let item of customerService.cart()">
+          <img [src]="item.imagen" alt="Producto" class="item-thumb" />
+          
+          <div class="item-meta">
+            <h4 class="item-name">{{ item.nombre }}</h4>
+            <span class="item-sku">SKU: {{ item.sku }}</span>
+            <span class="seller-tag">Vendedor: {{ item.vendedorNombre }}</span>
+          </div>
+
+          <!-- Price & Quantity Picker -->
+          <div class="item-controls">
+            <div class="qty-picker">
+              <button class="btn-qty-pick" (click)="updateQty(item.productoId, item.cantidad, -1)">-</button>
+              <span class="qty-val">{{ item.cantidad }}</span>
+              <button class="btn-qty-pick" (click)="updateQty(item.productoId, item.cantidad, 1)">+</button>
+            </div>
+            
+            <div class="price-totals">
+              <span class="unit-price">S/ {{ item.precio | number:'1.2-2' }} c/u</span>
+              <span class="total-price">S/ {{ item.precio * item.cantidad | number:'1.2-2' }}</span>
+            </div>
+
+            <button class="btn-delete-row" (click)="removeItem(item.productoId)" title="Eliminar artículo del carrito">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Summary checkout card -->
+    <div class="cart-summary-panel">
+      <div class="card summary-card">
+        <h3>Resumen del Pedido</h3>
+        
+        <div class="summary-rows">
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span>S/ {{ customerService.cartSubtotal() | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Costo de Envío</span>
+            <span class="text-emerald" *ngIf="customerService.cartSubtotal() >= 150">Gratis</span>
+            <span *ngIf="customerService.cartSubtotal() < 150">S/ {{ customerService.cartShipping() | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="summary-row">
+            <span>Impuestos (18% IGV inc.)</span>
+            <span>S/ {{ customerService.cartTax() | number:'1.2-2' }}</span>
+          </div>
+
+          <div class="divider-line"></div>
+
+          <div class="summary-row grand-total">
+            <span>Total Estimado</span>
+            <span class="text-emerald">S/ {{ customerService.cartTotal() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <button class="btn-checkout-proceed" (click)="proceedToCheckout()">
+          Continuar Compra
+        </button>
+
+        <p class="summary-help-info">🔒 Transacciones protegidas mediante cifrado SSL. Cumplimos con estándares PCI-DSS.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty Cart State -->
+  <div class="cart-empty-state card" *ngIf="customerService.cart().length === 0">
+    <span class="material-symbols-outlined empty-icon">shopping_cart_off</span>
+    <h3>Tu carrito está vacío</h3>
+    <p>¿Aún no has decidido qué comprar? Explora nuestro catálogo y descubre productos locales excepcionales.</p>
+    <a routerLink="/products" class="btn-go-shopping">Ir a Comprar</a>
+  </div>
+
+</div>

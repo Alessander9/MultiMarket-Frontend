@@ -1,0 +1,294 @@
+<div class="customer-layout">
+  
+  <!-- ================= TOP PROMO HEADER BAR ================= -->
+  <div class="promo-top-bar">
+    <p>🚚 Envío gratuito en todos los pedidos mayores a S/ 150 • Comercio 100% Justo y Local</p>
+  </div>
+
+  <!-- ================= HEADER E-COMMERCE ================= -->
+  <header class="navbar-header">
+    <div class="navbar-container">
+      
+      <!-- Brand Logo Area -->
+      <a routerLink="/" class="nav-brand">
+        <span class="material-symbols-outlined brand-icon">diamond</span>
+        <span class="brand-name">MultiMarket</span>
+      </a>
+
+      <!-- Categories Mega Menu Trigger -->
+      <div class="categories-mega-trigger-area">
+        <button class="nav-btn-categories" [class.active]="showCategoriesMenu()" (click)="toggleCategories()">
+          <span class="material-symbols-outlined">menu</span>
+          <span>Categorías</span>
+          <span class="material-symbols-outlined drop-arrow">arrow_drop_down</span>
+        </button>
+
+        <!-- Megamenu Dropdown -->
+        <div class="megamenu-panel animate-fade-in" *ngIf="showCategoriesMenu()">
+          <div class="megamenu-grid">
+            <div 
+              *ngFor="let cat of megaCategories" 
+              class="megamenu-item-row"
+              (click)="selectCategory(cat.nombre)"
+            >
+              <div class="item-icon-circle">
+                <span class="material-symbols-outlined">{{ cat.icon }}</span>
+              </div>
+              <div class="item-text">
+                <h4>{{ cat.nombre }}</h4>
+                <p>{{ cat.desc }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tiendas Link -->
+      <a routerLink="/stores" class="nav-link-stores" routerLinkActive="active-link">
+        <span class="material-symbols-outlined nav-icon">storefront</span>
+        <span>Tiendas</span>
+      </a>
+
+      <!-- Global Search Bar -->
+      <form class="nav-search-bar" (submit)="triggerSearch($event)">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input 
+          type="text" 
+          placeholder="Buscar café gourmet, chocolates, artesanías..." 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)"
+          name="search"
+          class="nav-search-input"
+        />
+        <button type="submit" class="btn-search-submit">Buscar</button>
+      </form>
+
+      <!-- Right Utility Actions -->
+      <div class="nav-right-actions">
+        
+        <!-- Mobile Search Toggle -->
+        <button class="icon-action-btn mobile-search-btn" (click)="showMobileSearch.update(v => !v)">
+          <span class="material-symbols-outlined">search</span>
+        </button>
+
+        <!-- Favorites Icon Link -->
+        <a routerLink="/favorites" class="icon-action-btn" title="Favoritos">
+          <span class="material-symbols-outlined">favorite</span>
+          <span class="badge bg-purple" *ngIf="customerService.favorites().length > 0">
+            {{ customerService.favorites().length }}
+          </span>
+        </a>
+
+        <!-- Shopping Cart Icon Link -->
+        <a routerLink="/cart" class="icon-action-btn" title="Carrito de Compras">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <span class="badge bg-emerald" *ngIf="customerService.cartCount() > 0">
+            {{ customerService.cartCount() }}
+          </span>
+        </a>
+
+        <!-- Notifications Bell dropdown -->
+        <div class="dropdown-utility-wrapper">
+          <button 
+            class="icon-action-btn" 
+            [class.active-btn]="showNotificationsPanel()" 
+            (click)="toggleNotifications()"
+            title="Notificaciones"
+          >
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="badge bg-purple" *ngIf="customerService.unreadNotificationsCount() > 0">
+              {{ customerService.unreadNotificationsCount() }}
+            </span>
+          </button>
+
+          <!-- Notifications Dropdown Panel -->
+          <div class="nav-dropdown notifications-panel animate-fade-in" *ngIf="showNotificationsPanel()">
+            <div class="dropdown-header">
+              <h4>Notificaciones</h4>
+              <button class="btn-clear-read" (click)="markAllNotificationsRead()">Marcar leido</button>
+            </div>
+            <div class="dropdown-scroll-content">
+              <div 
+                *ngFor="let n of customerService.notifications()" 
+                class="dropdown-item notif-row"
+                [class.unread]="!n.leido"
+              >
+                <div class="notif-icon-wrapper" [ngClass]="n.tipo.toLowerCase()">
+                  <span class="material-symbols-outlined">
+                    {{ n.tipo === 'PEDIDO' ? 'shopping_bag' : n.tipo === 'PAGO' ? 'credit_card' : n.tipo === 'CHAT' ? 'chat' : 'dns' }}
+                  </span>
+                </div>
+                <div class="notif-item-body">
+                  <h5>{{ n.titulo }}</h5>
+                  <p>{{ n.contenido }}</p>
+                  <span class="notif-time-text">{{ n.fecha | date:'shortTime' }}</span>
+                </div>
+              </div>
+              <div *ngIf="customerService.notifications().length === 0" class="empty-dropdown-state">
+                <span class="material-symbols-outlined">notifications_off</span>
+                <p>No tienes notificaciones por el momento.</p>
+              </div>
+            </div>
+            <a routerLink="/notifications" class="view-all-dropdown-btn">Ver toda la bandeja</a>
+          </div>
+        </div>
+
+        <div class="divider-v"></div>
+
+        <!-- User Profile Dropdown Menu -->
+        <div class="dropdown-utility-wrapper" *ngIf="authService.isLoggedIn()">
+          <button class="nav-profile-btn" (click)="toggleProfile()">
+            <img [src]="customerService.profile().foto" alt="Avatar" class="avatar-round" />
+            <span class="material-symbols-outlined arrow-icon">arrow_drop_down</span>
+          </button>
+
+          <!-- Profile Dropdown Menu -->
+          <div class="nav-dropdown profile-menu-panel animate-fade-in" *ngIf="showProfileMenu()">
+            <div class="profile-dropdown-header">
+              <h5>{{ customerService.profile().nombres }}</h5>
+              <p>{{ customerService.profile().correo }}</p>
+            </div>
+            <div class="divider-line"></div>
+            <ul class="dropdown-links-list">
+              <li>
+                <a routerLink="/account" class="drop-link-item">
+                  <span class="material-symbols-outlined">dashboard</span>
+                  Mi Cuenta Dashboard
+                </a>
+              </li>
+              <li>
+                <a routerLink="/orders" class="drop-link-item">
+                  <span class="material-symbols-outlined">local_shipping</span>
+                  Mis Pedidos
+                </a>
+              </li>
+              <li>
+                <a routerLink="/chat" class="drop-link-item">
+                  <span class="material-symbols-outlined">chat</span>
+                  Mis Mensajes
+                  <span class="chat-count-pill bg-emerald" *ngIf="customerService.unreadChatsCount() > 0">
+                    {{ customerService.unreadChatsCount() }}
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/profile" class="drop-link-item">
+                  <span class="material-symbols-outlined">person</span>
+                  Mi Perfil
+                </a>
+              </li>
+            </ul>
+            <div class="divider-line"></div>
+            <button class="btn-logout-dropdown" (click)="logout()">
+              <span class="material-symbols-outlined">logout</span>
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+
+        <!-- Login / Register button if guest -->
+        <a routerLink="/login" class="btn-login-header" *ngIf="!authService.isLoggedIn()">
+          <span class="material-symbols-outlined">login</span>
+          Ingresar
+        </a>
+
+      </div>
+    </div>
+
+    <!-- Mobile Search Row -->
+    <div class="mobile-search-row animate-fade-in" *ngIf="showMobileSearch()">
+      <form class="mobile-search-form" (submit)="triggerSearch($event)">
+        <input 
+          type="text" 
+          placeholder="Buscar en MultiMarket..." 
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="searchQuery.set($event)"
+          name="search"
+          class="mobile-search-input"
+        />
+        <button type="submit" class="btn-mobile-search-submit">Buscar</button>
+      </form>
+    </div>
+  </header>
+
+  <!-- ================= MAIN VIEWPORT ================= -->
+  <main class="main-viewport-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- ================= FOOTER E-COMMERCE ================= -->
+  <footer class="storefront-footer">
+    <div class="footer-grid">
+      <!-- Info Column -->
+      <div class="footer-col brand-col">
+        <a routerLink="/" class="footer-brand">
+          <span class="material-symbols-outlined logo-icon">diamond</span>
+          <span>MultiMarket</span>
+        </a>
+        <p class="brand-sub">La mayor vitrina de comercio justo del país. Conectando agricultores, artesanos y productores locales directamente contigo.</p>
+      </div>
+
+      <!-- Categories Links -->
+      <div class="footer-col">
+        <h4>Comprar Categorías</h4>
+        <ul class="footer-links">
+          <li><a (click)="selectCategory('Café')" class="foot-link">Café Orgánico</a></li>
+          <li><a (click)="selectCategory('Chocolate')" class="foot-link">Cacao y Chocolate</a></li>
+          <li><a (click)="selectCategory('Miel')" class="foot-link">Miel Pura</a></li>
+          <li><a (click)="selectCategory('Artesanías')" class="foot-link">Artesanías de Barro</a></li>
+        </ul>
+      </div>
+
+      <!-- Customer Service Links -->
+      <div class="footer-col">
+        <h4>Centro de Ayuda</h4>
+        <ul class="footer-links">
+          <li><a routerLink="/account" class="foot-link">Mi Cuenta</a></li>
+          <li><a routerLink="/orders" class="foot-link">Seguimiento de Envío</a></li>
+          <li><a routerLink="/chat" class="foot-link">Preguntar al Vendedor</a></li>
+          <li><a routerLink="/" class="foot-link">Términos de Compra</a></li>
+        </ul>
+      </div>
+
+      <!-- Trust Badges -->
+      <div class="footer-col trust-col">
+        <h4>Transacción Segura</h4>
+        <p class="trust-desc">Pasarela de pago cifrada con validaciones bancarias en tiempo real.</p>
+        <div class="payment-badges-row">
+          <span class="pay-card">VISA</span>
+          <span class="pay-card">MASTERCARD</span>
+          <span class="pay-card">YAPE</span>
+          <span class="pay-card">PLIN</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Copyright -->
+    <div class="footer-bottom-bar">
+      <p>&copy; 2026 <strong>MultiMarket</strong>. Todos los derechos reservados. Desarrollado con Angular 21 y Spring Boot.</p>
+    </div>
+  </footer>
+
+  <!-- ================= DYNAMIC FLOATING TOAST NOTIFICATION ================= -->
+  <div 
+    class="custom-floating-toast" 
+    *ngIf="customerService.activeToast() as toast"
+    [class.toast-fade-in]="toast.visible"
+    [class.toast-fade-out]="!toast.visible"
+    [class.toast-success]="toast.type === 'success'"
+    [class.toast-error]="toast.type === 'error'"
+    [class.toast-info]="toast.type === 'info'"
+    [class.toast-warning]="toast.type === 'warning'"
+  >
+    <div class="toast-content-wrapper">
+      <span class="material-symbols-outlined toast-icon">
+        {{ toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'cancel' : toast.type === 'warning' ? 'warning' : 'info' }}
+      </span>
+      <span class="toast-message">{{ toast.message }}</span>
+      <button class="btn-toast-close" (click)="customerService.activeToast.set(null)" title="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  </div>
+
+</div>

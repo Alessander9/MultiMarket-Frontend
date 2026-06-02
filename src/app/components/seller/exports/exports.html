@@ -1,0 +1,96 @@
+<div class="exports-wrapper animate-fade-in">
+  
+  <div class="exports-page-header">
+    <div class="page-title-area">
+      <h2>Exportación de Catálogo</h2>
+      <p>Genera y descarga copias completas de tus productos en formatos JSON y XML para copias de seguridad o integraciones</p>
+    </div>
+  </div>
+
+  <div class="exports-grid">
+    <!-- Generator card -->
+    <div class="card generator-card">
+      <h3>Nueva Exportación</h3>
+      <p class="gen-intro">Seleccione el formato en el cual desea serializar todo el catálogo de productos disponible en su tienda:</p>
+      
+      <div class="format-selections">
+        <label class="format-option" [class.selected]="selectedFormat() === 'JSON'">
+          <input type="radio" name="format" (click)="selectedFormat.set('JSON')" checked />
+          <span class="option-title">Formato JSON</span>
+          <span class="option-desc">Ideal para importar en plataformas web y bases de datos NoSQL</span>
+        </label>
+
+        <label class="format-option" [class.selected]="selectedFormat() === 'XML'">
+          <input type="radio" name="format" (click)="selectedFormat.set('XML')" />
+          <span class="option-title">Formato XML</span>
+          <span class="option-desc">Estructura estricta para integraciones empresariales (SOAP / ERPs)</span>
+        </label>
+      </div>
+
+      <div class="gen-actions">
+        <button class="btn-generate" (click)="triggerExport()" [disabled]="isGenerating()">
+          <span class="material-symbols-outlined" *ngIf="!isGenerating()">download</span>
+          <span class="spinner-sm" *ngIf="isGenerating()"></span>
+          {{ isGenerating() ? 'Generando Archivo...' : 'Generar y Descargar' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Specs -->
+    <div class="card spec-card">
+      <h3>Frecuencia y Respaldos</h3>
+      <p class="specs-p">Recomendamos exportar su catálogo al menos una vez por semana. Esto le permitirá:</p>
+      <ul class="specs-bullets">
+        <li>Tener un respaldo físico en caso de cambios masivos fallidos.</li>
+        <li>Sincronizar inventarios físicos locales con el stock disponible en MultiMarket.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Historical list -->
+  <div class="card history-logs-card">
+    <h3>Descargas e Historial de Archivos</h3>
+    
+    <div class="table-responsive">
+      <table class="history-logs-table">
+        <thead>
+          <tr>
+            <th>Fecha Generado</th>
+            <th>Formato</th>
+            <th>Nombre del Archivo</th>
+            <th>Productos Incluidos</th>
+            <th class="text-center">Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of sellerService.exports()">
+            <td>
+              <div class="date-col">
+                <span>{{ log.fecha | date:'mediumDate' }}</span>
+                <span class="time-text">{{ log.fecha | date:'shortTime' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="format-badge" [class.xml]="log.tipo === 'XML'" [class.json]="log.tipo === 'JSON'">
+                {{ log.tipo }}
+              </span>
+            </td>
+            <td>
+              <span class="file-name">{{ log.archivoNombre }}</span>
+            </td>
+            <td><strong>{{ log.registrosExportados }}</strong> ítems</td>
+            <td>
+              <div class="actions-cell">
+                <button class="btn-download" (click)="downloadFile(log.archivoNombre)" title="Descargar archivo en su computador">
+                  <span class="material-symbols-outlined">download</span>
+                  Descargar
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

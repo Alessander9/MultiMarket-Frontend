@@ -1,0 +1,66 @@
+<div class="notifications-wrapper animate-fade-in">
+  
+  <div class="notifications-page-header">
+    <div class="page-title-area">
+      <h2>Bandeja de Notificaciones</h2>
+      <p>Supervisa las alertas automáticas de transacciones, mensajes de chat y estado operativo del sistema</p>
+    </div>
+    <button class="btn-mark-all" (click)="markAllRead()" [disabled]="sellerService.unreadNotificationsCount() === 0">
+      <span class="material-symbols-outlined">done_all</span>
+      Marcar todo leido
+    </button>
+  </div>
+
+  <!-- Filters chips row -->
+  <div class="filters-card card">
+    <div class="chips-row">
+      <button class="chip" [class.active]="activeFilter() === 'ALL'" (click)="activeFilter.set('ALL')">Todas</button>
+      <button class="chip" [class.active]="activeFilter() === 'PEDIDO'" (click)="activeFilter.set('PEDIDO')">Pedidos</button>
+      <button class="chip" [class.active]="activeFilter() === 'PAGO'" (click)="activeFilter.set('PAGO')">Pagos</button>
+      <button class="chip" [class.active]="activeFilter() === 'CHAT'" (click)="activeFilter.set('CHAT')">Mensajes</button>
+      <button class="chip" [class.active]="activeFilter() === 'SISTEMA'" (click)="activeFilter.set('SISTEMA')">Sistema</button>
+    </div>
+  </div>
+
+  <!-- Notifications list console -->
+  <div class="card list-card">
+    <div class="notifications-list" *ngIf="filteredNotifications().length > 0">
+      
+      <div 
+        *ngFor="let n of filteredNotifications()" 
+        class="notification-item-row"
+        [class.unread]="!n.leido"
+      >
+        <div class="notif-icon-circle" [ngClass]="n.tipo.toLowerCase()">
+          <span class="material-symbols-outlined">
+            {{ n.tipo === 'PEDIDO' ? 'shopping_bag' : n.tipo === 'PAGO' ? 'payments' : n.tipo === 'CHAT' ? 'chat' : 'dns' }}
+          </span>
+        </div>
+
+        <div class="notif-body">
+          <div class="notif-header-row">
+            <h4>{{ n.titulo }}</h4>
+            <span class="notif-time">{{ n.fecha | date:'medium' }}</span>
+          </div>
+          <p class="notif-text">{{ n.contenido }}</p>
+        </div>
+
+        <div class="notif-actions">
+          <button *ngIf="!n.leido" class="btn-check-read" (click)="markRead(n.id)" title="Marcar como leido">
+            <span class="material-symbols-outlined">done</span>
+          </button>
+          <span class="read-indicator-dot" *ngIf="!n.leido"></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="filteredNotifications().length === 0">
+      <span class="material-symbols-outlined empty-icon">notifications_off</span>
+      <h3>Bandeja vacía</h3>
+      <p>No se encontraron alertas en la categoría seleccionada.</p>
+    </div>
+  </div>
+
+</div>
