@@ -164,12 +164,19 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   private refreshBackendData(): void {
+    this.dashboardService.loadSummary().subscribe();
+    this.portalService.loadUsers().subscribe();
+    this.portalService.loadRoles().subscribe();
     this.portalService.loadVendors().subscribe();
     this.portalService.loadCategories().subscribe();
     this.portalService.loadProducts().subscribe();
     this.portalService.loadOrders().subscribe();
+    this.portalService.loadPayments().subscribe();
+    this.portalService.loadSoapLogs().subscribe();
     this.portalService.loadNotifications().subscribe();
     this.portalService.loadChats().subscribe();
+    this.portalService.loadImportHistory().subscribe();
+    this.portalService.loadExportHistory().subscribe();
   }
 
   ngOnDestroy(): void {

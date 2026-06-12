@@ -1,5 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of, tap, map } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 // Interfaces fuertemente tipadas
 export interface KpiCard {
@@ -73,100 +75,86 @@ export interface SystemStatus {
   providedIn: 'root'
 })
 export class AdminDashboardService {
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = environment.apiUrl;
   
   // 1. KPIs principales (Signals)
-  readonly kpis = signal<KpiCard[]>([
-    { id: '1', titulo: 'Usuarios Totales', valor: '1,250', icono: 'person', tendencia: '+12% este mes', tendenciaPositiva: true },
-    { id: '2', titulo: 'Vendedores Activos', valor: '85', icono: 'storefront', tendencia: '+4 nuevos hoy', tendenciaPositiva: true },
-    { id: '3', titulo: 'Productos Publicados', valor: '4,560', icono: 'inventory_2', tendencia: '+124 esta semana', tendenciaPositiva: true },
-    { id: '4', titulo: 'Pedidos del Día', valor: '145', icono: 'shopping_bag', tendencia: '+18% vs ayer', tendenciaPositiva: true },
-    { id: '5', titulo: 'Ventas del Día', valor: 'S/ 12,540', icono: 'payments', tendencia: '+8% vs ayer', tendenciaPositiva: true },
-    { id: '6', titulo: 'Ventas del Mes', valor: 'S/ 152,800', icono: 'analytics', tendencia: '+24% vs mes anterior', tendenciaPositiva: true },
-    { id: '7', titulo: 'Pagos Pendientes', valor: '12', icono: 'credit_card', tendencia: '-5 resueltos hoy', tendenciaPositiva: true },
-    { id: '8', titulo: 'Conversaciones Activas', valor: '37', icono: 'chat', tendencia: '9 en espera', tendenciaPositiva: false }
-  ]);
+  readonly kpis = signal<KpiCard[]>([]);
 
   // 2. Gráficos de Ventas y Pedidos (Signals)
-  readonly salesData = signal<number[]>([10500, 11200, 9800, 12400, 13100, 11500, 12540]); // últimos 7 días
-  readonly ordersData = signal<number[]>([120, 135, 110, 140, 150, 130, 145]);
+  readonly salesData = signal<number[]>([]);
+  readonly ordersData = signal<number[]>([]);
 
   // 3. Top Categorías
-  readonly topCategories = signal<TopCategory[]>([
-    { nombre: 'Café', ventas: 45800, pedidos: 520, participacion: 30 },
-    { nombre: 'Chocolate', ventas: 38200, pedidos: 410, participacion: 25 },
-    { nombre: 'Artesanías', ventas: 30560, pedidos: 310, participacion: 20 },
-    { nombre: 'Textiles', ventas: 22920, pedidos: 240, participacion: 15 },
-    { nombre: 'Miel', ventas: 15280, pedidos: 170, participacion: 10 }
-  ]);
+  readonly topCategories = signal<TopCategory[]>([]);
 
   // 4. Top 10 Vendedores
-  readonly topVendors = signal<TopVendor[]>([
-    { nombreTienda: 'Cafetería del Centro', region: 'Cusco', ventas: 24500, productosCount: 42 },
-    { nombreTienda: 'Chocolates El Ceibo', region: 'Amazonas', ventas: 21200, productosCount: 35 },
-    { nombreTienda: 'Artesanías Andinas', region: 'Puno', ventas: 18400, productosCount: 88 },
-    { nombreTienda: 'Cooperativa Alto Mayo', region: 'San Martín', ventas: 16900, productosCount: 22 },
-    { nombreTienda: 'Miel Pura del Bosque', region: 'Lambayeque', ventas: 14200, productosCount: 15 },
-    { nombreTienda: 'Textiles Huaraz', region: 'Áncash', ventas: 12500, productosCount: 54 },
-    { nombreTienda: 'Café Monteverde', region: 'Cajamarca', ventas: 11800, productosCount: 19 },
-    { nombreTienda: 'Orgánicos del Sur', region: 'Arequipa', ventas: 10400, productosCount: 28 },
-    { nombreTienda: 'Artes del Fuego', region: 'Ayacucho', ventas: 9500, productosCount: 47 },
-    { nombreTienda: 'ChocoSelva', region: 'Junín', ventas: 8700, productosCount: 12 }
-  ]);
+  readonly topVendors = signal<TopVendor[]>([]);
 
   // 5. Actividad Reciente (Logs)
-  readonly recentActivities = signal<RecentActivity[]>([
-    { hora: '16:45', usuario: 'admin@multimarket.com', accion: 'Exportó Catálogo XML', modulo: 'KAFKA', resultado: 'OK' },
-    { hora: '16:20', usuario: 'Juan Perez (Vendedor)', accion: 'Creó Producto "Café Premium"', modulo: 'PRODUCTO', resultado: 'OK' },
-    { hora: '15:55', usuario: 'Sistema SOAP', accion: 'Rechazó Pago (Fondos Insuficientes)', modulo: 'PAGO', resultado: 'WARN' },
-    { hora: '15:10', usuario: 'admin@multimarket.com', accion: 'Modificó Roles de Usuario', modulo: 'AUTH', resultado: 'OK' },
-    { hora: '14:40', usuario: 'vendedor@multimarket.com', accion: 'Importación XML Fallida (SKU duplicado)', modulo: 'PRODUCTO', resultado: 'ERROR' },
-    { hora: '14:15', usuario: 'Maria Lopez (Comprador)', accion: 'Registró Pedido #PED-8834', modulo: 'PEDIDO', resultado: 'OK' },
-    { hora: '13:50', usuario: 'Sistema Kafka', accion: 'Alerta: Stock Mínimo Producto ID 45', modulo: 'INVENTARIO', resultado: 'WARN' },
-    { hora: '13:02', usuario: 'admin@multimarket.com', accion: 'Error de conexión SOAP Banco', modulo: 'SOAP', resultado: 'ERROR' }
-  ]);
+  readonly recentActivities = signal<RecentActivity[]>([]);
 
   // 6. Alertas Críticas
   readonly criticalAlerts = signal<CriticalAlerts>({
-    stockBajo: 15,
-    pedidosPendientes: 25,
-    pagosFallidos: 4,
-    erroresCriticos: 2,
+    stockBajo: 0,
+    pedidosPendientes: 0,
+    pagosFallidos: 0,
+    erroresCriticos: 0,
     serviciosCaidos: 0
   });
 
   // 7. Estado Kafka
   readonly kafkaStatus = signal<KafkaStatus>({
-    status: 'ONLINE',
-    mensajesHoy: 1250,
-    eventosProcesados: 1238,
-    errores: 12
+    status: 'OFFLINE',
+    mensajesHoy: 0,
+    eventosProcesados: 0,
+    errores: 0
   });
 
   // 8. Estado SOAP
   readonly soapStatus = signal<SoapStatus>({
-    status: 'DISPONIBLE',
-    transaccionesHoy: 342,
-    erroresSoap: 2,
-    tiempoRespuesta: '120ms'
+    status: 'MANTENIMIENTO',
+    transaccionesHoy: 0,
+    erroresSoap: 0,
+    tiempoRespuesta: 'N/D'
   });
 
   // 9. Estado Logs
   readonly logsSummary = signal<LogsSummary>({
-    info: 1500,
-    warn: 25,
-    error: 15,
+    info: 0,
+    warn: 0,
+    error: 0,
     fatal: 0
   });
 
   // 10. Estado Sistema
   readonly systemStatus = signal<SystemStatus>({
-    cpu: 35,
-    ram: '4.2 GB',
-    disco: 62,
-    microservicios: 9
+    cpu: 0,
+    ram: '0.0 GB',
+    disco: 0,
+    microservicios: 1
   });
 
   constructor() {}
+
+  loadSummary(): Observable<void> {
+    return this.http.get<any>(`${this.baseUrl}/dashboard/admin`).pipe(
+      tap(summary => {
+        this.kpis.set(summary.kpis ?? []);
+        this.salesData.set(summary.salesData ?? []);
+        this.ordersData.set(summary.ordersData ?? []);
+        this.topCategories.set(summary.topCategories ?? []);
+        this.topVendors.set(summary.topVendors ?? []);
+        this.recentActivities.set(summary.recentActivities ?? []);
+        this.criticalAlerts.set(summary.criticalAlerts ?? this.criticalAlerts());
+        this.kafkaStatus.set(summary.kafkaStatus ?? this.kafkaStatus());
+        this.soapStatus.set(summary.soapStatus ?? this.soapStatus());
+        this.logsSummary.set(summary.logsSummary ?? this.logsSummary());
+        this.systemStatus.set(summary.systemStatus ?? this.systemStatus());
+      }),
+      map(() => void 0)
+    );
+  }
 
   // Métodos de simulación para simular disparadores e interactividad en Dashboard
   triggerXmlImport(): Observable<string> {

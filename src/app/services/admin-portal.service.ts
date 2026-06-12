@@ -103,7 +103,7 @@ export interface AdminPayment {
   pedidoNumero: string;
   monto: number;
   metodoPago: 'VISA' | 'MASTERCARD' | 'YAPE' | 'PLIN' | 'TRANSFERENCIA';
-  estadoPago: 'APROBADO' | 'FALLIDO' | 'REEMBOLSADO';
+  estadoPago: 'APROBADO' | 'FALLIDO' | 'REEMBOLSADO' | 'PENDIENTE' | 'RECHAZADO';
   fechaPago: string;
   codigoOperacion: string;
 }
@@ -186,182 +186,63 @@ export class AdminPortalService {
   // ==========================================
   // In-Memory Databases (Angular Signals)
   // ==========================================
-  readonly users = signal<AdminUser[]>([
-    { id: 1, correo: 'admin@multimarket.com', roles: ['ADMIN'], estado: true, correoVerificado: true, fechaRegistro: '2026-05-01', intentosFallidos: 0, bloqueado: false },
-    { id: 2, correo: 'vendedor@multimarket.com', roles: ['VENDEDOR'], estado: true, correoVerificado: true, fechaRegistro: '2026-05-12', intentosFallidos: 0, bloqueado: false },
-    { id: 3, correo: 'comprador@multimarket.com', roles: ['COMPRADOR'], estado: true, correoVerificado: true, fechaRegistro: '2026-05-15', intentosFallidos: 0, bloqueado: false },
-    { id: 4, correo: 'pedro@correo.com', roles: ['COMPRADOR'], estado: true, correoVerificado: false, fechaRegistro: '2026-05-20', intentosFallidos: 3, bloqueado: false },
-    { id: 5, correo: 'bloqueado@correo.com', roles: ['VENDEDOR'], estado: false, correoVerificado: true, fechaRegistro: '2026-05-22', intentosFallidos: 5, bloqueado: true }
-  ]);
+  readonly users = signal<AdminUser[]>([]);
 
-  readonly roles = signal<AdminRole[]>([
-    { id: 1, nombre: 'ADMIN', descripcion: 'Administrador general del sistema con acceso a logs, servicios y configuraciones de auditoría.', permisos: ['read', 'write', 'delete', 'admin'] },
-    { id: 2, nombre: 'VENDEDOR', descripcion: 'Vendedor del marketplace. Administra tiendas, stock, pedidos propios y exportaciones.', permisos: ['read', 'write'] },
-    { id: 3, nombre: 'COMPRADOR', descripcion: 'Comprador o cliente final. Realiza búsquedas, agrega favoritos, chatea y procesa pagos.', permisos: ['read'] }
-  ]);
+  readonly roles = signal<AdminRole[]>([]);
 
-  readonly vendors = signal<AdminVendor[]>([
-    { id: 1, nombreTienda: 'Cafetería del Centro', descripcion: 'Los mejores cafés orgánicos de Cusco tostados al natural.', region: 'Cusco', direccion: 'Portal de Panes 123', logo: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-01', calificacionPromedio: 4.8 },
-    { id: 2, nombreTienda: 'Chocolates El Ceibo', descripcion: 'Cacao fino de aroma cosechado por comunidades locales.', region: 'Amazonas', direccion: 'Jr. Triunfo 456', logo: 'https://images.unsplash.com/photo-1548907040-4d42b52125e0?w=100', banner: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=600', activo: true, fechaCreacion: '2026-05-12', calificacionPromedio: 4.7 },
-    { id: 3, nombreTienda: 'Artesanías Andinas', descripcion: 'Textiles, cerámicas y platería hechos a mano.', region: 'Puno', direccion: 'Av. Floral 890', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-15', calificacionPromedio: 4.5 },
-    { id: 4, nombreTienda: 'Ferretería Cleo', descripcion: 'Líderes en distribución de herramientas manuales, eléctricas, materiales de construcción, cerrajería, iluminación y acabados para el hogar. Más de 15 años brindando soluciones confiables a maestros de obra, talleres industriales, artesanos y familias de Lima Norte.', region: 'Lima', direccion: 'Av. Alfredo Mendiola 3540, Los Olivos, Lima', logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100', banner: 'https://images.unsplash.com/photo-1513828722001-c22dbf88279e?w=600', activo: true, fechaCreacion: '2026-05-25', calificacionPromedio: 4.9 },
-    { id: 5, nombreTienda: 'Cusco Premium Café', descripcion: 'Café premium seleccionado artesanalmente de los valles del Cusco.', region: 'Cusco', direccion: 'Av. Sol 420, Cusco', logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
-    { id: 6, nombreTienda: 'Dulce Amazonía', descripcion: 'Barras artesanales de chocolate con frutas exóticas del Amazonas.', region: 'Amazonas', direccion: 'Chachapoyas 789', logo: 'https://images.unsplash.com/photo-1548907040-4d42b52125e0?w=100', banner: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 },
-    { id: 7, nombreTienda: 'Textil Cusco Imperial', descripcion: 'Chompas, mantas y chalinas tejidas con fina alpaca baby.', region: 'Cusco', direccion: 'Calle Hatun Rumiyoc 210, Cusco', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.6 },
-    { id: 8, nombreTienda: 'Apícola del Bosque', descripcion: 'Miel de abeja 100% pura recolectada de flores silvestres del norte.', region: 'Lambayeque', direccion: 'Av. Balta 654, Chiclayo', logo: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100', banner: 'https://images.unsplash.com/photo-1471943033881-a17e6a14e3d1?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 },
-    { id: 9, nombreTienda: 'Cerámicas Pucará', descripcion: 'Toritos de Pucará y artesanías pintadas a mano de alta calidad.', region: 'Puno', direccion: 'Jr. Lima 321, Puno', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.5 },
-    { id: 10, nombreTienda: 'Café San Martín Gourmet', descripcion: 'Café de alta calidad con notas dulces y afrutadas de Moyobamba.', region: 'San Martín', direccion: 'Jr. San Martín 150, Moyobamba', logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
-    { id: 11, nombreTienda: 'Chocolates Quillabamba', descripcion: 'Chocolate orgánico al 70% elaborado con cacao chuncho premium.', region: 'Cusco', direccion: 'Calle Espinar 450, Cusco', logo: 'https://images.unsplash.com/photo-1548907040-4d42b52125e0?w=100', banner: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 },
-    { id: 12, nombreTienda: 'Orfebrería del Sur', descripcion: 'Joyas de plata de 950 hechas por experimentados plateros.', region: 'Arequipa', direccion: 'Calle Santa Catalina 111, Arequipa', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.6 },
-    { id: 13, nombreTienda: 'Textil Altiplano', descripcion: 'Prendas típicas de abrigo tejidas con lana pura de oveja y alpaca.', region: 'Puno', direccion: 'Jr. Deustua 550, Puno', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.5 },
-    { id: 14, nombreTienda: 'Miel de La Libertad', descripcion: 'Miel pura y derivados apícolas como polen y jalea real.', region: 'La Libertad', direccion: 'Av. Larco 880, Trujillo', logo: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100', banner: 'https://images.unsplash.com/photo-1471943033881-a17e6a14e3d1?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 },
-    { id: 15, nombreTienda: 'Ferretería Norte', descripcion: 'Amplio catálogo de herramientas eléctricas profesionales y acabados.', region: 'Piura', direccion: 'Av. Grau 1200, Piura', logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100', banner: 'https://images.unsplash.com/photo-1513828722001-c22dbf88279e?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.6 },
-    { id: 16, nombreTienda: 'Café Chanchamayo', descripcion: 'Café cultivado en la selva central con un aroma inconfundible.', region: 'Junín', direccion: 'Av. Tarma 340, La Merced', logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
-    { id: 17, nombreTienda: 'Granos Cajamarca', descripcion: 'Café gourmet producido bajo sombra en fincas cajamarquinas.', region: 'Cajamarca', direccion: 'Jr. Comercio 560, Cajamarca', logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100', banner: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
-    { id: 18, nombreTienda: 'Artesanías de Piura', descripcion: 'Trabajos finos de filigrana de plata de Catacaos.', region: 'Piura', direccion: 'Jr. Comercio Catacaos 220', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.6 },
-    { id: 19, nombreTienda: 'Textil Alpaca Real', descripcion: 'Colección de chompas de alpaca y accesorios de moda sostenible.', region: 'Arequipa', direccion: 'Calle Mercaderes 305, Arequipa', logo: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=100', banner: 'https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.8 },
-    { id: 20, nombreTienda: 'Miel Andina', descripcion: 'Miel multifloral orgánica de los valles sagrados.', region: 'Cusco', direccion: 'Urubamba Sector Central, Cusco', logo: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100', banner: 'https://images.unsplash.com/photo-1471943033881-a17e6a14e3d1?w=600', activo: true, fechaCreacion: '2026-05-26', calificacionPromedio: 4.7 }
-  ]);
+  readonly vendors = signal<AdminVendor[]>([]);
 
-  readonly categories = signal<AdminCategory[]>([
-    { id: 1, nombre: 'Café', descripcion: 'Granos de café regionales y mezclas de altura.', activa: true },
-    { id: 2, nombre: 'Chocolate', descripcion: 'Barras de chocolate, bombones y cacao en polvo.', activa: true },
-    { id: 3, nombre: 'Artesanías', descripcion: 'Cerámicas, platería, retablos y manualidades tradicionales.', activa: true },
-    { id: 4, nombre: 'Textiles', descripcion: 'Mantados, chalinas, chompas de alpaca y prendas típicas.', activa: true },
-    { id: 5, nombre: 'Miel', descripcion: 'Miel de abeja pura y derivados apícolas.', activa: true },
-    { id: 6, nombre: 'Ferretería', descripcion: 'Herramientas manuales, eléctricas y accesorios de construcción.', activa: true }
-  ]);
+  readonly categories = signal<AdminCategory[]>([]);
 
-  readonly products = signal<AdminProduct[]>([
-    { id: 1, nombre: 'Café Cusco Premium', descripcion: 'Café de altura 100% orgánico de grano seleccionado.', sku: 'CAF-CUS-001', categoriaId: 1, vendedorId: 1, precio: 35.00, stock: 45, peso: 0.50, activo: true, fechaCreacion: '2026-05-02', imagenes: ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300'] },
-    { id: 2, nombre: 'Chocolate Amargo 70%', descripcion: 'Chocolate de origen fino de aroma con notas de frutos secos.', sku: 'CHO-AMA-070', categoriaId: 2, vendedorId: 2, precio: 12.50, stock: 120, peso: 0.10, activo: true, fechaCreacion: '2026-05-13', imagenes: ['https://images.unsplash.com/photo-1548907040-4d42b52125e0?w=300'] },
-    { id: 3, nombre: 'Retablo Ayacuchano Mediano', descripcion: 'Escena tradicional andina tallada a mano en madera y pasta.', sku: 'ART-RET-AY2', categoriaId: 3, vendedorId: 3, precio: 85.00, stock: 8, peso: 1.20, activo: true, fechaCreacion: '2026-05-16', imagenes: ['https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=300'] },
-    { id: 4, nombre: 'Chalina de Alpaca Baby', descripcion: 'Chalina tejida con pura alpaca suave y abrigadora.', sku: 'TEX-CHA-ALP', categoriaId: 4, vendedorId: 3, precio: 120.00, stock: 3, peso: 0.25, activo: true, fechaCreacion: '2026-05-18', imagenes: ['https://images.unsplash.com/photo-1459411552884-841db9b3cc2a?w=300'] },
-    { id: 5, nombre: 'Miel de Abeja Silvestre', descripcion: 'Miel cosechada en bosques del norte totalmente cruda.', sku: 'MIE-SIL-001', categoriaId: 5, vendedorId: 1, precio: 22.00, stock: 50, peso: 0.60, activo: true, fechaCreacion: '2026-05-20', imagenes: ['https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300'] },
-    { id: 101, nombre: 'Taladro Percutor DeWalt 20V Max', descripcion: 'Taladro percutor inalámbrico Brushless de alta potencia. Incluye 2 baterías de litio, cargador y maletín.', sku: 'FER-TAL-DEW-20V', categoriaId: 6, vendedorId: 4, precio: 489.00, stock: 25, peso: 2.40, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] },
-    { id: 102, nombre: 'Juego de Herramientas Stanley (110 piezas)', descripcion: 'Completo maletín de herramientas mecánicas de acero cromo vanadio.', sku: 'FER-JUE-STA-110P', categoriaId: 6, vendedorId: 4, precio: 299.90, stock: 15, peso: 6.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
-    { id: 103, nombre: 'Amoladora Angular Bosch 4 1/2" 850W', descripcion: 'Amoladora angular profesional Bosch GWS 850 con empuñadura auxiliar ergonómica.', sku: 'FER-AMO-BOS-4.5', categoriaId: 6, vendedorId: 4, precio: 249.00, stock: 18, peso: 1.90, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] },
-    { id: 104, nombre: 'Caja de Herramientas Tramontina Plástica 20"', descripcion: 'Caja portaherramientas plástica de alta resistencia con cierres metálicos.', sku: 'FER-CAJ-TRA-20', categoriaId: 6, vendedorId: 4, precio: 69.90, stock: 40, peso: 2.00, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
-    { id: 105, nombre: 'Cerradura Digital Inteligente Yale YDF40', descripcion: 'Cerradura biométrica digital para puertas de madera o metal.', sku: 'FER-CER-YAL-DIG', categoriaId: 6, vendedorId: 4, precio: 389.00, stock: 12, peso: 1.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
-    { id: 106, nombre: 'Set de Destornilladores Imantados Stanley (6 piezas)', descripcion: 'Destornilladores profesionales con mangos ergonómicos trilobulares.', sku: 'FER-SET-DES-IM6', categoriaId: 6, vendedorId: 4, precio: 39.90, stock: 80, peso: 0.80, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
-    { id: 107, nombre: 'Pintura Látex CPP Pato Premium - Blanco', descripcion: 'Pintura látex premium de alta lavabilidad y excelente cubrimiento.', sku: 'FER-PIN-PAT-BL4', categoriaId: 6, vendedorId: 4, precio: 189.00, stock: 30, peso: 22.00, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300'] },
-    { id: 108, nombre: 'Candado de Acero Blindado Forte 60mm', descripcion: 'Candado de máxima seguridad blindado con cuerpo de bronce.', sku: 'FER-CAN-FOR-60', categoriaId: 6, vendedorId: 4, precio: 59.90, stock: 55, peso: 0.60, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
-    { id: 109, nombre: 'Rotomartillo SDS Plus Makita 800W', descripcion: 'Rotomartillo profesional con tres modos de operación Makita.', sku: 'FER-ROT-MAK-800W', categoriaId: 6, vendedorId: 4, precio: 679.00, stock: 8, peso: 3.20, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] },
-    { id: 110, nombre: 'Martillo de Uña Tramontina Acero Carbono', descripcion: 'Martillo de carpintero con cabeza forjada de alta dureza.', sku: 'FER-MAR-TRA-AC', categoriaId: 6, vendedorId: 4, precio: 29.90, stock: 100, peso: 0.70, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
-    { id: 111, nombre: 'Wincha Métrica Stanley Powerlock 8m', descripcion: 'Cinta métrica profesional con revestimiento antidesgaste.', sku: 'FER-WIN-STA-8M', categoriaId: 6, vendedorId: 4, precio: 42.00, stock: 65, peso: 0.40, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
-    { id: 112, nombre: 'Linterna LED Recargable de Alta Potencia', descripcion: 'Linterna táctica metálica recargable mediante puerto USB.', sku: 'FER-LIN-LED-REC', categoriaId: 6, vendedorId: 4, precio: 49.90, stock: 90, peso: 0.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
-    { id: 113, nombre: 'Juego de Llaves Mixtas Stanley (12 piezas)', descripcion: 'Set de llaves combinadas corona y boca de acero pulido.', sku: 'FER-JUE-LLA-MIX12', categoriaId: 6, vendedorId: 4, precio: 119.00, stock: 22, peso: 1.80, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
-    { id: 114, nombre: 'Sierra Circular Black+Decker 1500W', descripcion: 'Sierra circular con disco de carburo y guía de precisión.', sku: 'FER-SIE-BDE-1500W', categoriaId: 6, vendedorId: 4, precio: 319.00, stock: 14, peso: 4.10, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] },
-    { id: 115, nombre: 'Cable Eléctrico Indeco Nro 12 THW (100m)', descripcion: 'Rollo de cable de cobre recocido con cubierta de PVC retardante.', sku: 'FER-CAB-IND-12R', categoriaId: 6, vendedorId: 4, precio: 219.00, stock: 40, peso: 3.80, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
-    { id: 116, nombre: 'Set de Brochas Atlas Premium (3 piezas)', descripcion: 'Brochas profesionales de fibra fina sintética para acabados.', sku: 'FER-BRO-ATL-S3', categoriaId: 6, vendedorId: 4, precio: 24.50, stock: 110, peso: 0.30, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300'] },
-    { id: 117, nombre: 'Cinta Aisladora 3M Temflex (Caja 10 und)', descripcion: 'Cinta de vinilo de alta flexibilidad para aislamiento eléctrico.', sku: 'FER-CIN-3M-TEM10', categoriaId: 6, vendedorId: 4, precio: 35.00, stock: 150, peso: 0.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
-    { id: 118, nombre: 'Nivel de Burbuja de Aluminio Stanley 24"', descripcion: 'Nivel profesional resistente a impactos y deformaciones.', sku: 'FER-NIV-STA-24', categoriaId: 6, vendedorId: 4, precio: 55.00, stock: 35, peso: 0.80, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300'] },
-    { id: 119, nombre: 'Candado de Combinación TSA Yale Latón', descripcion: 'Candado programable de 3 dígitos homologado para equipaje.', sku: 'FER-CAN-YAL-TSA', categoriaId: 6, vendedorId: 4, precio: 45.00, stock: 10, peso: 0.10, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=300'] },
-    { id: 120, nombre: 'Compresora de Aire Truper 24 Litros 2.5HP', descripcion: 'Compresora de aire monofásica lubricada para uso constante.', sku: 'FER-COM-TRU-24L', categoriaId: 6, vendedorId: 4, precio: 499.00, stock: 6, peso: 18.50, activo: true, fechaCreacion: '2026-05-25', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300'] }
-  ]);
+  readonly products = signal<AdminProduct[]>([]);
 
-  readonly inventoryMovements = signal<InventoryMovement[]>([
-    { id: 1, productoId: 1, productoNombre: 'Café Cusco Premium', cantidad: 50, tipoMovimiento: 'ENTRADA', observacion: 'Ingreso inicial por importación XML.', fechaMovimiento: '2026-05-02 10:15' },
-    { id: 2, productoId: 1, productoNombre: 'Café Cusco Premium', cantidad: 5, tipoMovimiento: 'SALIDA', observacion: 'Venta realizada pedido #PED-01.', fechaMovimiento: '2026-05-03 14:30' },
-    { id: 3, productoId: 4, productoNombre: 'Chalina de Alpaca Baby', cantidad: 1, tipoMovimiento: 'AJUSTE', observacion: 'Corrección manual de stock por merma.', fechaMovimiento: '2026-05-20 11:00' }
-  ]);
+  readonly inventoryMovements = signal<InventoryMovement[]>([]);
 
-  readonly orders = signal<AdminOrder[]>([
-    {
-      id: 1,
-      numeroPedido: 'PED-9092-A',
-      fechaPedido: '2026-05-28',
-      subtotal: 70.00,
-      impuesto: 12.60,
-      costoEnvio: 10.00,
-      total: 92.60,
-      estado: 'PAGADO',
-      compradorCorreo: 'comprador@multimarket.com',
-      compradorNombre: 'Maria Comprador',
-      vendedorNombre: 'Cafetería del Centro',
-      vendedorId: 1,
-      metodoPago: 'VISA',
-      codigoOperacion: 'OP-4F3D2E',
-      detalles: [
-        { productoId: 1, productoNombre: 'Café Cusco Premium', sku: 'CAF-CUS-001', cantidad: 2, precioUnitario: 35.00, subtotal: 70.00 }
-      ]
-    },
-    {
-      id: 2,
-      numeroPedido: 'PED-1120-B',
-      fechaPedido: '2026-05-30',
-      subtotal: 25.00,
-      impuesto: 4.50,
-      costoEnvio: 8.00,
-      total: 37.50,
-      estado: 'PENDIENTE',
-      compradorCorreo: 'pedro@correo.com',
-      compradorNombre: 'Pedro Gomez',
-      vendedorNombre: 'Chocolates El Ceibo',
-      vendedorId: 2,
-      detalles: [
-        { productoId: 2, productoNombre: 'Chocolate Amargo 70%', sku: 'CHO-AMA-070', cantidad: 2, precioUnitario: 12.50, subtotal: 25.00 }
-      ]
-    }
-  ]);
+  readonly orders = signal<AdminOrder[]>([]);
 
-  readonly payments = signal<AdminPayment[]>([
-    { id: 1, pedidoNumero: 'PED-9092-A', monto: 92.60, metodoPago: 'VISA', estadoPago: 'APROBADO', fechaPago: '2026-05-28 14:32', codigoOperacion: 'OP-4F3D2E' },
-    { id: 2, pedidoNumero: 'PED-8812-X', monto: 120.00, metodoPago: 'MASTERCARD', estadoPago: 'FALLIDO', fechaPago: '2026-05-29 11:20', codigoOperacion: 'RECHAZADO_SALDO' }
-  ]);
+  readonly payments = signal<AdminPayment[]>([]);
 
-  readonly soapLogs = signal<SOAPLog[]>([
-    {
-      id: 1,
-      tipoOperacion: 'PROCESAR_PAGO',
-      estado: 'EXITOSA',
-      fecha: '2026-05-28 14:32:11',
-      requestXml: '<soapenv:Envelope xmlns:web="http://multimarket.com/payment"><soapenv:Body><web:procesarPago><web:numeroTarjeta>4111-XXXX-XXXX-1111</web:numeroTarjeta><web:monto>92.60</web:monto></web:procesarPago></soapenv:Body></soapenv:Envelope>',
-      responseXml: '<soapenv:Envelope><soapenv:Body><web:procesarPagoResponse><web:codigoOperacion>OP-4F3D2E</web:codigoOperacion><web:estado>APROBADO</web:estado></web:procesarPagoResponse></soapenv:Body></soapenv:Envelope>'
-    },
-    {
-      id: 2,
-      tipoOperacion: 'PROCESAR_PAGO',
-      estado: 'RECHAZADA',
-      fecha: '2026-05-29 11:20:04',
-      requestXml: '<soapenv:Envelope xmlns:web="http://multimarket.com/payment"><soapenv:Body><web:procesarPago><web:numeroTarjeta>5555-XXXX-XXXX-4444</web:numeroTarjeta><web:monto>120.00</web:monto></web:procesarPago></soapenv:Body></soapenv:Envelope>',
-      responseXml: '<soapenv:Envelope><soapenv:Body><web:procesarPagoResponse><web:codigoOperacion>RECHAZADO_SALDO</web:codigoOperacion><web:estado>RECHAZADO</web:estado></web:procesarPagoResponse></soapenv:Body></soapenv:Envelope>'
-    }
-  ]);
+  readonly soapLogs = signal<SOAPLog[]>([]);
 
-  readonly chats = signal<AdminChat[]>([
-    {
-      id: 1,
-      fechaCreacion: '2026-05-25',
-      activa: true,
-      compradorCorreo: 'comprador@multimarket.com',
-      vendedorNombre: 'Cafetería del Centro',
-      ultimoMensaje: 'Hola, ¿tienen stock disponible del café Cusco?',
-      mensajes: [
-        { remitente: 'comprador@multimarket.com', contenido: 'Hola, ¿tienen stock disponible del café Cusco?', fecha: '14:20' },
-        { remitente: 'vendedor@multimarket.com', contenido: 'Hola, sí, tenemos stock fresco recién tostado listo.', fecha: '14:25' }
-      ]
-    }
-  ]);
+  readonly chats = signal<AdminChat[]>([]);
 
-  readonly notifications = signal<AdminNotification[]>([
-    { id: 1, titulo: 'Campaña de Invierno', mensaje: 'Cupón del 15% de descuento en textiles andinos.', tipo: 'SISTEMA', destinatarios: 'TODOS', fechaCreacion: '2026-05-20' },
-    { id: 2, titulo: 'Ajuste de Comisiones', mensaje: 'Actualización en las tasas de venta por categoría.', tipo: 'SISTEMA', destinatarios: 'VENDEDORES', fechaCreacion: '2026-05-25' }
-  ]);
+  readonly notifications = signal<AdminNotification[]>([]);
 
-  readonly xmlImports = signal<XmlImportLog[]>([
-    { id: 1, nombreArchivo: 'catalogo_cusco_mayo.xml', fechaImportacion: '2026-05-02 10:14', totalRegistros: 15, registrosCorrectos: 15, registrosError: 0, estado: 'COMPLETADO' },
-    { id: 2, nombreArchivo: 'incorrecto_productos.xml', fechaImportacion: '2026-05-18 16:30', totalRegistros: 5, registrosCorrectos: 3, registrosError: 2, estado: 'COMPLETADO' }
-  ]);
+  readonly xmlImports = signal<XmlImportLog[]>([]);
 
-  readonly exports = signal<JsonXmlExportLog[]>([
-    { id: 1, formato: 'XML', fechaExportacion: '2026-05-29 11:00', rutaArchivo: '/exports/catalogo_xml_123.xml', estado: 'COMPLETADO' },
-    { id: 2, formato: 'JSON', fechaExportacion: '2026-05-30 09:15', rutaArchivo: '/exports/catalogo_json_556.json', estado: 'COMPLETADO' }
-  ]);
+  readonly exports = signal<JsonXmlExportLog[]>([]);
 
   // ==========================================
   // BACKEND-FED READ METHODS
   // ==========================================
+
+  loadUsers(): Observable<AdminUser[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/usuarios`).pipe(
+      map(users => users.map(u => ({
+        id: u.id,
+        correo: u.correo,
+        roles: Array.isArray(u.roles) ? u.roles : [],
+        estado: Boolean(u.estado),
+        correoVerificado: Boolean(u.correoVerificado),
+        fechaRegistro: u.fechaRegistro ?? new Date().toISOString(),
+        intentosFallidos: Number(u.intentosFallidos ?? 0),
+        bloqueado: Boolean(u.bloqueado)
+      }))),
+      tap(users => this.users.set(users))
+    );
+  }
+
+  loadRoles(): Observable<AdminRole[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/roles`).pipe(
+      map(roles => roles.map(r => ({
+        id: r.id,
+        nombre: r.nombre,
+        descripcion: r.descripcion,
+        permisos: Array.isArray(r.permisos) ? r.permisos : []
+      }))),
+      tap(roles => this.roles.set(roles))
+    );
+  }
 
   loadVendors(): Observable<AdminVendor[]> {
     return this.http.get<any[]>(`${this.baseUrl}/vendedores`).pipe(
@@ -418,6 +299,63 @@ export class AdminPortalService {
         fechaCreacion: notif.fechaCreacion ?? notif.fecha ?? new Date().toISOString().split('T')[0]
       }))),
       tap(notifs => this.notifications.set(notifs))
+    );
+  }
+
+  loadPayments(): Observable<AdminPayment[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/pagos`).pipe(
+      map(payments => payments.map(p => ({
+        id: p.id,
+        pedidoNumero: p.pedidoNumero ?? p.numeroPedido ?? '',
+        monto: Number(p.monto ?? 0),
+        metodoPago: p.metodoPago,
+        estadoPago: p.estadoPago === 'RECHAZADO' ? 'FALLIDO' : p.estadoPago,
+        fechaPago: p.fechaPago ?? new Date().toISOString(),
+        codigoOperacion: p.codigoOperacion ?? ''
+      }))),
+      tap(payments => this.payments.set(payments))
+    );
+  }
+
+  loadSoapLogs(): Observable<SOAPLog[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/pagos/soap`).pipe(
+      map(logs => logs.map(log => ({
+        id: log.id,
+        tipoOperacion: (log.estado?.includes('VALIDACION') ? 'VALIDAR_TARJETA' : 'PROCESAR_PAGO') as SOAPLog['tipoOperacion'],
+        estado: (log.estado?.includes('RECHAZ') ? 'RECHAZADA' : 'EXITOSA') as SOAPLog['estado'],
+        fecha: log.fecha ?? new Date().toISOString(),
+        requestXml: log.requestXml ?? '',
+        responseXml: log.responseXml ?? ''
+      }))),
+      tap(logs => this.soapLogs.set(logs))
+    );
+  }
+
+  loadImportHistory(): Observable<XmlImportLog[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/importar`).pipe(
+      map(imports => imports.map(item => ({
+        id: item.id,
+        nombreArchivo: item.nombreArchivo,
+        fechaImportacion: item.fechaImportacion ?? new Date().toISOString(),
+        totalRegistros: Number(item.totalRegistros ?? 0),
+        registrosCorrectos: Number(item.registrosCorrectos ?? 0),
+        registrosError: Number(item.registrosError ?? 0),
+        estado: (Number(item.registrosError ?? 0) > 0 ? 'FALLIDO' : 'COMPLETADO') as XmlImportLog['estado']
+      }))),
+      tap(imports => this.xmlImports.set(imports))
+    );
+  }
+
+  loadExportHistory(): Observable<JsonXmlExportLog[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/exportar`).pipe(
+      map(exports => exports.map(item => ({
+        id: item.id,
+        formato: item.formato,
+        fechaExportacion: item.fechaExportacion ?? new Date().toISOString(),
+        rutaArchivo: item.rutaArchivo ?? '',
+        estado: item.estado ?? 'COMPLETADO'
+      }))),
+      tap(exports => this.exports.set(exports))
     );
   }
 
