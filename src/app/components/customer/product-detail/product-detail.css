@@ -523,3 +523,9 @@
   text-decoration: none;
   margin-top: 8px;
 }
+
+@media (max-width: 480px) {
+  .specs-actions-panel {
+    grid-template-columns: 1fr !important;
+  }
+}

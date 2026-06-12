@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { CustomerService } from '../../../services/customer.service';
@@ -18,6 +18,20 @@ export class CustomerHome implements OnInit {
 
   // local loading states
   readonly isLoading = signal(false);
+
+  // Sorted list helpers for neat organization
+  readonly featuredVendors = computed(() => {
+    return [...this.portalService.vendors()]
+      .filter(v => v.activo)
+      .sort((a, b) => b.calificacionPromedio - a.calificacionPromedio)
+      .slice(0, 4);
+  });
+
+  readonly recommendedProducts = computed(() => {
+    return [...this.portalService.products()]
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .slice(0, 8);
+  });
 
   // Active Promo Index for Hero Slider
   readonly promoIndex = signal(0);

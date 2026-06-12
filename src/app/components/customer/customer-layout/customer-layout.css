@@ -695,6 +695,12 @@
     grid-template-columns: 1fr 1fr;
     gap: 30px;
   }
+  .nav-link-stores span:not(.nav-icon) {
+    display: none;
+  }
+  .nav-link-stores {
+    padding: 8px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -709,6 +715,17 @@
   }
   .main-viewport-content {
     padding: 20px 16px;
+  }
+  .btn-login-header {
+    padding: 8px;
+    min-width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-login-header span:not(.material-symbols-outlined) {
+    display: none;
   }
 }
 

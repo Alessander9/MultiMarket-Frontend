@@ -1,8 +1,10 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError, forkJoin } from 'rxjs';
-import { tap, map, switchMap } from 'rxjs/operators';
+import { catchError, tap, map, switchMap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { AuthService } from './auth.service';
+import { ChatService } from './chat.service';
 
 // --- INTERFACES ---
 
@@ -167,8 +169,16 @@ export interface SellerSettings {
 })
 export class SellerService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
+  private readonly chatService = inject(ChatService);
   private readonly baseUrl = environment.apiUrl;
   private storeId: number | null = null;
+
+  constructor() {
+    this.chatService.messageReceived$.subscribe(payload => {
+      this.handleIncomingSocketMessage(payload);
+    });
+  }
 
   // --- REACTIVE STATE VIA SIGNALS ---
 
@@ -190,38 +200,10 @@ export class SellerService {
   });
 
   // 2. Productos
-  readonly products = signal<SellerProduct[]>([
-    { id: 101, nombre: 'Taladro Percutor DeWalt 20V Max', descripcion: 'Taladro percutor inalámbrico Brushless (sin carbones) de alta potencia. Incluye 2 baterías de litio de 2.0Ah, cargador rápido y maletín de transporte.', sku: 'FER-TAL-DEW-20V', categoria: 'Herramientas Eléctricas', precio: 489.00, stock: 25, peso: 2.4, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80'] },
-    { id: 102, nombre: 'Juego de Herramientas Stanley (110 piezas)', descripcion: 'Completo maletín de herramientas mecánicas de acero cromo vanadio. Incluye dados de 1/2 y 1/4, llaves de trinquete, destornilladores, alicates y llaves hexagonales.', sku: 'FER-JUE-STA-110P', categoria: 'Herramientas Manuales', precio: 299.90, stock: 15, peso: 6.5, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&q=80'] },
-    { id: 103, nombre: 'Amoladora Angular Bosch 4 1/2" 850W', descripcion: 'Amoladora angular profesional Bosch GWS 850. Cuenta con motor potente de 850W, guarda de protección y empuñadura auxiliar ergonómica.', sku: 'FER-AMO-BOS-4.5', categoria: 'Herramientas Eléctricas', precio: 249.00, stock: 18, peso: 1.9, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80'] },
-    { id: 104, nombre: 'Caja de Herramientas Tramontina Plástica 20"', descripcion: 'Caja portaherramientas plástica de alta resistencia con cierres metálicos y bandeja interna removible. Ideal para organizar y transportar equipo.', sku: 'FER-CAJ-TRA-20', categoria: 'Herramientas Manuales', precio: 69.90, stock: 40, peso: 2.0, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&q=80'] },
-    { id: 105, nombre: 'Cerradura Digital Inteligente Yale YDF40', descripcion: 'Cerradura biométrica digital de sobreponer para puertas de madera o metal. Métodos de acceso: Huella dactilar, clave numérica y tarjeta RFID.', sku: 'FER-CER-YAL-DIG', categoria: 'Cerrajería & Seguridad', precio: 389.00, stock: 12, peso: 1.5, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=400&q=80'] },
-    { id: 106, nombre: 'Set de Destornilladores Imantados Stanley (6 piezas)', descripcion: 'Juego de destornilladores profesionales con mangos ergonómicos trilobulares y puntas magnéticas fosfatadas. Incluye planos y Philips.', sku: 'FER-SET-DES-IM6', categoria: 'Herramientas Manuales', precio: 39.90, stock: 80, peso: 0.8, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&q=80'] },
-    { id: 107, nombre: 'Pintura Látex CPP Pato Premium - Blanco (4 Galones)', descripcion: 'Pintura látex premium de alta lavabilidad, excelente cubrimiento y acabado mate. Especial para interiores y exteriores en zonas de alta humedad.', sku: 'FER-PIN-PAT-BL4', categoria: 'Pinturas & Acabados', precio: 189.00, stock: 30, peso: 22.0, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&q=80'] },
-    { id: 108, nombre: 'Candado de Acero Blindado Forte 60mm', descripcion: 'Candado de máxima seguridad blindado con cuerpo de bronce y coraza de acero endurecido. Sistema de pines antitaladro y antiganzúa.', sku: 'FER-CAN-FOR-60', categoria: 'Cerrajería & Seguridad', precio: 59.90, stock: 55, peso: 0.6, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=400&q=80'] },
-    { id: 109, nombre: 'Rotomartillo SDS Plus Makita 800W', descripcion: 'Rotomartillo Makita HR2470. Tres modos de operación: rotación, percusión con rotación y cincelado. Energía de impacto de 2.7 Joules.', sku: 'FER-ROT-MAK-800W', categoria: 'Herramientas Eléctricas', precio: 679.00, stock: 8, peso: 3.2, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80'] },
-    { id: 110, nombre: 'Martillo de Uña Tramontina Acero Carbono', descripcion: 'Martillo de carpintero con cabeza forjada y templada en acero especial. Mango de madera fijado mediante cuña metálica para mayor firmeza.', sku: 'FER-MAR-TRA-AC', categoria: 'Herramientas Manuales', precio: 29.90, stock: 100, peso: 0.7, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&q=80'] },
-    { id: 111, nombre: 'Wincha Métrica Stanley Powerlock 8m/26ft', descripcion: 'Cinta métrica profesional Powerlock con botón de bloqueo. Hoja recubierta con Mylar antidesgaste y gancho de tres remaches.', sku: 'FER-WIN-STA-8M', categoria: 'Herramientas Manuales', precio: 42.00, stock: 65, peso: 0.4, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&q=80'] },
-    { id: 112, nombre: 'Linterna LED Recargable de Alta Potencia', descripcion: 'Linterna táctica metálica recargable mediante USB. Chip LED T6 de 1000 lúmenes con zoom ajustable y 5 modos de iluminación.', sku: 'FER-LIN-LED-REC', categoria: 'Electricidad & Iluminación', precio: 49.90, stock: 90, peso: 0.5, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=400&q=80'] },
-    { id: 113, nombre: 'Juego de Llaves Mixtas Stanley (12 piezas)', descripcion: 'Set de llaves combinadas (corona y boca) en pulgadas o milímetros. Acabado cromado anticorrosivo con estuche organizador plástico.', sku: 'FER-JUE-LLA-MIX12', categoria: 'Herramientas Manuales', precio: 119.00, stock: 22, peso: 1.8, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&q=80'] },
-    { id: 114, nombre: 'Sierra Circular Black+Decker 1500W', descripcion: 'Sierra circular con motor de 1500W y disco de carburo de 7 1/4" (184mm). Ajuste de bisel de hasta 45 grados y guía láser integrada.', sku: 'FER-SIE-BDE-1500W', categoria: 'Herramientas Eléctricas', precio: 319.00, stock: 14, peso: 4.1, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80'] },
-    { id: 115, nombre: 'Cable Eléctrico Indeco Nro 12 THW (100m, Rojo)', descripcion: 'Rollo de 100 metros de cable de cobre recocido Indeco. Aislamiento de PVC resistente a la humedad y retardante a la llama.', sku: 'FER-CAB-IND-12R', categoria: 'Electricidad & Iluminación', precio: 219.00, stock: 40, peso: 3.8, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=400&q=80'] },
-    { id: 116, nombre: 'Set de Brochas Atlas Premium (3 piezas)', descripcion: 'Juego de tres brochas de cerdas sintéticas finas de 1", 2" y 3" de ancho. Mango de madera natural con virola metálica insignia.', sku: 'FER-BRO-ATL-S3', categoria: 'Pinturas & Acabados', precio: 24.50, stock: 110, peso: 0.3, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=400&q=80'] },
-    { id: 117, nombre: 'Cinta Aisladora 3M Temflex (Caja 10 unidades)', descripcion: 'Cinta aisladora de vinilo de alta flexibilidad. Excelente aislamiento dieléctrico y resistencia a la intemperie. Caja de 10 rollos.', sku: 'FER-CIN-3M-TEM10', categoria: 'Electricidad & Iluminación', precio: 35.00, stock: 150, peso: 0.5, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=400&q=80'] },
-    { id: 118, nombre: 'Nivel de Burbuja de Aluminio Stanley 24"', descripcion: 'Nivel profesional de aleación de aluminio extruido de 24 pulgadas. Cuenta con 3 burbujas (plomada, nivel y 45°) protegidas contra impactos.', sku: 'FER-NIV-STA-24', categoria: 'Herramientas Manuales', precio: 55.00, stock: 35, peso: 0.8, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&q=80'] },
-    { id: 119, nombre: 'Candado de Combinación TSA Yale Latón', descripcion: 'Candado para maletas o casilleros homologado por la TSA. Cuerpo de latón y combinación programable de 3 dígitos.', sku: 'FER-CAN-YAL-TSA', categoria: 'Cerrajería & Seguridad', precio: 45.00, stock: 0, peso: 0.1, estado: 'SIN_STOCK', imagenes: ['https://images.unsplash.com/photo-1558002038-1055907df827?w=400&q=80'] },
-    { id: 120, nombre: 'Compresora de Aire Truper 24 Litros 2.5HP', descripcion: 'Compresora lubricada por aceite de alta eficiencia. Tanque de 24L con motor monofásico de inducción de 2.5 caballos de fuerza.', sku: 'FER-COM-TRU-24L', categoria: 'Herramientas Eléctricas', precio: 499.00, stock: 6, peso: 18.5, estado: 'ACTIVO', imagenes: ['https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80'] }
-  ]);
+  readonly products = signal<SellerProduct[]>([]);
 
   // 3. Movimientos de Inventario
-  readonly inventoryMovements = signal<InventoryMovement[]>([
-    { id: 501, fecha: '2026-05-30T10:30:00-05:00', productoId: 101, productoNombre: 'Taladro Percutor DeWalt 20V Max', sku: 'FER-TAL-DEW-20V', cantidad: 8, tipo: 'ENTRADA', observacion: 'Ingreso por despacho del importador autorizado' },
-    { id: 502, fecha: '2026-05-29T15:45:00-05:00', productoId: 102, productoNombre: 'Juego de Herramientas Stanley (110 piezas)', sku: 'FER-JUE-STA-110P', cantidad: -2, tipo: 'SALIDA', observacion: 'Venta realizada Pedido #PED-7768' },
-    { id: 503, fecha: '2026-05-28T09:00:00-05:00', productoId: 105, productoNombre: 'Cerradura Digital Inteligente Yale YDF40', sku: 'FER-CER-YAL-DIG', cantidad: -1, tipo: 'SALIDA', observacion: 'Venta realizada Pedido #PED-7762' },
-    { id: 504, fecha: '2026-05-27T11:20:00-05:00', productoId: 108, productoNombre: 'Candado de Acero Blindado Forte 60mm', sku: 'FER-CAN-FOR-60', cantidad: 50, tipo: 'ENTRADA', observacion: 'Abastecimiento de fábrica de Forte' },
-    { id: 505, fecha: '2026-05-25T16:10:00-05:00', productoId: 119, productoNombre: 'Candado de Combinación TSA Yale Latón', sku: 'FER-CAN-YAL-TSA', cantidad: -1, tipo: 'AJUSTE', observacion: 'Mermas por rotura de blister en exhibidor' },
-    { id: 506, fecha: '2026-05-24T08:15:00-05:00', productoId: 101, productoNombre: 'Taladro Percutor DeWalt 20V Max', sku: 'FER-TAL-DEW-20V', cantidad: 12, tipo: 'AJUSTE', observacion: 'Ajuste e inventario de auditoría física' }
-  ]);
+  readonly inventoryMovements = signal<InventoryMovement[]>([]);
 
   // 4. Pedidos
   readonly orders = signal<SellerOrder[]>([
@@ -490,6 +472,13 @@ export class SellerService {
     };
   }
 
+  private isOwnProduct(product: SellerProduct): boolean {
+    if (this.storeId == null) {
+      return true;
+    }
+    return product.vendorId == null || product.vendorId === this.storeId;
+  }
+
   private normalizeOrder(order: any): SellerOrder {
     return {
       id: Number(order?.id ?? 0),
@@ -569,18 +558,30 @@ export class SellerService {
   }
 
   loadBackendData(): Observable<void> {
+    const safeGet = <T>(request$: Observable<T>, fallback: T) =>
+      request$.pipe(catchError(() => of(fallback)));
+
     return forkJoin({
-      store: this.http.get<any>(`${this.baseUrl}/vendedores/mi-tienda`),
-      categories: this.http.get<any[]>(`${this.baseUrl}/categorias`),
-      products: this.http.get<any[]>(`${this.baseUrl}/productos`),
-      orders: this.http.get<any[]>(`${this.baseUrl}/pedidos/tienda`),
-      notifications: this.http.get<any[]>(`${this.baseUrl}/notificaciones`),
-      conversations: this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones`)
+      store: safeGet(this.http.get<any>(`${this.baseUrl}/vendedores/mi-tienda`), null),
+      categories: safeGet(this.http.get<any[]>(`${this.baseUrl}/categorias`), []),
+      products: safeGet(this.http.get<any[]>(`${this.baseUrl}/vendedores/mi-tienda/productos`), []),
+      orders: safeGet(this.http.get<any[]>(`${this.baseUrl}/pedidos/tienda`), []),
+      notifications: safeGet(this.http.get<any[]>(`${this.baseUrl}/notificaciones`), []),
+      conversations: safeGet(this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones`), [])
     }).pipe(
       tap(({ store, categories, products, orders, notifications, conversations }) => {
-        this.storeProfile.set(this.normalizeStoreProfile(store));
+        if (store) {
+          this.storeProfile.set(this.normalizeStoreProfile(store));
+        }
+
         this.categories.set(categories.map(cat => ({ id: Number(cat?.id ?? 0), nombre: cat?.nombre ?? '' })));
-        this.products.set(products.map(p => this.normalizeProduct(p)));
+
+        const ownProducts = products
+          .map(p => this.normalizeProduct(p))
+          .filter(p => this.isOwnProduct(p));
+        this.products.set(ownProducts);
+
+        this.inventoryMovements.set([]);
         this.orders.set(orders.map(o => this.normalizeOrder(o)));
         this.notifications.set(notifications.map(n => this.normalizeNotification(n)));
         this.conversations.set(conversations.map(c => this.normalizeConversation(c)));
@@ -641,6 +642,9 @@ export class SellerService {
   updateProduct(id: number, request: Partial<SellerProduct>): Observable<SellerProduct> {
     const original = this.products().find(p => p.id === id);
     if (!original) return throwError(() => new Error('Producto no encontrado'));
+    if (!this.isOwnProduct(original)) {
+      return throwError(() => new Error('No estás autorizado para modificar este producto'));
+    }
 
     const payload = {
       nombre: request.nombre ?? original.nombre,
@@ -662,6 +666,11 @@ export class SellerService {
   }
 
   deleteProduct(id: number): Observable<void> {
+    const original = this.products().find(p => p.id === id);
+    if (original && !this.isOwnProduct(original)) {
+      return throwError(() => new Error('No estás autorizado para eliminar este producto'));
+    }
+
     return this.http.delete<void>(`${this.baseUrl}/productos/${id}`).pipe(
       tap(() => {
         this.products.update(list => list.filter(p => p.id !== id));
@@ -673,6 +682,9 @@ export class SellerService {
   adjustInventory(productoId: number, cantidad: number, tipo: 'ENTRADA' | 'SALIDA' | 'AJUSTE', observacion: string): Observable<SellerProduct> {
     const prod = this.products().find(p => p.id === productoId);
     if (!prod) return throwError(() => new Error('Producto no encontrado'));
+    if (!this.isOwnProduct(prod)) {
+      return throwError(() => new Error('No estás autorizado para manipular este producto.'));
+    }
 
     return this.http.post<any>(`${this.baseUrl}/inventarios/productos/${productoId}/movimientos`, {
       tipoMovimiento: tipo,
@@ -737,11 +749,99 @@ export class SellerService {
     );
   }
 
+  loadMessageHistory(conversationId: number): Observable<SellerMessage[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones/${conversationId}/mensajes`).pipe(
+      map(msgs => msgs.map(m => ({
+        id: Number(m?.id ?? 0),
+        remitente: m?.remitenteCorreo === this.authService.currentUserEmail() ? 'VENDEDOR' as const : 'COMPRADOR' as const,
+        contenido: m?.contenido ?? '',
+        fecha: m?.fechaEnvio ?? new Date().toISOString(),
+        leido: Boolean(m?.leido)
+      }))),
+      tap(msgs => {
+        this.conversations.update(list => list.map(c => {
+          if (c.id === conversationId) {
+            return { ...c, mensajes: msgs };
+          }
+          return c;
+        }));
+      })
+    );
+  }
+
+  private handleIncomingSocketMessage(payload: any): void {
+    const { conversacionId, data } = payload;
+    if (!conversacionId || !data) return;
+
+    const isSeller = data.remitenteCorreo === this.authService.currentUserEmail();
+    const msg: SellerMessage = {
+      id: Number(data.id ?? 0),
+      remitente: isSeller ? 'VENDEDOR' : 'COMPRADOR',
+      contenido: data.contenido ?? '',
+      fecha: data.fechaEnvio ?? new Date().toISOString(),
+      leido: Boolean(data.leido)
+    };
+
+    this.conversations.update(list => {
+      const exists = list.some(c => c.id === conversacionId);
+      if (!exists) {
+        // Reload conversations to pull the new thread
+        this.loadBackendData().subscribe();
+        return list;
+      }
+      return list.map(c => {
+        if (c.id === conversacionId) {
+          // Avoid duplicates
+          if (c.mensajes.some(m => m.id === msg.id)) {
+            return c;
+          }
+
+          // Trigger a notification for new customer messages
+          if (!isSeller) {
+            this.addNotification(
+              'CHAT',
+              `Nuevo mensaje de ${c.compradorNombre}`,
+              msg.contenido
+            );
+          }
+
+          return {
+            ...c,
+            ultimoMensaje: msg.contenido,
+            fechaUltimoMensaje: msg.fecha,
+            noLeidos: isSeller ? c.noLeidos : c.noLeidos + 1,
+            mensajes: [...c.mensajes, msg]
+          };
+        }
+        return c;
+      });
+    });
+  }
+
   // Enviar mensaje en Chat
   sendChatMessage(conversationId: number, contenido: string): Observable<SellerMessage> {
     const conv = this.conversations().find(c => c.id === conversationId);
     if (!conv) return throwError(() => new Error('Conversación no encontrada'));
 
+    // Try sending via WebSocket first
+    const sentViaSocket = this.chatService.sendMessageViaSocket(
+      conversationId,
+      this.authService.currentUserEmail()!,
+      contenido
+    );
+
+    if (sentViaSocket) {
+      const tempMsg: SellerMessage = {
+        id: Math.floor(Math.random() * -100000),
+        remitente: 'VENDEDOR' as const,
+        contenido,
+        fecha: new Date().toISOString(),
+        leido: true
+      };
+      return of(tempMsg);
+    }
+
+    // Fallback to HTTP POST if WebSocket connection is not open
     return this.http.post<any>(`${this.baseUrl}/chat/conversaciones/${conversationId}/mensajes`, { contenido }).pipe(
       map(msg => ({
         id: Number(msg?.id ?? Math.floor(Math.random() * 100000)),
@@ -753,6 +853,7 @@ export class SellerService {
       tap(msg => {
         this.conversations.update(list => list.map(c => {
           if (c.id === conversationId) {
+            if (c.mensajes.some(m => m.id === msg.id)) return c;
             return {
               ...c,
               ultimoMensaje: msg.contenido,

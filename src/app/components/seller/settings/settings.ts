@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SellerService, SellerSettings } from '../../../services/seller.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-seller-settings',
@@ -13,6 +14,7 @@ import { SellerService, SellerSettings } from '../../../services/seller.service'
 export class SellerSettingsComponent implements OnInit {
   protected readonly sellerService = inject(SellerService);
   private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
 
   // Active section tab: 'account' | 'security' | 'preferences'
   readonly activeSettingTab = signal<'account' | 'security' | 'preferences'>('account');
@@ -89,11 +91,24 @@ export class SellerSettingsComponent implements OnInit {
     }
 
     this.isSaving.set(true);
-    setTimeout(() => {
-      this.isSaving.set(false);
-      this.passwordForm.reset();
-      this.showToast('Contraseña actualizada exitosamente en el servidor.');
-    }, 1000);
+    const val = this.passwordForm.value;
+    const payload = {
+      oldPassword: val.oldPassword,
+      newPassword: val.newPassword
+    };
+
+    this.authService.changePassword(payload).subscribe({
+      next: (msg) => {
+        this.isSaving.set(false);
+        this.passwordForm.reset();
+        this.showToast(msg || 'Contraseña actualizada exitosamente.');
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        const detail = err.error?.message || err.error || 'Error al cambiar la contraseña. Verifique sus credenciales.';
+        alert(detail);
+      }
+    });
   }
 
   toggle2fa(): void {

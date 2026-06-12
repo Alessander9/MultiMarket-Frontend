@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -18,9 +18,25 @@ export class Productos implements OnInit {
 
   // Component Signals
   readonly products = signal<Product[]>([]);
+  readonly searchQuery = signal('');
   readonly profileDetails = signal<any | null>(null);
   readonly isLoadingProducts = signal(false);
   readonly isLoadingProfile = signal(false);
+
+  readonly filteredProducts = computed(() => {
+    const list = this.products();
+    const query = this.searchQuery().trim().toLowerCase();
+    if (!query) {
+      return list;
+    }
+    const filtered = list.filter(p => 
+      p.nombre.toLowerCase().includes(query) || 
+      p.sku.toLowerCase().includes(query) ||
+      (p.categoriaNombre && p.categoriaNombre.toLowerCase().includes(query)) ||
+      (p.vendedorNombre && p.vendedorNombre.toLowerCase().includes(query))
+    );
+    return filtered.slice(0, 2);
+  });
 
   ngOnInit(): void {
     // Security check: if user is not logged in, redirect to login page immediately

@@ -13,10 +13,13 @@ import { SellerService, SellerProduct } from '../../../services/seller.service';
 export class SellerProducts implements OnInit {
   protected readonly sellerService = inject(SellerService);
   private readonly fb = inject(FormBuilder);
+  readonly defaultPreviewImage = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=900&auto=format&fit=crop&q=80';
+  private readonly fallbackCategories = ['Café', 'Chocolate', 'Miel', 'Artesanías', 'Textiles', 'Ferretería'];
 
   // Active view state: 'list' | 'create' | 'edit' | 'detail'
   readonly viewState = signal<'list' | 'create' | 'edit' | 'detail'>('list');
   readonly selectedProduct = signal<SellerProduct | null>(null);
+  readonly deleteConfirm = signal<{ id: number; message: string } | null>(null);
 
   // States
   readonly isLoading = signal(false);
@@ -35,25 +38,47 @@ export class SellerProducts implements OnInit {
   readonly currentPage = signal(1);
   readonly pageSize = 5;
 
+  readonly categoryOptions = computed(() => {
+    const backendCategories = this.sellerService.categories();
+    if (backendCategories.length > 0) {
+      return backendCategories;
+    }
+    return this.fallbackCategories.map((nombre, index) => ({ id: index + 1, nombre }));
+  });
+
   // Reactive Form
   productForm!: FormGroup;
 
   ngOnInit(): void {
     this.initForm();
+    if (!this.sellerService.categories().length || !this.sellerService.products().length) {
+      this.sellerService.loadBackendData().subscribe();
+    }
   }
 
   initForm(product?: SellerProduct): void {
+    const resolvedCategoryId = this.resolveCategoryId(product?.categoria);
     this.productForm = this.fb.group({
       nombre: [product?.nombre || '', [Validators.required, Validators.maxLength(100)]],
       descripcion: [product?.descripcion || '', [Validators.required, Validators.maxLength(800)]],
       sku: [product?.sku || '', [Validators.required, Validators.pattern(/^[A-Z0-9_-]+$/)]],
-      categoria: [product?.categoria || 'Café', [Validators.required]],
+      categoriaId: [resolvedCategoryId, [Validators.required]],
       precio: [product?.precio || 0, [Validators.required, Validators.min(0.1)]],
       stock: [product?.stock || 0, [Validators.required, Validators.min(0)]],
+      stockMinimo: [Math.max(0, Math.min(product?.stock || 0, 10)), [Validators.required, Validators.min(0)]],
       peso: [product?.peso || 0, [Validators.required, Validators.min(0.01)]],
       estado: [product?.estado || 'ACTIVO', [Validators.required]],
-      imagenUrl: ['']
+      imagenUrl: [product?.imagenes?.[0] || '']
     });
+  }
+
+  private resolveCategoryId(category: string | number | undefined): number {
+    if (typeof category === 'number') {
+      return category;
+    }
+    const categoryName = (category ?? '').toString().trim().toLowerCase();
+    const fromBackend = this.categoryOptions().find(cat => cat.nombre.toLowerCase() === categoryName);
+    return fromBackend?.id ?? this.categoryOptions()[0]?.id ?? 1;
   }
 
   // --- FILTERS & COMPUTED PROPERTIES ---
@@ -69,6 +94,7 @@ export class SellerProducts implements OnInit {
         p.sku.toLowerCase().includes(search) || 
         p.descripcion.toLowerCase().includes(search)
       );
+      prods = prods.slice(0, 2); // limit to 2 options
     }
 
     // 2. Category Filter
@@ -144,6 +170,7 @@ export class SellerProducts implements OnInit {
   }
 
   openCreate(): void {
+    this.selectedProduct.set(null);
     this.initForm();
     this.viewState.set('create');
   }
@@ -174,16 +201,16 @@ export class SellerProducts implements OnInit {
     this.feedbackMessage.set(null);
 
     const values = this.productForm.value;
-    const prodData = {
+    const prodData: any = {
       nombre: values.nombre,
       descripcion: values.descripcion,
       sku: values.sku.toUpperCase(),
-      categoria: values.categoria,
+      categoria: Number(values.categoriaId),
       precio: parseFloat(values.precio),
       stock: parseInt(values.stock, 10),
       peso: parseFloat(values.peso),
       estado: values.estado,
-      imagenes: values.imagenUrl ? [values.imagenUrl] : []
+      imagenes: values.imagenUrl ? [values.imagenUrl.trim()] : []
     };
 
     if (this.viewState() === 'create') {
@@ -218,20 +245,29 @@ export class SellerProducts implements OnInit {
 
   deleteProduct(id: number, event: Event): void {
     event.stopPropagation();
-    if (confirm('¿Está seguro de que desea eliminar este producto del catálogo?')) {
-      this.isLoading.set(true);
-      this.sellerService.deleteProduct(id).subscribe({
-        next: () => {
-          this.isLoading.set(false);
-          this.showFeedback('Producto eliminado con éxito.', 'success');
-          this.currentPage.set(1);
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.showFeedback('No se pudo eliminar el producto.', 'error');
-        }
-      });
-    }
+    this.deleteConfirm.set({
+      id,
+      message: '¿Está seguro de que desea eliminar este producto del catálogo de forma permanente? Esta acción no se puede deshacer.'
+    });
+  }
+
+  confirmDelete(): void {
+    const data = this.deleteConfirm();
+    if (!data) return;
+
+    this.deleteConfirm.set(null);
+    this.isLoading.set(true);
+    this.sellerService.deleteProduct(data.id).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.showFeedback('Producto eliminado con éxito.', 'success');
+        this.currentPage.set(1);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.showFeedback('No se pudo eliminar el producto.', 'error');
+      }
+    });
   }
 
   private showFeedback(text: string, type: 'success' | 'error'): void {
@@ -248,5 +284,39 @@ export class SellerProducts implements OnInit {
     this.filterMinPrice.set(null);
     this.filterMaxPrice.set(null);
     this.currentPage.set(1);
+  }
+
+  onSkuInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.toUpperCase();
+    input.value = value;
+    this.productForm.get('sku')?.setValue(value, { emitEvent: false });
+  }
+
+  onImageUrlChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.productForm.get('imagenUrl')?.setValue(input.value.trim());
+  }
+
+  getSelectedPreviewImage(): string {
+    const imageUrl = this.productForm?.get('imagenUrl')?.value?.trim();
+    return imageUrl || this.selectedProduct()?.imagenes?.[0] || this.defaultPreviewImage;
+  }
+
+  getSelectedStateLabel(): string {
+    const state = this.selectedProduct();
+    if (!state) return '';
+    return state.estado === 'ACTIVO' ? 'Activo' : state.estado === 'INACTIVO' ? 'Inactivo' : 'Sin stock';
+  }
+
+  getStockState(stock: number): string {
+    if (stock <= 0) return 'Sin stock';
+    if (stock <= 10) return 'Stock bajo';
+    return 'Disponible';
+  }
+
+  getSelectedCategoryName(): string {
+    const selectedId = Number(this.productForm?.get('categoriaId')?.value);
+    return this.categoryOptions().find(cat => cat.id === selectedId)?.nombre ?? 'Sin categoría';
   }
 }

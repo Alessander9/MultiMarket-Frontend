@@ -15,6 +15,25 @@
         <button class="btn-reset-filters" (click)="clearFilters()">Limpiar</button>
       </div>
 
+      <!-- Real-time Local Search Input -->
+      <div class="filter-section">
+        <h4>Buscador de Productos</h4>
+        <div class="search-input-sidebar" style="position: relative; display: flex; align-items: center; width: 100%;">
+          <span class="material-symbols-outlined" style="position: absolute; left: 10px; font-size: 18px; color: var(--on-surface-variant); pointer-events: none;">search</span>
+          <input 
+            type="text" 
+            placeholder="Escriba para filtrar..." 
+            [value]="searchQuery()" 
+            (input)="searchQuery.set($any($event.target).value)"
+            style="width: 100%; padding: 8px 12px 8px 32px; border-radius: var(--radius-sm); border: 1px solid var(--outline-variant); background-color: var(--surface-container-low); color: var(--on-surface); outline: none; font-size: 13px; font-family: inherit;"
+          />
+        </div>
+        <div *ngIf="searchQuery()" style="margin-top: 6px; font-size: 11px; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 4px;">
+          <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
+          <span>Máximo 2 coincidencias</span>
+        </div>
+      </div>
+
       <!-- Category Filter -->
       <div class="filter-section">
         <h4>Categoría</h4>

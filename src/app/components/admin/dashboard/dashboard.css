@@ -1390,10 +1390,6 @@
 .list-panel {
   width: 100%;
 }
-.form-panel, .detail-drawer {
-  width: 100%;
-  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
 
 @keyframes slideInLeft {
   from {
@@ -3418,5 +3414,126 @@
     width: 100%;
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* =================================================== */
+/* 22. GLOBAL MOBILE RESPONSIVENESS OVERRIDES          */
+/* =================================================== */
+.mobile-menu-toggle-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.mobile-menu-toggle-btn:hover {
+  background-color: var(--surface-container-low);
+  color: var(--on-surface);
+}
+
+.mobile-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .mobile-menu-toggle-btn {
+    display: flex !important;
+  }
+  
+  .mobile-logo-container {
+    display: flex !important;
+    align-items: center;
+    color: var(--primary);
+  }
+  
+  .collapse-toggle-btn {
+    display: none !important;
+  }
+  
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh;
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+  }
+  
+  .sidebar-collapsed .sidebar {
+    width: 260px !important;
+    transform: translateX(-100%);
+  }
+  
+  .sidebar-collapsed .brand-text,
+  .sidebar-collapsed .section-heading,
+  .sidebar-collapsed .nav-text {
+    display: block !important;
+  }
+  
+  .sidebar-collapsed .nav-item {
+    justify-content: flex-start !important;
+    padding: 10px 12px !important;
+  }
+  
+  .mobile-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.52);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+  }
+  
+  .top-header {
+    padding: 0 20px;
+  }
+  
+  .content-body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .top-header {
+    padding: 0 16px;
+  }
+  
+  .admin-meta {
+    display: none !important;
+  }
+  
+  .profile-card-btn {
+    padding: 6px !important;
+  }
+  
+  .profile-card-btn .arrow-icon {
+    display: none !important;
+  }
+  
+  .table-card {
+    padding: 16px 0 0 0 !important;
+  }
+  
+  .table-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .search-filter-bar {
+    padding: 16px !important;
   }
 }

@@ -150,12 +150,25 @@
             </div>
             <div class="divider-line"></div>
             <ul class="dropdown-links-list">
+              <li *ngIf="authService.currentUserRoles().includes('ADMINISTRADOR')">
+                <a routerLink="/admin/dashboard" class="drop-link-item" style="border: 1px solid rgba(167, 139, 250, 0.25); background: rgba(167, 139, 250, 0.08); font-weight: 600; color: var(--primary);">
+                  <span class="material-symbols-outlined" style="color: var(--primary);">shield_person</span>
+                  Panel Administrador
+                </a>
+              </li>
+              <li *ngIf="authService.currentUserRoles().includes('VENDEDOR')">
+                <a routerLink="/seller/dashboard" class="drop-link-item" style="border: 1px solid rgba(52, 211, 153, 0.25); background: rgba(52, 211, 153, 0.08); font-weight: 600; color: var(--tertiary);">
+                  <span class="material-symbols-outlined" style="color: var(--tertiary);">storefront</span>
+                  Panel Vendedor
+                </a>
+              </li>
               <li>
                 <a routerLink="/account" class="drop-link-item">
                   <span class="material-symbols-outlined">dashboard</span>
                   Mi Cuenta Dashboard
                 </a>
               </li>
+
               <li>
                 <a routerLink="/orders" class="drop-link-item">
                   <span class="material-symbols-outlined">local_shipping</span>

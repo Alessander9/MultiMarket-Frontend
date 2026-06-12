@@ -57,7 +57,9 @@
         <div class="new-address-form-box" *ngIf="showNewAddressForm()">
           <div class="form-header">
             <h4>Registrar nueva dirección de despacho</h4>
-            <button class="btn-text-only" (click)="showNewAddressForm.set(false)">Volver a mis direcciones</button>
+            <button class="close-drawer-btn" (click)="showNewAddressForm.set(false)" title="Cerrar">
+              <span class="material-symbols-outlined">close</span>
+            </button>
           </div>
 
           <div class="form-grid">

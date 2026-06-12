@@ -20,6 +20,7 @@ export class SellerInventory implements OnInit {
   // UI status
   readonly isLoading = signal(false);
   readonly successMessage = signal<string | null>(null);
+  readonly errorMessage = signal<string | null>(null);
 
   // Search filter
   readonly searchProduct = signal('');
@@ -30,6 +31,9 @@ export class SellerInventory implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    if (!this.sellerService.products().length) {
+      this.sellerService.loadBackendData().subscribe();
+    }
   }
 
   public initForm(): void {
@@ -71,6 +75,7 @@ export class SellerInventory implements OnInit {
 
     this.isLoading.set(true);
     this.successMessage.set(null);
+    this.errorMessage.set(null);
 
     const values = this.adjustmentForm.value;
     const prodId = parseInt(values.productoId, 10);
@@ -87,8 +92,16 @@ export class SellerInventory implements OnInit {
           this.successMessage.set(null);
         }, 4000);
       },
-      error: () => {
+      error: (err) => {
         this.isLoading.set(false);
+        if (err.status === 403) {
+           this.errorMessage.set('Acceso denegado. Tu sesión pudo haber expirado, o no tienes permisos para realizar esta acción.');
+        } else {
+           this.errorMessage.set(err.error?.message || 'Ocurrió un error al intentar actualizar el inventario.');
+        }
+        setTimeout(() => {
+          this.errorMessage.set(null);
+        }, 6000);
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, SellerConversation, SellerMessage } from '../../../services/seller.service';
@@ -24,12 +24,17 @@ export class SellerChat implements OnInit, AfterViewChecked {
   // Local state helper
   readonly isSending = signal(false);
 
+  constructor() {
+    effect(() => {
+      const convs = this.sellerService.conversations();
+      if (convs.length > 0 && this.activeConvId() === null) {
+        setTimeout(() => this.selectConversation(convs[0].id));
+      }
+    });
+  }
+
   ngOnInit(): void {
-    // Automatically select the first thread if available
-    const convs = this.sellerService.conversations();
-    if (convs.length > 0) {
-      this.selectConversation(convs[0].id);
-    }
+    // Auto-selection is handled by the constructor effect once conversations are loaded
   }
 
   ngAfterViewChecked(): void {
@@ -49,17 +54,22 @@ export class SellerChat implements OnInit, AfterViewChecked {
   selectConversation(id: number): void {
     this.activeConvId.set(id);
     
-    // Mark messages in this thread as read
-    this.sellerService.conversations.update(list => list.map(c => {
-      if (c.id === id) {
-        return {
-          ...c,
-          noLeidos: 0,
-          mensajes: c.mensajes.map(m => ({ ...m, leido: true }))
-        };
+    this.sellerService.loadMessageHistory(id).subscribe({
+      next: () => {
+        // Mark messages in this thread as read
+        this.sellerService.conversations.update(list => list.map(c => {
+          if (c.id === id) {
+            return {
+              ...c,
+              noLeidos: 0,
+              mensajes: c.mensajes.map(m => ({ ...m, leido: true }))
+            };
+          }
+          return c;
+        }));
+        this.scrollToBottom();
       }
-      return c;
-    }));
+    });
   }
 
   sendMessage(): void {

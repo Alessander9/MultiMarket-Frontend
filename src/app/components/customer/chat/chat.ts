@@ -20,7 +20,15 @@ export class CustomerChat {
   typedMessage = signal<string>('');
 
   ngOnInit(): void {
-    this.markSelectedAsRead();
+    const defaultId = this.selectedConvId();
+    if (defaultId) {
+      this.customerService.loadMessageHistory(defaultId).subscribe({
+        next: () => {
+          this.markSelectedAsRead();
+          this.scrollToBottom();
+        }
+      });
+    }
   }
 
   ngAfterViewChecked(): void {
@@ -33,8 +41,12 @@ export class CustomerChat {
 
   selectConversation(id: number): void {
     this.selectedConvId.set(id);
-    this.markSelectedAsRead();
-    this.scrollToBottom();
+    this.customerService.loadMessageHistory(id).subscribe({
+      next: () => {
+        this.markSelectedAsRead();
+        this.scrollToBottom();
+      }
+    });
   }
 
   private markSelectedAsRead(): void {

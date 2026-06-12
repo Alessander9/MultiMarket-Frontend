@@ -4,6 +4,7 @@ import { delay, tap, map, switchMap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
+import { ChatService } from './chat.service';
 
 // --- INTERFACES ---
 
@@ -101,8 +102,15 @@ export interface VendorMini {
 export class CustomerService {
   private readonly http = inject(HttpClient);
   private readonly authService = inject(AuthService);
+  private readonly chatService = inject(ChatService);
   private readonly baseUrl = environment.apiUrl;
   private toastTimeout: any = null;
+
+  constructor() {
+    this.chatService.messageReceived$.subscribe(payload => {
+      this.handleIncomingSocketMessage(payload);
+    });
+  }
 
   // --- STATE SIGNALS ---
   readonly activeToast = signal<{ message: string; type: 'success' | 'info' | 'error' | 'warning'; visible: boolean } | null>(null);
@@ -553,6 +561,58 @@ export class CustomerService {
 
   // --- CHAT WITH VENDOR ---
 
+  loadMessageHistory(conversationId: number): Observable<BuyerMessage[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones/${conversationId}/mensajes`).pipe(
+      map(msgs => msgs.map(m => this.normalizeMessage(m))),
+      tap(msgs => {
+        this.conversations.update(list => list.map(c => {
+          if (c.id === conversationId) {
+            return { ...c, mensajes: msgs };
+          }
+          return c;
+        }));
+      })
+    );
+  }
+
+  private handleIncomingSocketMessage(payload: any): void {
+    const { conversacionId, data } = payload;
+    if (!conversacionId || !data) return;
+
+    const isBuyer = data.remitenteCorreo === this.authService.currentUserEmail();
+    const msg = this.normalizeMessage(data);
+
+    this.conversations.update(list => {
+      const exists = list.some(c => c.id === conversacionId);
+      if (!exists) {
+        // Trigger a reload of conversation list from server to pick up new conversation channel
+        this.loadBackendData().subscribe();
+        return list;
+      }
+      return list.map(c => {
+        if (c.id === conversacionId) {
+          // Avoid duplicate messages
+          if (c.mensajes.some(m => m.id === msg.id)) {
+            return c;
+          }
+
+          if (!isBuyer) {
+            this.showToast(`Mensaje de ${c.vendedorNombreTienda}: "${msg.contenido}"`, 'info');
+          }
+
+          return {
+            ...c,
+            ultimoMensaje: msg.contenido,
+            fechaUltimoMensaje: msg.fecha,
+            noLeidos: isBuyer ? c.noLeidos : c.noLeidos + 1,
+            mensajes: [...c.mensajes, msg]
+          };
+        }
+        return c;
+      });
+    });
+  }
+
   sendChatMessage(vendedorId: number, content: string): Observable<BuyerMessage> {
     const ensureConversation = (existing?: BuyerConversation) => {
       if (existing) return of(existing);
@@ -563,12 +623,34 @@ export class CustomerService {
 
     const activeConv = this.conversations().find(c => c.vendedorId === vendedorId);
     return ensureConversation(activeConv).pipe(
-      switchMap(conv =>
-        this.http.post<any>(`${this.baseUrl}/chat/conversaciones/${conv.id}/mensajes`, { contenido: content }).pipe(
+      switchMap(conv => {
+        // Try sending via WebSocket first
+        const sentViaSocket = this.chatService.sendMessageViaSocket(
+          conv.id,
+          this.authService.currentUserEmail()!,
+          content
+        );
+
+        if (sentViaSocket) {
+          // Return a temp message instantly.
+          // The socket messageReceived$ listener will handle appending the actual ACK-ed message.
+          const tempMsg: BuyerMessage = {
+            id: Math.floor(Math.random() * -100000),
+            remitente: 'COMPRADOR',
+            contenido: content,
+            fecha: new Date().toISOString(),
+            leido: false
+          };
+          return of(tempMsg);
+        }
+
+        // Fallback to HTTP POST if WebSocket connection is not open
+        return this.http.post<any>(`${this.baseUrl}/chat/conversaciones/${conv.id}/mensajes`, { contenido: content }).pipe(
           map(msg => this.normalizeMessage(msg)),
           tap(msg => {
             this.conversations.update(list => list.map(c => {
               if (c.id === conv.id) {
+                if (c.mensajes.some(m => m.id === msg.id)) return c;
                 return {
                   ...c,
                   ultimoMensaje: msg.contenido,
@@ -579,8 +661,8 @@ export class CustomerService {
               return c;
             }));
           })
-        )
-      )
+        );
+      })
     );
   }
 

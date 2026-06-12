@@ -98,7 +98,7 @@
       </div>
 
       <div class="home-stores-grid">
-        <div class="home-store-card card" *ngFor="let vendor of portalService.vendors().slice(0, 4)">
+        <div class="home-store-card card" *ngFor="let vendor of featuredVendors()">
           <!-- Banner bg -->
           <div class="home-store-banner" [style.background-image]="'url(' + vendor.banner + ')'">
             <span class="home-store-rating-badge">
@@ -140,7 +140,7 @@
       <div class="products-showcase-grid">
         
         <div 
-          *ngFor="let prod of portalService.products().slice(0, 8)" 
+          *ngFor="let prod of recommendedProducts()" 
           class="product-item-card card animate-fade-in"
           [routerLink]="['/products', prod.id]"
         >

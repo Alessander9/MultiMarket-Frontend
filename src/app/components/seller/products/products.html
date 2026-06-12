@@ -29,15 +29,19 @@
         <!-- Search bar -->
         <div class="filter-group flex-2">
           <label class="filter-label">Buscar</label>
-          <div class="filter-input-wrapper">
-            <span class="material-symbols-outlined">search</span>
+          <div class="filter-input-wrapper" style="position: relative; display: flex; align-items: center;">
+            <span class="material-symbols-outlined" style="position: absolute; left: 10px;">search</span>
             <input 
               type="text" 
               placeholder="Buscar por Nombre, SKU, descripción..." 
               [value]="filterSearch()" 
               (input)="filterSearch.set($any($event.target).value); currentPage.set(1)"
               class="filter-input"
+              style="padding-left: 36px; padding-right: 70px; width: 100%;"
             />
+            <span *ngIf="filterSearch()" style="position: absolute; right: 10px; font-size: 10px; color: var(--primary); background: rgba(167, 139, 250, 0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(167, 139, 250, 0.25);">
+              Máx 2
+            </span>
           </div>
         </div>
 
@@ -228,7 +232,7 @@
     <div class="products-header">
       <div class="page-title-area">
         <h2>{{ viewState() === 'create' ? 'Crear Nuevo Producto' : 'Editar Producto' }}</h2>
-        <p>Ingresa la ficha de especificaciones detallada para venta directa</p>
+        <p>Completa la ficha comercial y deja listo el producto para publicar en tu tienda</p>
       </div>
       <button class="btn-cancel-top" (click)="viewState.set('list')">
         Regresar al Listado
@@ -236,98 +240,191 @@
     </div>
 
     <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="product-form card">
-      <div class="form-scroll-content">
-        <div class="form-grid">
-          
-          <!-- Nombre -->
-          <div class="form-group full-width">
-            <label class="form-label" for="nombre">Nombre del Producto *</label>
-            <input type="text" id="nombre" formControlName="nombre" class="form-input" placeholder="Ej. Café Orgánico Molido 500g" />
-            <span class="validation-err" *ngIf="productForm.get('nombre')?.touched && productForm.get('nombre')?.invalid">
-              El nombre es obligatorio (máx 100 caracteres).
-            </span>
+      <div class="form-shell">
+        <div class="form-scroll-content">
+          <div class="form-hero">
+            <div class="form-hero-copy">
+              <span class="section-kicker">Registro Comercial</span>
+              <h3>{{ viewState() === 'create' ? 'Define un producto sólido desde el inicio' : 'Ajusta la ficha sin perder claridad comercial' }}</h3>
+              <p>La vista se organiza por bloques para que no tengas que buscar cada dato. SKU, precio, stock y categoría quedan a la mano.</p>
+            </div>
+            <div class="form-hero-stats">
+              <div class="hero-stat">
+                <span>Estado</span>
+                <strong>{{ productForm.get('estado')?.value || 'ACTIVO' }}</strong>
+              </div>
+              <div class="hero-stat">
+                <span>Categorías</span>
+                <strong>{{ categoryOptions().length }}</strong>
+              </div>
+              <div class="hero-stat">
+                <span>Vista previa</span>
+                <strong>{{ productForm.get('imagenUrl')?.value?.trim() ? 'Personalizada' : 'Por defecto' }}</strong>
+              </div>
+            </div>
           </div>
 
-          <!-- Descripción -->
-          <div class="form-group full-width">
-            <label class="form-label" for="descripcion">Descripción Comercial *</label>
-            <textarea id="descripcion" formControlName="descripcion" rows="5" class="form-input" placeholder="Detalla el aroma, origen, notas de cata o uso..."></textarea>
-            <span class="validation-err" *ngIf="productForm.get('descripcion')?.touched && productForm.get('descripcion')?.invalid">
-              La descripción es obligatoria (máx 800 caracteres).
-            </span>
+          <div class="form-grid form-grid-hero">
+            <div class="form-group full-width">
+              <label class="form-label" for="nombre">Nombre del Producto *</label>
+              <input type="text" id="nombre" formControlName="nombre" class="form-input form-input-lg" placeholder="Ej. Café Orgánico Molido 500g" />
+              <span class="validation-err" *ngIf="productForm.get('nombre')?.touched && productForm.get('nombre')?.invalid">
+                El nombre es obligatorio (máx 100 caracteres).
+              </span>
+            </div>
+
+            <div class="form-group full-width">
+              <label class="form-label" for="descripcion">Descripción Comercial *</label>
+              <textarea id="descripcion" formControlName="descripcion" rows="6" class="form-input form-textarea" placeholder="Detalla el aroma, origen, notas de cata o uso..."></textarea>
+              <div class="field-meta">
+                <span>Redacta un mensaje claro para comprador final.</span>
+                <span>{{ productForm.get('descripcion')?.value?.length || 0 }}/800</span>
+              </div>
+              <span class="validation-err" *ngIf="productForm.get('descripcion')?.touched && productForm.get('descripcion')?.invalid">
+                La descripción es obligatoria (máx 800 caracteres).
+              </span>
+            </div>
           </div>
 
-          <!-- SKU -->
-          <div class="form-group">
-            <label class="form-label" for="sku">Código SKU Único *</label>
-            <input type="text" id="sku" formControlName="sku" class="form-input" placeholder="Ej. CAF-ORG-500G" [attr.disabled]="viewState() === 'edit' ? true : null" />
-            <span class="validation-err" *ngIf="productForm.get('sku')?.touched && productForm.get('sku')?.invalid">
-              SKU es obligatorio (letras, números y guiones).
-            </span>
+          <div class="form-section">
+            <div class="section-header">
+              <span class="section-kicker">Identidad del producto</span>
+              <h4>SKU, categoría y publicación</h4>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="sku">Código SKU Único *</label>
+                <input type="text" id="sku" formControlName="sku" class="form-input" placeholder="Ej. CAF-ORG-500G" [attr.disabled]="viewState() === 'edit' ? true : null" (input)="onSkuInput($event)" />
+                <span class="validation-err" *ngIf="productForm.get('sku')?.touched && productForm.get('sku')?.invalid">
+                  SKU es obligatorio (letras, números y guiones).
+                </span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="categoriaId">Categoría *</label>
+                <select id="categoriaId" formControlName="categoriaId" class="form-input">
+                  <option *ngFor="let cat of categoryOptions()" [value]="cat.id">{{ cat.nombre }}</option>
+                </select>
+                <span class="validation-err" *ngIf="productForm.get('categoriaId')?.touched && productForm.get('categoriaId')?.invalid">
+                  Debe seleccionar una categoría.
+                </span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="estado">Estado de Publicación *</label>
+                <select id="estado" formControlName="estado" class="form-input">
+                  <option value="ACTIVO">ACTIVO (Público)</option>
+                  <option value="INACTIVO">INACTIVO (Borrador)</option>
+                  <option value="SIN_STOCK">SIN STOCK (Agotado)</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <!-- Categoría -->
-          <div class="form-group">
-            <label class="form-label" for="categoria">Categoría *</label>
-            <select id="categoria" formControlName="categoria" class="form-input">
-              <option value="Café">Café</option>
-              <option value="Chocolate">Chocolate</option>
-              <option value="Miel">Miel</option>
-              <option value="Artesanías">Artesanías</option>
-              <option value="Textiles">Textiles</option>
-            </select>
+          <div class="form-section">
+            <div class="section-header">
+              <span class="section-kicker">Comercial e inventario</span>
+              <h4>Precio, stock y peso</h4>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="precio">Precio de Venta (S/) *</label>
+                <input type="number" id="precio" formControlName="precio" class="form-input" step="0.1" min="0.1" />
+                <span class="validation-err" *ngIf="productForm.get('precio')?.touched && productForm.get('precio')?.invalid">
+                  Ingrese un precio de venta válido (> 0).
+                </span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="stock">Stock Disponible *</label>
+                <input type="number" id="stock" formControlName="stock" class="form-input" min="0" />
+                <span class="validation-err" *ngIf="productForm.get('stock')?.touched && productForm.get('stock')?.invalid">
+                  El stock no puede ser negativo.
+                </span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="stockMinimo">Stock mínimo sugerido *</label>
+                <input type="number" id="stockMinimo" formControlName="stockMinimo" class="form-input" min="0" />
+                <span class="validation-err" *ngIf="productForm.get('stockMinimo')?.touched && productForm.get('stockMinimo')?.invalid">
+                  El stock mínimo debe ser mayor o igual a 0.
+                </span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="peso">Peso de Envío (kg) *</label>
+                <input type="number" id="peso" formControlName="peso" class="form-input" step="0.01" min="0.01" />
+                <span class="validation-err" *ngIf="productForm.get('peso')?.touched && productForm.get('peso')?.invalid">
+                  Ingrese un peso válido (> 0.01).
+                </span>
+              </div>
+            </div>
           </div>
 
-          <!-- Precio -->
-          <div class="form-group">
-            <label class="form-label" for="precio">Precio de Venta (S/) *</label>
-            <input type="number" id="precio" formControlName="precio" class="form-input" step="0.1" />
-            <span class="validation-err" *ngIf="productForm.get('precio')?.touched && productForm.get('precio')?.invalid">
-              Ingrese un precio de venta válido (> 0).
-            </span>
+          <div class="form-section">
+            <div class="section-header">
+              <span class="section-kicker">Imagen principal</span>
+              <h4>Enlace de portada</h4>
+            </div>
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label class="form-label" for="imagenUrl">URL Imagen Principal del Producto</label>
+                <input type="text" id="imagenUrl" formControlName="imagenUrl" class="form-input" placeholder="https://... o enlace de imagen" (input)="onImageUrlChange($event)" />
+                <div class="field-meta">
+                  <span>Se usa como imagen de portada en listados y detalle.</span>
+                  <span>{{ productForm.get('imagenUrl')?.value?.trim() ? 'Imagen personalizada activa' : 'Usando imagen por defecto' }}</span>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <!-- Stock Inicial -->
-          <div class="form-group">
-            <label class="form-label" for="stock">Stock Disponible *</label>
-            <input type="number" id="stock" formControlName="stock" class="form-input" />
-            <span class="validation-err" *ngIf="productForm.get('stock')?.touched && productForm.get('stock')?.invalid">
-              El stock no puede ser negativo.
-            </span>
-          </div>
-
-          <!-- Peso -->
-          <div class="form-group">
-            <label class="form-label" for="peso">Peso de Envío (kg) *</label>
-            <input type="number" id="peso" formControlName="peso" class="form-input" step="0.01" />
-            <span class="validation-err" *ngIf="productForm.get('peso')?.touched && productForm.get('peso')?.invalid">
-              Ingrese un peso válido (> 0.01).
-            </span>
-          </div>
-
-          <!-- Estado -->
-          <div class="form-group">
-            <label class="form-label" for="estado">Estado de Publicación *</label>
-            <select id="estado" formControlName="estado" class="form-input">
-              <option value="ACTIVO">ACTIVO (Público)</option>
-              <option value="INACTIVO">INACTIVO (Borrador)</option>
-              <option value="SIN_STOCK">SIN STOCK (Agotado)</option>
-            </select>
-          </div>
-
-          <!-- URL Imagen -->
-          <div class="form-group full-width">
-            <label class="form-label" for="imagenUrl">URL Imagen Principal del Producto</label>
-            <input type="text" id="imagenUrl" formControlName="imagenUrl" class="form-input" placeholder="https://unsplash.com/... o enlace de imagen" />
-          </div>
-
         </div>
+
+        <aside class="form-preview-panel">
+          <div class="preview-card">
+            <span class="section-kicker">Vista previa</span>
+            <div class="preview-image-wrap">
+              <img [src]="getSelectedPreviewImage()" alt="Vista previa del producto" class="preview-image" />
+            </div>
+            <div class="preview-copy">
+              <h4>{{ productForm.get('nombre')?.value || 'Nombre del producto' }}</h4>
+              <p>{{ productForm.get('descripcion')?.value || 'La descripción aparecerá aquí cuando llenes el formulario.' }}</p>
+            </div>
+            <div class="preview-meta">
+              <div>
+                <span>SKU</span>
+                <strong>{{ productForm.get('sku')?.value || '---' }}</strong>
+              </div>
+              <div>
+                <span>Precio</span>
+                <strong>S/ {{ productForm.get('precio')?.value || '0.00' }}</strong>
+              </div>
+              <div>
+                <span>Stock</span>
+                <strong>{{ productForm.get('stock')?.value || 0 }} und</strong>
+              </div>
+              <div>
+                <span>Categoría</span>
+                <strong>{{ getSelectedCategoryName() }}</strong>
+              </div>
+            </div>
+            <div class="preview-badge-row">
+              <span class="preview-badge" [ngClass]="(productForm.get('estado')?.value || 'ACTIVO').toLowerCase()">
+                {{ productForm.get('estado')?.value || 'ACTIVO' }}
+              </span>
+              <span class="preview-badge muted">{{ getStockState(+productForm.get('stock')?.value || 0) }}</span>
+            </div>
+            <div class="preview-note">
+              <span class="material-symbols-outlined">tips_and_updates</span>
+              <p>Usa una imagen clara y un SKU legible para acelerar búsquedas internas y ventas.</p>
+            </div>
+          </div>
+        </aside>
       </div>
 
       <div class="form-actions">
         <button type="button" class="btn-cancel" (click)="viewState.set('list')">Cancelar</button>
         <button type="submit" class="btn-save" [disabled]="productForm.invalid || isLoading()">
-          {{ isLoading() ? 'Guardando...' : 'Guardar Ficha' }}
+          {{ isLoading() ? 'Guardando...' : (viewState() === 'create' ? 'Publicar Producto' : 'Guardar Cambios') }}
         </button>
       </div>
     </form>
@@ -420,6 +517,19 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Custom Premium Delete Confirmation Modal -->
+  <div class="delete-confirm-modal" *ngIf="deleteConfirm()">
+    <div class="modal-icon-wrapper">
+      <span class="material-symbols-outlined">delete_forever</span>
+    </div>
+    <h3>Eliminar Producto</h3>
+    <p>{{ deleteConfirm()?.message }}</p>
+    <div class="modal-btn-group">
+      <button class="btn-cancel-modal" (click)="deleteConfirm.set(null)">Cancelar</button>
+      <button class="btn-confirm-modal" (click)="confirmDelete()">Eliminar</button>
     </div>
   </div>
 

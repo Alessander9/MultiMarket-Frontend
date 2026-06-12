@@ -363,6 +363,24 @@ export class AdminPortalService {
   // BACKEND-FED READ METHODS
   // ==========================================
 
+  loadVendors(): Observable<AdminVendor[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/vendedores`).pipe(
+      map(vendors => vendors.map(v => ({
+        id: v.id,
+        nombreTienda: v.nombreTienda,
+        descripcion: v.descripcion,
+        region: v.region,
+        direccion: v.direccion,
+        logo: v.logo,
+        banner: v.banner,
+        activo: v.activo ?? true,
+        fechaCreacion: v.fechaCreacion ? v.fechaCreacion.split('T')[0] : new Date().toISOString().split('T')[0],
+        calificacionPromedio: v.calificacionPromedio ?? 5
+      }))),
+      tap(vendors => this.vendors.set(vendors))
+    );
+  }
+
   loadCategories(): Observable<AdminCategory[]> {
     return this.http.get<any[]>(`${this.baseUrl}/categorias`).pipe(
       map(categories => categories.map(cat => ({
@@ -447,7 +465,7 @@ export class AdminPortalService {
   }
 
   // Vendors CRUD
-  addVendor(vendor: Partial<AdminVendor>): Observable<AdminVendor> {
+  addVendor(vendor: any): Observable<AdminVendor> {
     return this.http.post<any>(`${this.baseUrl}/vendedores`, vendor).pipe(
       map(created => {
         const fullVendor: AdminVendor = {
@@ -459,7 +477,7 @@ export class AdminPortalService {
           logo: created.logo,
           banner: created.banner,
           activo: created.activo ?? true,
-          fechaCreacion: created.fechaCreacion ?? new Date().toISOString().split('T')[0],
+          fechaCreacion: created.fechaCreacion ? created.fechaCreacion.split('T')[0] : new Date().toISOString().split('T')[0],
           calificacionPromedio: created.calificacionPromedio ?? 5
         };
         this.vendors.update(list => [...list, fullVendor]);
@@ -600,7 +618,9 @@ export class AdminPortalService {
     if (nuevoStock < 0) nuevoStock = 0;
 
     // Actualizar producto
-    this.updateProduct(productoId, { stock: nuevoStock });
+    this.updateProduct(productoId, { ...prod, stock: nuevoStock }).subscribe({
+      error: (err) => console.error('Error al actualizar stock del producto:', err)
+    });
     // Registrar movimiento
     this.addInventoryMovement(productoId, prod.nombre, cantidad, tipo, obs);
   }

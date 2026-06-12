@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../services/auth.service';
 import { CustomerService } from '../../../services/customer.service';
 import { AdminPortalService } from '../../../services/admin-portal.service';
+import { ChatService } from '../../../services/chat.service';
 
 @Component({
   selector: 'app-customer-layout',
@@ -17,6 +18,7 @@ export class CustomerLayout implements OnInit {
   protected readonly authService = inject(AuthService);
   protected readonly customerService = inject(CustomerService);
   protected readonly portalService = inject(AdminPortalService);
+  protected readonly chatService = inject(ChatService);
   private readonly router = inject(Router);
 
   // Dropdown states
@@ -41,6 +43,13 @@ export class CustomerLayout implements OnInit {
     this.customerService.loadBackendData().subscribe();
     this.portalService.loadProducts().subscribe();
     this.portalService.loadCategories().subscribe();
+
+    // Establish websocket connection
+    const email = this.authService.currentUserEmail();
+    if (email) {
+      this.chatService.connect(email);
+    }
+
     // Automatically close menus on routing
     this.router.events.subscribe(() => {
       this.closeAllMenus();
@@ -89,6 +98,7 @@ export class CustomerLayout implements OnInit {
   }
 
   logout(): void {
+    this.chatService.disconnect();
     this.authService.logout();
     this.router.navigate(['/login']);
   }

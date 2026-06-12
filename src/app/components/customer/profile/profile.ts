@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CustomerService, Address, BuyerProfile } from '../../../services/customer.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-customer-profile',
@@ -12,6 +13,7 @@ import { CustomerService, Address, BuyerProfile } from '../../../services/custom
 })
 export class CustomerProfile {
   protected readonly customerService = inject(CustomerService);
+  private readonly authService = inject(AuthService);
 
   // Active sub-tab settings: 'personal' | 'addresses' | 'security' | 'preferences'
   activeTab = signal<'personal' | 'addresses' | 'security' | 'preferences'>('personal');
@@ -138,8 +140,21 @@ export class CustomerProfile {
       return;
     }
 
-    alert('¡Contraseña cambiada exitosamente!');
-    this.passwordForm = { current: '', new: '', confirm: '' };
+    const payload = {
+      oldPassword: this.passwordForm.current,
+      newPassword: this.passwordForm.new
+    };
+
+    this.authService.changePassword(payload).subscribe({
+      next: (msg) => {
+        alert(msg || '¡Contraseña cambiada exitosamente!');
+        this.passwordForm = { current: '', new: '', confirm: '' };
+      },
+      error: (err) => {
+        const detail = err.error?.message || err.error || 'Ocurrió un error al cambiar la contraseña. Verifique sus credenciales.';
+        alert(detail);
+      }
+    });
   }
 
   revokeSession(device: string): void {

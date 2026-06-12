@@ -109,7 +109,12 @@
 
         <!-- Address Create/Edit Form panel -->
         <div class="address-form-box" *ngIf="showAddressForm()">
-          <h4 class="form-title">{{ editingAddressId() ? 'Editar Dirección' : 'Registrar Nueva Dirección' }}</h4>
+          <div class="drawer-header-row">
+            <h4 class="form-title">{{ editingAddressId() ? 'Editar Dirección' : 'Registrar Nueva Dirección' }}</h4>
+            <button class="close-drawer-btn" (click)="showAddressForm.set(false)" title="Cerrar">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
           
           <div class="settings-form-grid mt-16">
             <div class="form-group full-width">

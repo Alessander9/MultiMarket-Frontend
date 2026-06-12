@@ -26,6 +26,7 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly sidebarCollapsed = signal(false);
   readonly activeSection = signal('dashboard');
   readonly isLoading = signal(false);
+  readonly vendorViewMode = signal<'list' | 'cards'>('list');
   
   // Header Dropdown Toggles
   readonly showNotifications = signal(false);
@@ -92,6 +93,7 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly selectedPaymentId = signal<number | null>(null);
   readonly selectedChatId = signal<number | null>(null);
   readonly selectedSoapLogId = signal<number | null>(null);
+  readonly deleteConfirm = signal<{ type: 'user' | 'vendor' | 'category' | 'product'; id: number; message: string } | null>(null);
 
   // View Forms State (CRUD toggles)
   readonly isCreatingUser = signal(false);
@@ -138,6 +140,10 @@ export class Dashboard implements OnInit, OnDestroy {
       return;
     }
 
+    if (window.innerWidth <= 1024) {
+      this.sidebarCollapsed.set(true);
+    }
+
     this.updateActiveSectionFromUrl();
     this.refreshBackendData();
     
@@ -158,6 +164,7 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   private refreshBackendData(): void {
+    this.portalService.loadVendors().subscribe();
     this.portalService.loadCategories().subscribe();
     this.portalService.loadProducts().subscribe();
     this.portalService.loadOrders().subscribe();
@@ -196,6 +203,7 @@ export class Dashboard implements OnInit, OnDestroy {
       direccion: ['', [Validators.required]],
       logo: ['https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100'],
       banner: ['https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600'],
+      correoUsuario: ['', [Validators.email]],
       activo: [true]
     });
 
@@ -266,8 +274,7 @@ export class Dashboard implements OnInit, OnDestroy {
     
     if (url.includes('/admin/users')) parsedSection = 'usuarios';
     else if (url.includes('/admin/roles')) parsedSection = 'roles';
-    else if (url.includes('/admin/vendors')) parsedSection = 'vendedores';
-    else if (url.includes('/admin/stores')) parsedSection = 'tiendas';
+    else if (url.includes('/admin/vendors') || url.includes('/admin/stores')) parsedSection = 'vendedores';
     else if (url.includes('/admin/categories')) parsedSection = 'categorias';
     else if (url.includes('/admin/products')) parsedSection = 'productos';
     else if (url.includes('/admin/inventory')) parsedSection = 'inventario';
@@ -332,8 +339,7 @@ export class Dashboard implements OnInit, OnDestroy {
     
     if (sectionId === 'usuarios') routePath = 'users';
     else if (sectionId === 'roles') routePath = 'roles';
-    else if (sectionId === 'vendedores') routePath = 'vendors';
-    else if (sectionId === 'tiendas') routePath = 'stores';
+    else if (sectionId === 'vendedores' || sectionId === 'tiendas') routePath = 'vendors';
     else if (sectionId === 'categorias') routePath = 'categories';
     else if (sectionId === 'productos') routePath = 'products';
     else if (sectionId === 'inventario') routePath = 'inventory';
@@ -408,7 +414,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (query) {
       list = list.filter(r => r.nombre.toLowerCase().includes(query) || r.descripcion.toLowerCase().includes(query));
     }
-    return list;
+    return [...list].sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
 
   readonly selectedRole = computed(() => {
@@ -424,7 +430,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (query) {
       list = list.filter(v => v.nombreTienda.toLowerCase().includes(query) || v.region.toLowerCase().includes(query));
     }
-    return list;
+    return [...list].sort((a, b) => a.nombreTienda.localeCompare(b.nombreTienda));
   });
 
   readonly selectedVendor = computed(() => {
@@ -451,7 +457,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (query) {
       list = list.filter(c => c.nombre.toLowerCase().includes(query) || c.descripcion.toLowerCase().includes(query));
     }
-    return list;
+    return [...list].sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
 
   readonly selectedCategory = computed(() => {
@@ -465,12 +471,17 @@ export class Dashboard implements OnInit, OnDestroy {
     
     // Map Category and Vendor Names dynamically first
     const mapped = list.map(p => {
-      const cat = this.portalService.categories().find(c => c.id === p.categoriaId);
-      const vend = this.portalService.vendors().find(v => v.id === p.vendedorId);
+      const catId = p.categoriaId != null ? Number(p.categoriaId) : null;
+      const vendId = p.vendedorId != null ? Number(p.vendedorId) : null;
+      
+      const cat = this.portalService.categories().find(c => Number(c.id) === catId);
+      const vend = this.portalService.vendors().find(v => Number(v.id) === vendId);
       return {
         ...p,
-        categoriaNombre: cat ? cat.nombre : 'Sin Categoría',
-        vendedorNombre: vend ? vend.nombreTienda : 'Sin Vendedor'
+        categoriaId: catId ?? p.categoriaId,
+        vendedorId: vendId ?? p.vendedorId,
+        categoriaNombre: cat ? cat.nombre : (p.categoriaNombre || 'Sin Categoría'),
+        vendedorNombre: vend ? vend.nombreTienda : (p.vendedorNombre || 'Sin Vendedor')
       };
     });
 
@@ -478,8 +489,11 @@ export class Dashboard implements OnInit, OnDestroy {
 
     const vendorFilterId = this.productsVendorFilterId();
     if (vendorFilterId) {
-      result = result.filter(p => p.vendedorId === vendorFilterId);
+      result = result.filter(p => Number(p.vendedorId) === Number(vendorFilterId));
     }
+
+    // Default sort alphabetically
+    result = [...result].sort((a, b) => a.nombre.localeCompare(b.nombre));
 
     const query = this.searchQuery().toLowerCase();
     if (query) {
@@ -489,6 +503,7 @@ export class Dashboard implements OnInit, OnDestroy {
         p.vendedorNombre.toLowerCase().includes(query) ||
         p.categoriaNombre.toLowerCase().includes(query)
       );
+      result = result.slice(0, 2); // limit to 2 options
     }
     return result;
   });
@@ -498,14 +513,20 @@ export class Dashboard implements OnInit, OnDestroy {
     const prod = this.portalService.products().find(p => p.id === id);
     if (!prod) return null;
     
-    const cat = this.portalService.categories().find(c => c.id === prod.categoriaId);
-    const vend = this.portalService.vendors().find(v => v.id === prod.vendedorId);
+    const catId = prod.categoriaId != null ? Number(prod.categoriaId) : null;
+    const vendId = prod.vendedorId != null ? Number(prod.vendedorId) : null;
+    
+    const cat = this.portalService.categories().find(c => Number(c.id) === catId);
+    const vend = this.portalService.vendors().find(v => Number(v.id) === vendId);
     return {
       ...prod,
-      categoriaNombre: cat ? cat.nombre : 'Sin Categoría',
-      vendedorNombre: vend ? vend.nombreTienda : 'Sin Vendedor'
+      categoriaId: catId ?? prod.categoriaId,
+      vendedorId: vendId ?? prod.vendedorId,
+      categoriaNombre: cat ? cat.nombre : (prod.categoriaNombre || 'Sin Categoría'),
+      vendedorNombre: vend ? vend.nombreTienda : (prod.vendedorNombre || 'Sin Vendedor')
     };
   });
+
 
   // INVENTORY MOVEMENTS
   readonly filteredInventoryMovements = computed(() => {
@@ -515,7 +536,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (query) {
       list = list.filter(m => m.productoNombre.toLowerCase().includes(query) || m.tipoMovimiento.toLowerCase().includes(query));
     }
-    return list;
+    return [...list].sort((a, b) => b.id - a.id); // Newest first
   });
 
   // ORDERS
@@ -530,7 +551,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (status !== 'ALL') {
       list = list.filter(o => o.estado === status);
     }
-    return list;
+    return [...list].sort((a, b) => b.id - a.id); // Newest first
   });
 
   readonly selectedOrder = computed(() => {
@@ -550,7 +571,7 @@ export class Dashboard implements OnInit, OnDestroy {
     if (status !== 'ALL') {
       list = list.filter(p => p.estadoPago === status);
     }
-    return list;
+    return [...list].sort((a, b) => b.id - a.id); // Newest first
   });
 
   readonly selectedPayment = computed(() => {
@@ -701,10 +722,11 @@ export class Dashboard implements OnInit, OnDestroy {
   }
 
   deleteUser(id: number): void {
-    if (confirm('¿Está seguro de eliminar este usuario de forma permanente?')) {
-      this.portalService.deleteUser(id);
-      this.showToast('Usuario removido de los registros de SQL Server.', 'success');
-    }
+    this.deleteConfirm.set({
+      type: 'user',
+      id,
+      message: '¿Está seguro de eliminar este usuario de forma permanente de los registros de SQL Server? Esta acción no se puede deshacer.'
+    });
   }
 
   toggleBlockUser(user: AdminUser): void {
@@ -747,12 +769,14 @@ export class Dashboard implements OnInit, OnDestroy {
   // 3. VENDORS CRUD
   openCreateVendor(): void {
     this.resetAllFormToggles();
+    this.vendorViewMode.set('list');
     this.vendorForm.reset({ region: 'Cusco', activo: true });
     this.isCreatingVendor.set(true);
   }
 
   openEditVendor(vendor: AdminVendor): void {
     this.resetAllFormToggles();
+    this.vendorViewMode.set('list');
     this.selectedVendorId.set(vendor.id);
     this.vendorForm.reset({
       nombreTienda: vendor.nombreTienda,
@@ -773,23 +797,42 @@ export class Dashboard implements OnInit, OnDestroy {
     }
     
     if (this.isCreatingVendor()) {
-      this.portalService.addVendor(this.vendorForm.value).subscribe(() => {
-        this.showToast('Vendedor regional registrado con éxito.', 'success');
+      const correo = this.vendorForm.get('correoUsuario')?.value;
+      if (!correo || !correo.trim()) {
+        this.showToast('El correo electrónico del vendedor es obligatorio para el registro.', 'error');
+        return;
+      }
+
+      this.portalService.addVendor(this.vendorForm.value).subscribe({
+        next: () => {
+          this.showToast('Vendedor regional registrado con éxito.', 'success');
+          this.resetAllFormToggles();
+        },
+        error: (err) => {
+          console.error(err);
+          this.showToast('Error al registrar el vendedor. Verifique si el correo existe y tiene rol VENDEDOR, o si ya tiene tienda.', 'error');
+        }
       });
     } else {
-      this.portalService.updateVendor(this.selectedVendorId()!, this.vendorForm.value).subscribe(() => {
-        this.showToast('Datos de la tienda del vendedor actualizados.', 'success');
+      this.portalService.updateVendor(this.selectedVendorId()!, this.vendorForm.value).subscribe({
+        next: () => {
+          this.showToast('Datos de la tienda del vendedor actualizados.', 'success');
+          this.resetAllFormToggles();
+        },
+        error: (err) => {
+          console.error(err);
+          this.showToast('Error al actualizar los datos de la tienda.', 'error');
+        }
       });
     }
-    this.resetAllFormToggles();
   }
 
   deleteVendor(id: number): void {
-    if (confirm('¿Dar de baja a este vendedor? Esto desactivará su catálogo.')) {
-      this.portalService.deleteVendor(id).subscribe(() => {
-        this.showToast('Vendedor eliminado físicamente de la base de datos.', 'success');
-      });
-    }
+    this.deleteConfirm.set({
+      type: 'vendor',
+      id,
+      message: '¿Dar de baja a este vendedor? Esto desactivará su catálogo y detendrá sus operaciones comerciales en la plataforma.'
+    });
   }
 
   // 3b. STORES (TIENDAS) HELPERS
@@ -808,8 +851,15 @@ export class Dashboard implements OnInit, OnDestroy {
 
   toggleVendorActive(vendor: AdminVendor): void {
     const updatedStatus = !vendor.activo;
-    this.portalService.updateVendor(vendor.id, { activo: updatedStatus });
-    this.showToast(`Tienda "${vendor.nombreTienda}" ${updatedStatus ? 'Habilitada' : 'Suspendida'} con éxito.`, 'info');
+    this.portalService.updateVendor(vendor.id, { ...vendor, activo: updatedStatus }).subscribe({
+      next: () => {
+        this.showToast(`Tienda "${vendor.nombreTienda}" ${updatedStatus ? 'Habilitada' : 'Suspendida'} con éxito.`, 'info');
+      },
+      error: (err) => {
+        console.error(err);
+        this.showToast('Error al cambiar el estado de la tienda.', 'error');
+      }
+    });
   }
 
   // 4. CATEGORIES CRUD
@@ -837,31 +887,44 @@ export class Dashboard implements OnInit, OnDestroy {
     }
 
     if (this.isCreatingCategory()) {
-      this.portalService.addCategory(this.categoryForm.value).subscribe(() => {
-        this.showToast('Categoría creada satisfactoriamente.', 'success');
+      this.portalService.addCategory(this.categoryForm.value).subscribe({
+        next: () => {
+          this.showToast('Categoría creada satisfactoriamente.', 'success');
+          this.resetAllFormToggles();
+        },
+        error: (err) => {
+          this.showToast(err.error?.message || err.message || 'Error al crear la categoría.', 'error');
+        }
       });
     } else {
-      this.portalService.updateCategory(this.selectedCategoryId()!, this.categoryForm.value).subscribe(() => {
-        this.showToast('Categoría actualizada con éxito.', 'success');
+      this.portalService.updateCategory(this.selectedCategoryId()!, this.categoryForm.value).subscribe({
+        next: () => {
+          this.showToast('Categoría actualizada con éxito.', 'success');
+          this.resetAllFormToggles();
+        },
+        error: (err) => {
+          this.showToast(err.error?.message || err.message || 'Error al actualizar la categoría.', 'error');
+        }
       });
     }
-    this.resetAllFormToggles();
   }
 
+
   deleteCategory(id: number): void {
-    if (confirm('¿Eliminar esta categoría?')) {
-      this.portalService.deleteCategory(id).subscribe(() => {
-        this.showToast('Categoría eliminada del catálogo.', 'success');
-      });
-    }
+    this.deleteConfirm.set({
+      type: 'category',
+      id,
+      message: '¿Está seguro de eliminar esta categoría? Esto podría afectar la clasificación de los productos asociados.'
+    });
   }
 
   // 5. PRODUCTS CRUD
   openCreateProduct(): void {
     this.resetAllFormToggles();
+    const currentStoreId = this.productsVendorFilterId();
     this.productForm.reset({
       categoriaId: this.portalService.categories()[0]?.id || 1,
-      vendedorId: this.portalService.vendors()[0]?.id || 1,
+      vendedorId: currentStoreId || this.portalService.vendors()[0]?.id || 1,
       precio: 10.0,
       stock: 10,
       peso: 0.20,
@@ -870,6 +933,7 @@ export class Dashboard implements OnInit, OnDestroy {
     });
     this.isCreatingProduct.set(true);
   }
+
 
   openEditProduct(p: AdminProduct): void {
     this.resetAllFormToggles();
@@ -901,20 +965,62 @@ export class Dashboard implements OnInit, OnDestroy {
     };
 
     if (this.isCreatingProduct()) {
-      this.portalService.addProduct(payload).subscribe(() => {
-        this.showToast('Producto publicado. Persistido en el backend.', 'success');
+      this.portalService.addProduct(payload).subscribe({
+        next: () => {
+          this.showToast('Producto publicado. Persistido en el backend.', 'success');
+          this.resetAllFormToggles();
+        },
+        error: (err) => {
+          this.showToast(err.error?.message || err.message || 'Error al publicar producto.', 'error');
+        }
       });
     } else {
-      this.portalService.updateProduct(this.selectedProductId()!, payload).subscribe(() => {
-        this.showToast('Detalles del producto actualizados en SQL Server.', 'success');
+      this.portalService.updateProduct(this.selectedProductId()!, payload).subscribe({
+        next: () => {
+          this.showToast('Detalles del producto actualizados en SQL Server.', 'success');
+          this.resetAllFormToggles();
+        },
+        error: (err) => {
+          this.showToast(err.error?.message || err.message || 'Error al actualizar producto.', 'error');
+        }
       });
     }
-    this.resetAllFormToggles();
   }
 
+
   deleteProduct(id: number): void {
-    if (confirm('¿Dar de baja a este producto? El stock quedará inhabilitado.')) {
-      this.portalService.deleteProduct(id).subscribe(() => {
+    this.deleteConfirm.set({
+      type: 'product',
+      id,
+      message: '¿Dar de baja a este producto? El stock quedará inhabilitado para la venta en la tienda de forma permanente.'
+    });
+  }
+
+  confirmDelete(): void {
+    const data = this.deleteConfirm();
+    if (!data) return;
+
+    this.deleteConfirm.set(null); // Close modal
+
+    if (data.type === 'user') {
+      this.portalService.deleteUser(data.id);
+      this.showToast('Usuario removido de los registros de SQL Server.', 'success');
+    } else if (data.type === 'vendor') {
+      this.portalService.deleteVendor(data.id).subscribe({
+        next: () => {
+          this.showToast('Vendedor desactivado con éxito.', 'success');
+        },
+        error: (err) => {
+          console.error(err);
+          this.showToast('Error al desactivar el vendedor.', 'error');
+        }
+      });
+    } else if (data.type === 'category') {
+      this.portalService.deleteCategory(data.id).subscribe(() => {
+        this.showToast('Categoría eliminada del catálogo.', 'success');
+      });
+    } else if (data.type === 'product') {
+      this.portalService.deleteProduct(data.id).subscribe(() => {
         this.showToast('Producto eliminado del marketplace.', 'success');
       });
     }
@@ -1013,11 +1119,17 @@ export class Dashboard implements OnInit, OnDestroy {
     }
 
     const val = this.xmlImportForm.value;
-    this.portalService.uploadCatalogXmlSimulation(val.fileName, val.totalRecords, val.errorCount).subscribe(msg => {
-      this.showToast(msg, 'success');
+    this.portalService.uploadCatalogXmlSimulation(val.fileName, val.totalRecords, val.errorCount).subscribe({
+      next: (msg) => {
+        this.showToast(msg, 'success');
+        this.resetAllFormToggles();
+      },
+      error: (err) => {
+        this.showToast(err.error?.message || err.message || 'Error al procesar la importación XML.', 'error');
+      }
     });
-    this.resetAllFormToggles();
   }
+
 
   // 12. EXPORTS
   openCreateExport(): void {
@@ -1028,11 +1140,17 @@ export class Dashboard implements OnInit, OnDestroy {
 
   triggerCatalogExport(): void {
     const val = this.exportForm.value;
-    this.portalService.exportCatalogSimulation(val.formato).subscribe(msg => {
-      this.showToast(msg, 'success');
+    this.portalService.exportCatalogSimulation(val.formato).subscribe({
+      next: (msg) => {
+        this.showToast(msg, 'success');
+        this.resetAllFormToggles();
+      },
+      error: (err) => {
+        this.showToast(err.error?.message || err.message || 'Error al generar la exportación.', 'error');
+      }
     });
-    this.resetAllFormToggles();
   }
+
 
   // 13. SETTINGS
   saveSettings(): void {

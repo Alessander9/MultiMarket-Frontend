@@ -10,16 +10,19 @@
 
 <!-- Main SaaS Enterprise Layout Container -->
 <div class="dashboard-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <!-- Backdrop for mobile sidebar dismiss -->
+  <div class="mobile-sidebar-backdrop" *ngIf="!sidebarCollapsed()" (click)="toggleSidebar()"></div>
   
   <!-- =================================================== -->
   <!-- 1. SIDEBAR IZQUIERDO COLLAPSABLE                   -->
   <!-- =================================================== -->
   <aside class="sidebar">
     <div class="sidebar-header">
-      <div class="brand-container">
+      <a routerLink="/" class="brand-container" style="text-decoration: none; cursor: pointer; display: flex; align-items: center; gap: 8px;">
         <span class="material-symbols-outlined logo-icon">diamond</span>
         <span class="brand-text">MultiMarket</span>
-      </div>
+      </a>
+
       <button (click)="toggleSidebar()" class="collapse-toggle-btn">
         <span class="material-symbols-outlined">
           {{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
@@ -48,10 +51,6 @@
           <li class="nav-item" [class.active]="activeSection() === 'vendedores'" (click)="selectSection('vendedores')">
             <span class="material-symbols-outlined nav-icon">storefront</span>
             <span class="nav-text">Vendedores</span>
-          </li>
-          <li class="nav-item" [class.active]="activeSection() === 'tiendas'" (click)="selectSection('tiendas')">
-            <span class="material-symbols-outlined nav-icon">store</span>
-            <span class="nav-text">Tiendas</span>
           </li>
           <li class="nav-item" [class.active]="activeSection() === 'productos'" (click)="selectSection('productos')">
             <span class="material-symbols-outlined nav-icon">inventory_2</span>
@@ -168,6 +167,9 @@
     <!-- =================================================== -->
     <header class="top-header">
       <div class="header-left">
+        <button (click)="toggleSidebar()" class="mobile-menu-toggle-btn" title="Menú">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
         <div class="mobile-logo-container">
           <span class="material-symbols-outlined logo-icon">diamond</span>
         </div>
@@ -215,6 +217,10 @@
               <span class="dropdown-role">ADMINISTRADOR GENERAL</span>
             </div>
             <ul class="dropdown-list">
+              <li class="dropdown-item" routerLink="/" (click)="showProfileMenu.set(false)" style="border-bottom: 1px solid var(--border-color); background: rgba(167, 139, 250, 0.05); font-weight: 600; color: var(--highlight-color);">
+                <span class="material-symbols-outlined" style="color: var(--highlight-color);">store</span>
+                <span>Ir a la Tienda</span>
+              </li>
               <li class="dropdown-item" (click)="selectSection('configuracion'); showProfileMenu.set(false)">
                 <span class="material-symbols-outlined">manage_accounts</span>
                 <span>Mi Perfil</span>
@@ -224,6 +230,7 @@
                 <span>Cerrar Sesión</span>
               </li>
             </ul>
+
           </div>
         </div>
       </div>
@@ -623,8 +630,15 @@
 
           <!-- Right Side Form (Create/Edit) -->
           <div *ngIf="isCreatingUser() || isEditingUser()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">{{ isCreatingUser() ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}</h4>
-            <p class="block-subtitle">Formulario de registro relacional en SQL Server</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">{{ isCreatingUser() ? 'Crear Nuevo Usuario' : 'Editar Usuario' }}</h4>
+                <p class="block-subtitle">Formulario de registro relacional en SQL Server</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="portal-form">
               <div class="form-group">
@@ -671,7 +685,7 @@
           </div>
 
           <!-- Drawer details -->
-          <div *ngIf="selectedUser()" class="dashboard-block-card detail-drawer animate-slide-in">
+          <div *ngIf="selectedUser() && !isEditingUser() && !isCreatingUser()" class="dashboard-block-card detail-drawer animate-slide-in">
             <div class="drawer-header-row">
               <h4 class="block-title">Auditoría del Usuario</h4>
               <button (click)="selectedUserId.set(null)" class="close-drawer-btn">
@@ -747,8 +761,15 @@
           </div>
 
           <div *ngIf="isCreatingRole()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">Crear Nuevo Rol</h4>
-            <p class="block-subtitle">Formulario de registro relacional</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">Crear Nuevo Rol</h4>
+                <p class="block-subtitle">Formulario de registro relacional</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="roleForm" (ngSubmit)="saveRole()" class="portal-form">
               <div class="form-group">
@@ -803,6 +824,28 @@
             <p class="welcome-subtitle">Control de comercios, validación de tiendas y catálogos.</p>
           </div>
           <div class="header-action-group">
+            <!-- View Mode Switcher -->
+            <div class="view-toggle-premium" style="display: flex; gap: 4px; background: var(--bg-card); padding: 4px; border-radius: 8px; border: 1px solid var(--border-color); margin-right: 8px;">
+              <button type="button" 
+                      class="action-btn-icon" 
+                      [style.background]="vendorViewMode() === 'list' ? 'var(--highlight-color)' : 'transparent'"
+                      [style.color]="vendorViewMode() === 'list' ? '#fff' : 'var(--text-color)'"
+                      style="padding: 6px 12px; border-radius: 6px; border: none; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;"
+                      (click)="vendorViewMode.set('list')">
+                <span class="material-symbols-outlined" style="font-size: 1.15rem;">list</span>
+                <span>Lista</span>
+              </button>
+              <button type="button" 
+                      class="action-btn-icon" 
+                      [style.background]="vendorViewMode() === 'cards' ? 'var(--highlight-color)' : 'transparent'"
+                      [style.color]="vendorViewMode() === 'cards' ? '#fff' : 'var(--text-color)'"
+                      style="padding: 6px 12px; border-radius: 6px; border: none; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500;"
+                      (click)="vendorViewMode.set('cards')">
+                <span class="material-symbols-outlined" style="font-size: 1.15rem;">grid_view</span>
+                <span>Mosaico</span>
+              </button>
+            </div>
+
             <button class="action-btn highlight-btn" (click)="openCreateVendor()">
               <span class="material-symbols-outlined">storefront</span>
               <span>Nuevo Vendedor</span>
@@ -810,7 +853,7 @@
           </div>
         </div>
 
-        <div class="portal-grid-split">
+        <div class="portal-grid-split" *ngIf="vendorViewMode() === 'list'">
           <div class="dashboard-block-card table-card list-panel">
             <div class="table-scroll-wrapper">
               <table class="dashboard-table">
@@ -862,10 +905,25 @@
 
           <!-- Form Panel -->
           <div *ngIf="isCreatingVendor() || isEditingVendor()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">{{ isCreatingVendor() ? 'Registrar Vendedor' : 'Editar Tienda Vendedor' }}</h4>
-            <p class="block-subtitle">Configuración corporativa de la tienda regional</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">{{ isCreatingVendor() ? 'Registrar Vendedor' : 'Editar Tienda Vendedor' }}</h4>
+                <p class="block-subtitle">Configuración corporativa de la tienda regional</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="vendorForm" (ngSubmit)="saveVendor()" class="portal-form">
+              <div class="form-group" *ngIf="isCreatingVendor()">
+                <label>Correo del Usuario Vendedor *</label>
+                <input type="email" formControlName="correoUsuario" placeholder="vendedor@correo.com" class="portal-input"/>
+                <small class="form-help" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; display: block;">
+                  El usuario correspondiente debe estar previamente registrado con el rol VENDEDOR y no tener tienda aún.
+                </small>
+              </div>
+
               <div class="form-group">
                 <label>Nombre de la Tienda *</label>
                 <input type="text" formControlName="nombreTienda" placeholder="Ej. Chocolates finos" class="portal-input"/>
@@ -920,7 +978,7 @@
           </div>
 
           <!-- Drawer details and seller products list -->
-          <div *ngIf="selectedVendor()" class="dashboard-block-card detail-drawer animate-slide-in">
+          <div *ngIf="selectedVendor() && !isEditingVendor() && !isCreatingVendor()" class="dashboard-block-card detail-drawer animate-slide-in">
             <div class="drawer-header-row">
               <h4 class="block-title">Ficha del Vendedor</h4>
               <button (click)="selectedVendorId.set(null)" class="close-drawer-btn">
@@ -974,27 +1032,9 @@
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- =================================================== -->
-      <!-- SECTION: TIENDAS (STORES)                            -->
-      <!-- =================================================== -->
-      <div *ngIf="!isLoading() && activeSection() === 'tiendas'" class="animate-fade-in section-block">
-        <div class="section-header-row">
-          <div>
-            <h2 class="welcome-title">Control y Monitoreo de Tiendas</h2>
-            <p class="welcome-subtitle">Supervisión integral de comercios y marcas registradas por los vendedores.</p>
-          </div>
-          <div class="header-action-group">
-            <button class="action-btn highlight-btn" (click)="selectSection('vendedores')">
-              <span class="material-symbols-outlined">storefront</span>
-              <span>Ir a Directorio</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Stores Card Grid -->
-        <div class="stores-premium-grid">
+        <!-- Stores Card Grid (Grid view for Vendors) -->
+        <div class="stores-premium-grid" *ngIf="vendorViewMode() === 'cards'">
           <div class="store-premium-card animate-fade-in" *ngFor="let vendor of filteredVendors(); let i = index">
             <!-- Store Banner -->
             <div class="store-banner-cover" [style.background-image]="'url(' + vendor.banner + ')'">
@@ -1046,7 +1086,7 @@
                     <span class="material-symbols-outlined">inventory</span>
                     <span>Ver Productos</span>
                   </button>
-                  <button (click)="selectedVendorId.set(vendor.id); selectSection('vendedores')" class="store-action-btn view-details-btn" title="Ficha del Vendedor">
+                  <button (click)="selectedVendorId.set(vendor.id); vendorViewMode.set('list')" class="store-action-btn view-details-btn" title="Ficha del Vendedor">
                     <span class="material-symbols-outlined">visibility</span>
                     <span>Detalles</span>
                   </button>
@@ -1056,6 +1096,7 @@
           </div>
         </div>
       </div>
+
 
       <!-- =================================================== -->
       <!-- SECTION: CATEGORIAS                                 -->
@@ -1116,8 +1157,15 @@
 
           <!-- Form -->
           <div *ngIf="isCreatingCategory() || isEditingCategory()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">{{ isCreatingCategory() ? 'Nueva Categoría' : 'Editar Categoría' }}</h4>
-            <p class="block-subtitle">Formulario de registro relacional</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">{{ isCreatingCategory() ? 'Nueva Categoría' : 'Editar Categoría' }}</h4>
+                <p class="block-subtitle">Formulario de registro relacional</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="portal-form">
               <div class="form-group">
@@ -1152,6 +1200,7 @@
       <!-- =================================================== -->
       <div *ngIf="!isLoading() && activeSection() === 'productos'" class="animate-fade-in section-block">
         <!-- Store Catalog Hero Banner (for filtered store view) -->
+        <!-- Store Catalog Hero Banner (for filtered store view) -->
         <div class="store-catalog-hero animate-fade-in" *ngIf="selectedProductsVendor()" [style.background-image]="'linear-gradient(rgba(15, 14, 25, 0.75), rgba(15, 14, 25, 0.95)), url(' + selectedProductsVendor()?.banner + ')'">
           <div class="store-hero-left">
             <div class="store-hero-logo-container">
@@ -1164,6 +1213,9 @@
                 <span class="badge-store-rating">
                   <span class="material-symbols-outlined star-icon">star</span>
                   <span>{{ selectedProductsVendor()?.calificacionPromedio | number:'1.1-1' }}</span>
+                </span>
+                <span *ngIf="searchQuery()" style="margin-left: 8px; font-size: 11px; color: var(--primary); background: rgba(167, 139, 250, 0.15); padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(167, 139, 250, 0.25);">
+                  Buscador activo: Máx 2 resultados
                 </span>
               </div>
               <h2 class="store-hero-title">{{ selectedProductsVendor()?.nombreTienda }}</h2>
@@ -1185,12 +1237,17 @@
             </button>
           </div>
         </div>
-
+ 
         <!-- Global Catalog Header Row (for unfiltered view) -->
         <div class="section-header-row" *ngIf="!selectedProductsVendor()">
           <div>
             <h2 class="welcome-title">Catálogo de Productos Global</h2>
-            <p class="welcome-subtitle">Catálogos de vendedores, monitoreo de precios y existencias.</p>
+            <p class="welcome-subtitle">
+              Catálogos de vendedores, monitoreo de precios y existencias.
+              <span *ngIf="searchQuery()" style="display: inline-block; margin-left: 8px; font-size: 12px; color: var(--primary); background: rgba(167, 139, 250, 0.15); padding: 2px 8px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(167, 139, 250, 0.25);">
+                ⚠️ Buscador activo: Máximo 2 resultados
+              </span>
+            </p>
           </div>
           <div class="header-action-group">
             <button class="action-btn highlight-btn" (click)="openCreateProduct()">
@@ -1267,8 +1324,15 @@
 
           <!-- Product Form -->
           <div *ngIf="isCreatingProduct() || isEditingProduct()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">{{ isCreatingProduct() ? 'Publicar Nuevo Producto' : 'Editar Ficha Producto' }}</h4>
-            <p class="block-subtitle">Formulario de registro relacional en catálogo</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">{{ isCreatingProduct() ? 'Publicar Nuevo Producto' : 'Editar Ficha Producto' }}</h4>
+                <p class="block-subtitle">Formulario de registro relacional en catálogo</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="productForm" (ngSubmit)="saveProduct()" class="portal-form">
               <div class="form-group form-row">
@@ -1340,7 +1404,7 @@
           </div>
 
           <!-- Product Details Drawer -->
-          <div *ngIf="selectedProduct()" class="dashboard-block-card detail-drawer animate-slide-in">
+          <div *ngIf="selectedProduct() && !isEditingProduct() && !isCreatingProduct()" class="dashboard-block-card detail-drawer animate-slide-in">
             <div class="drawer-header-row">
               <h4 class="block-title">Ficha Técnica del Producto</h4>
               <button (click)="selectedProductId.set(null)" class="close-drawer-btn">
@@ -1437,8 +1501,15 @@
           </div>
 
           <div *ngIf="isAdjustingInventory()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">Ajuste de Almacén (Manual)</h4>
-            <p class="block-subtitle">Formulario de alteración de stock físico</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">Ajuste de Almacén (Manual)</h4>
+                <p class="block-subtitle">Formulario de alteración de stock físico</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="inventoryForm" (ngSubmit)="saveInventoryAdjustment()" class="portal-form">
               <div class="form-group">
@@ -1905,8 +1976,15 @@
 
           <!-- Notification Form -->
           <div *ngIf="isCreatingNotification()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">Distribuir Comunicado</h4>
-            <p class="block-subtitle">Envío asíncrono vía WebSocket a clientes activos</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">Distribuir Comunicado</h4>
+                <p class="block-subtitle">Envío asíncrono vía WebSocket a clientes activos</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="notificationForm" (ngSubmit)="sendNotification()" class="portal-form">
               <div class="form-group">
@@ -2000,8 +2078,15 @@
 
           <!-- XML Simulation Form -->
           <div *ngIf="isCreatingImport()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">Subir Archivo XML</h4>
-            <p class="block-subtitle">Simulador de parser relacional frontend-backend</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">Subir Archivo XML</h4>
+                <p class="block-subtitle">Simulador de parser relacional frontend-backend</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="xmlImportForm" (ngSubmit)="processXmlImport()" class="portal-form">
               <div class="form-group">
@@ -2073,8 +2158,15 @@
           </div>
 
           <div *ngIf="isCreatingExport()" class="dashboard-block-card form-panel animate-slide-in">
-            <h4 class="block-title">Generar Dump</h4>
-            <p class="block-subtitle">Configuración del archivo de salida</p>
+            <div class="drawer-header-row">
+              <div>
+                <h4 class="block-title">Generar Dump</h4>
+                <p class="block-subtitle">Configuración del archivo de salida</p>
+              </div>
+              <button (click)="resetAllFormToggles()" class="close-drawer-btn" title="Cerrar">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
             <form [formGroup]="exportForm" (ngSubmit)="triggerCatalogExport()" class="portal-form">
               <div class="form-group">
@@ -2311,7 +2403,7 @@
         </div>
 
         <div class="portal-grid-split">
-          <div class="dashboard-block-card form-panel list-panel">
+          <div class="dashboard-block-card settings-form-panel list-panel">
             <h4 class="block-title">Variables del Entorno del Sistema</h4>
             <p class="block-subtitle">Auditoría global de propiedades y microservicios</p>
 
@@ -2360,5 +2452,18 @@
       </div>
 
     </main>
+  </div>
+</div>
+
+<!-- Custom Premium Delete Confirmation Modal -->
+<div class="delete-confirm-modal" *ngIf="deleteConfirm()">
+  <div class="modal-icon-wrapper">
+    <span class="material-symbols-outlined">delete_forever</span>
+  </div>
+  <h3>Confirmar Acción</h3>
+  <p>{{ deleteConfirm()?.message }}</p>
+  <div class="modal-btn-group">
+    <button class="btn-cancel-modal" (click)="deleteConfirm.set(null)">Cancelar</button>
+    <button class="btn-confirm-modal" (click)="confirmDelete()">Eliminar</button>
   </div>
 </div>

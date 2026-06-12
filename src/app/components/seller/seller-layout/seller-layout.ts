@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { SellerService } from '../../../services/seller.service';
+import { ChatService } from '../../../services/chat.service';
 import { filter, Subscription } from 'rxjs';
 
 interface SidebarMenuItem {
@@ -27,6 +28,7 @@ interface SidebarSection {
 export class SellerLayout implements OnInit, OnDestroy {
   protected readonly authService = inject(AuthService);
   protected readonly sellerService = inject(SellerService);
+  protected readonly chatService = inject(ChatService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -138,6 +140,13 @@ export class SellerLayout implements OnInit, OnDestroy {
     // Generate initial breadcrumbs and update on navigation
     this.updateBreadcrumbs(this.router.url);
     this.sellerService.loadBackendData().subscribe();
+
+    // Establish websocket connection
+    const email = this.authService.currentUserEmail();
+    if (email) {
+      this.chatService.connect(email);
+    }
+
     this.routerSubscription = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
@@ -198,6 +207,7 @@ export class SellerLayout implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    this.chatService.disconnect();
     this.authService.logout();
     this.router.navigate(['/login']);
   }

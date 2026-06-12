@@ -288,4 +288,17 @@
     </div>
   </div>
 
+  <!-- Custom Premium Delete Confirmation Modal (used for cancel order) -->
+  <div class="delete-confirm-modal" *ngIf="deleteConfirm()">
+    <div class="modal-icon-wrapper">
+      <span class="material-symbols-outlined">warning</span>
+    </div>
+    <h3>Cancelar Pedido</h3>
+    <p>{{ deleteConfirm()?.message }}</p>
+    <div class="modal-btn-group">
+      <button class="btn-cancel-modal" (click)="deleteConfirm.set(null)">Regresar</button>
+      <button class="btn-confirm-modal" (click)="confirmCancel()">Confirmar Cancelación</button>
+    </div>
+  </div>
+
 </div>

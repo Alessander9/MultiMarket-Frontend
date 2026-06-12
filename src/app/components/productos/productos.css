@@ -669,3 +669,27 @@ code {
 .rotate-badge-counter {
   transform: rotate(-6deg);
 }
+
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: 24px 16px;
+  }
+  
+  .dashboard-card {
+    padding: 20px;
+  }
+  
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .profile-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-info-item.full-width {
+    grid-column: span 1;
+  }
+}

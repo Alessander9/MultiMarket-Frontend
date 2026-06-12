@@ -43,12 +43,13 @@ export class CustomerStores implements OnInit {
       list = list.filter(v => v.region === reg);
     }
 
-    return list;
+    // Sort alphabetically by store/vendor name
+    return [...list].sort((a, b) => a.nombreTienda.localeCompare(b.nombreTienda));
   });
 
   readonly regionsList = computed(() => {
     const list = this.portalService.vendors().map(v => v.region);
-    return Array.from(new Set(list));
+    return Array.from(new Set(list)).sort((a, b) => a.localeCompare(b));
   });
 
   visitStore(vendorId: number, vendorName: string): void {

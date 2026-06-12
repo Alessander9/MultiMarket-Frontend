@@ -89,6 +89,7 @@ export class CustomerProducts implements OnInit {
     const q = this.searchQuery().trim().toLowerCase();
     if (q) {
       prods = prods.filter(p => p.nombre.toLowerCase().includes(q) || p.descripcion.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q));
+      prods = prods.slice(0, 2); // limit to 2 options
     }
 
     // 2. Category

@@ -15,6 +15,7 @@ export class SellerOrders implements OnInit {
   // Active view: 'list' | 'detail'
   readonly viewState = signal<'list' | 'detail'>('list');
   readonly selectedOrder = signal<SellerOrder | null>(null);
+  readonly deleteConfirm = signal<{ id: number; message: string } | null>(null);
 
   // local states
   readonly isLoading = signal(false);
@@ -90,20 +91,29 @@ export class SellerOrders implements OnInit {
   }
 
   cancelOrder(orderId: number): void {
-    if (confirm('¿Está seguro de que desea cancelar este pedido? Se retornará el stock correspondiente.')) {
-      this.isLoading.set(true);
-      this.sellerService.updateOrderStatus(orderId, 'CANCELADO').subscribe({
-        next: (updatedOrder) => {
-          this.isLoading.set(false);
-          this.selectedOrder.set(updatedOrder);
-          this.showToast('Pedido cancelado con éxito. Stock retornado.');
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.showToast('No se pudo cancelar el pedido.');
-        }
-      });
-    }
+    this.deleteConfirm.set({
+      id: orderId,
+      message: '¿Está seguro de que desea cancelar este pedido? Se retornará el stock correspondiente a los productos de esta transacción.'
+    });
+  }
+
+  confirmCancel(): void {
+    const data = this.deleteConfirm();
+    if (!data) return;
+
+    this.deleteConfirm.set(null);
+    this.isLoading.set(true);
+    this.sellerService.updateOrderStatus(data.id, 'CANCELADO').subscribe({
+      next: (updatedOrder) => {
+        this.isLoading.set(false);
+        this.selectedOrder.set(updatedOrder);
+        this.showToast('Pedido cancelado con éxito. Stock retornado.');
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.showToast('No se pudo cancelar el pedido.');
+      }
+    });
   }
 
   printInvoiceMock(): void {
