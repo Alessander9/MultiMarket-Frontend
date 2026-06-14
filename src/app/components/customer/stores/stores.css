@@ -313,7 +313,7 @@
 
 .btn-visit-store {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: #121214;
+  color: var(--on-primary-container);
   border: none;
   border-radius: var(--radius-md);
   padding: 10px 16px;
@@ -390,7 +390,7 @@
 
 .btn-reset-empty {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: #121214;
+  color: var(--on-primary-container);
   border: none;
   border-radius: var(--radius-md);
   padding: 10px 20px;

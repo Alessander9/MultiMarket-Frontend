@@ -32,6 +32,27 @@
     <!-- Login Form -->
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       
+      <!-- Test Access Buttons -->
+      <section class="quick-access-panel" aria-label="Accesos de prueba">
+        <div class="quick-access-header">
+          <h3 class="quick-access-title">Accesos de prueba</h3>
+          <p class="quick-access-subtitle">Usa una cuenta semilla para entrar sin escribir credenciales.</p>
+        </div>
+
+        <div class="quick-access-grid">
+          <button
+            *ngFor="let account of quickAccessAccounts"
+            type="button"
+            class="quick-access-btn"
+            [disabled]="isLoading()"
+            (click)="useQuickLogin(account)"
+          >
+            <span class="quick-access-label">{{ account.label }}</span>
+            <span class="quick-access-description">{{ account.description }}</span>
+          </button>
+        </div>
+      </section>
+      
       <!-- Email Field -->
       <div class="form-group">
         <label class="form-label" for="email">Email Address</label>

@@ -188,8 +188,8 @@ export class SellerService {
     descripcion: 'Líderes en distribución de herramientas manuales, eléctricas, materiales de construcción, cerrajería, iluminación y acabados para el hogar. Más de 15 años brindando soluciones confiables a maestros de obra, talleres industriales, artesanos y familias de Lima Norte.',
     region: 'Lima',
     direccion: 'Av. Alfredo Mendiola 3540, Los Olivos, Lima',
-    logo: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=150&auto=format&fit=crop&q=80',
-    banner: 'https://images.unsplash.com/photo-1513828722001-c22dbf88279e?w=1200&auto=format&fit=crop&q=80',
+    logo: '/img/frutosSecos.jpg',
+    banner: '/img/frutos-secos-bg.jpeg',
     correo: 'contacto@ferreteriacleo.pe',
     telefono: '+51 999 888 777',
     redesSociales: {
@@ -214,8 +214,8 @@ export class SellerService {
       clienteNombre: 'Carlos Mendoza',
       clienteCorreo: 'carlos.mendoza@gmail.com',
       items: [
-        { id: 3001, productoId: 101, productoNombre: 'Taladro Percutor DeWalt 20V Max', sku: 'FER-TAL-DEW-20V', precio: 489.00, cantidad: 1, imagen: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=100' },
-        { id: 3002, productoId: 102, productoNombre: 'Juego de Herramientas Stanley (110 piezas)', sku: 'FER-JUE-STA-110P', precio: 299.90, cantidad: 1, imagen: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100' }
+        { id: 3001, productoId: 101, productoNombre: 'Taladro Percutor DeWalt 20V Max', sku: 'FER-TAL-DEW-20V', precio: 489.00, cantidad: 1, imagen: '/img/aceite-coco.jpeg' },
+        { id: 3002, productoId: 102, productoNombre: 'Juego de Herramientas Stanley (110 piezas)', sku: 'FER-JUE-STA-110P', precio: 299.90, cantidad: 1, imagen: '/img/aceite-oliva.jpeg' }
       ],
       subtotal: 788.90,
       envio: 15.00,
@@ -231,7 +231,7 @@ export class SellerService {
       clienteNombre: 'Andrea Rojas',
       clienteCorreo: 'andrea.rojas@outlook.com',
       items: [
-        { id: 3003, productoId: 108, productoNombre: 'Candado de Acero Blindado Forte 60mm', sku: 'FER-CAN-FOR-60', precio: 59.90, cantidad: 4, imagen: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=100' }
+        { id: 3003, productoId: 108, productoNombre: 'Candado de Acero Blindado Forte 60mm', sku: 'FER-CAN-FOR-60', precio: 59.90, cantidad: 4, imagen: '/img/miel.jpg' }
       ],
       subtotal: 239.60,
       envio: 10.00,
@@ -247,7 +247,7 @@ export class SellerService {
       clienteNombre: 'Juan Carlos Guerrero',
       clienteCorreo: 'jc.guerrero@hotmail.com',
       items: [
-        { id: 3004, productoId: 105, productoNombre: 'Cerradura Digital Inteligente Yale YDF40', sku: 'FER-CER-YAL-DIG', precio: 389.00, cantidad: 1, imagen: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=100' }
+        { id: 3004, productoId: 105, productoNombre: 'Cerradura Digital Inteligente Yale YDF40', sku: 'FER-CER-YAL-DIG', precio: 389.00, cantidad: 1, imagen: '/img/propoleo.jpg' }
       ],
       subtotal: 389.00,
       envio: 25.00,
@@ -263,8 +263,8 @@ export class SellerService {
       clienteNombre: 'Maria Alejandra Torres',
       clienteCorreo: 'm.torres@gmail.com',
       items: [
-        { id: 3005, productoId: 107, productoNombre: 'Pintura Látex CPP Pato Premium - Blanco (4 Galones)', sku: 'FER-PIN-PAT-BL4', precio: 189.00, cantidad: 2, imagen: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=100' },
-        { id: 3006, productoId: 111, productoNombre: 'Wincha Métrica Stanley Powerlock 8m/26ft', sku: 'FER-WIN-STA-8M', precio: 42.00, cantidad: 1, imagen: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=100' }
+        { id: 3005, productoId: 107, productoNombre: 'Pintura Látex CPP Pato Premium - Blanco (4 Galones)', sku: 'FER-PIN-PAT-BL4', precio: 189.00, cantidad: 2, imagen: '/img/super-alimentos-bg.jpeg' },
+        { id: 3006, productoId: 111, productoNombre: 'Wincha Métrica Stanley Powerlock 8m/26ft', sku: 'FER-WIN-STA-8M', precio: 42.00, cantidad: 1, imagen: '/img/frutosSecos.jpg' }
       ],
       subtotal: 420.00,
       envio: 15.00,
@@ -280,7 +280,7 @@ export class SellerService {
       clienteNombre: 'Pedro Alvarez',
       clienteCorreo: 'palvarez@cibertec.edu.pe',
       items: [
-        { id: 3007, productoId: 101, productoNombre: 'Taladro Percutor DeWalt 20V Max', sku: 'FER-TAL-DEW-20V', precio: 489.00, cantidad: 1, imagen: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=100' }
+        { id: 3007, productoId: 101, productoNombre: 'Taladro Percutor DeWalt 20V Max', sku: 'FER-TAL-DEW-20V', precio: 489.00, cantidad: 1, imagen: '/img/aceite-coco.jpeg' }
       ],
       subtotal: 489.00,
       envio: 15.00,
@@ -307,7 +307,7 @@ export class SellerService {
       id: 401,
       compradorNombre: 'Carlos Mendoza',
       compradorCorreo: 'carlos.mendoza@gmail.com',
-      compradorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      compradorAvatar: '/img/AdultoMayor.jpg',
       ultimoMensaje: 'Hola, acabo de realizar mi pedido. ¿Cuándo se despacha?',
       fechaUltimoMensaje: '2026-05-31T20:45:00-05:00',
       noLeidos: 1,
@@ -322,7 +322,7 @@ export class SellerService {
       id: 402,
       compradorNombre: 'Andrea Rojas',
       compradorCorreo: 'andrea.rojas@outlook.com',
-      compradorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+      compradorAvatar: '/img/AdultoMayor.jpg',
       ultimoMensaje: 'Muchas gracias por la atención brindada.',
       fechaUltimoMensaje: '2026-05-31T16:15:00-05:00',
       noLeidos: 0,
@@ -338,7 +338,7 @@ export class SellerService {
       id: 403,
       compradorNombre: 'Juan Carlos Guerrero',
       compradorCorreo: 'jc.guerrero@hotmail.com',
-      compradorAvatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&auto=format&fit=crop&q=80',
+      compradorAvatar: '/img/AdultoMayor.jpg',
       ultimoMensaje: 'El café llegó perfecto. Un sabor increíble.',
       fechaUltimoMensaje: '2026-05-30T18:30:00-05:00',
       noLeidos: 0,
@@ -493,7 +493,7 @@ export class SellerService {
         sku: item?.sku ?? '',
         precio: Number(item?.precioUnitario ?? item?.precio ?? 0),
         cantidad: Number(item?.cantidad ?? 0),
-        imagen: item?.imagen ?? item?.imagenes?.[0] ?? 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=100'
+        imagen: item?.imagen ?? item?.imagenes?.[0] ?? '/img/aceite-oliva.jpeg'
       })),
       subtotal: Number(order?.subtotal ?? 0),
       envio: Number(order?.costoEnvio ?? order?.envio ?? 0),
@@ -521,7 +521,7 @@ export class SellerService {
       id: Number(conv?.id ?? 0),
       compradorNombre: buyerEmail ? buyerEmail.split('@')[0] : 'Comprador',
       compradorCorreo: buyerEmail,
-      compradorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      compradorAvatar: '/img/AdultoMayor.jpg',
       ultimoMensaje: conv?.ultimoMensaje ?? '',
       fechaUltimoMensaje: conv?.fechaUltimoMensaje ?? conv?.fechaCreacion ?? new Date().toISOString(),
       noLeidos: Number(conv?.noLeidos ?? 0),

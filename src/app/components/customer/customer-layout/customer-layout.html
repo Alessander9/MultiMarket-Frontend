@@ -2,7 +2,7 @@
   
   <!-- ================= TOP PROMO HEADER BAR ================= -->
   <div class="promo-top-bar">
-    <p>🚚 Envío gratuito en todos los pedidos mayores a S/ 150 • Comercio 100% Justo y Local</p>
+    <p>🚚 Envío gratis desde S/ 150 • Tiendas locales verificadas • Chat directo con vendedores</p>
   </div>
 
   <!-- ================= HEADER E-COMMERCE ================= -->
@@ -72,7 +72,7 @@
         </button>
 
         <!-- Favorites Icon Link -->
-        <a routerLink="/favorites" class="icon-action-btn" title="Favoritos">
+        <a routerLink="/favorites" class="icon-action-btn" title="Favoritos" *ngIf="canUseBuyerFeatures()">
           <span class="material-symbols-outlined">favorite</span>
           <span class="badge bg-purple" *ngIf="customerService.favorites().length > 0">
             {{ customerService.favorites().length }}
@@ -80,12 +80,85 @@
         </a>
 
         <!-- Shopping Cart Icon Link -->
-        <a routerLink="/cart" class="icon-action-btn" title="Carrito de Compras">
-          <span class="material-symbols-outlined">shopping_cart</span>
-          <span class="badge bg-emerald" *ngIf="customerService.cartCount() > 0">
-            {{ customerService.cartCount() }}
+        <div class="dropdown-utility-wrapper" *ngIf="authService.isLoggedIn()">
+          <button
+            class="nav-cart-link"
+            type="button"
+            title="Carrito de Compras"
+            (click)="toggleCartPreview()"
+            [class.cart-hit]="cartBadgePulse()"
+          >
+            <span class="nav-cart-link__icon">
+              <span class="material-symbols-outlined nav-cart-link__icon-symbol">shopping_cart</span>
+            </span>
+            <span class="nav-cart-link__text">
+              Carrito
+            </span>
+            <span
+              class="nav-cart-link__count"
+              *ngIf="customerService.cartCount() > 0"
+              [class.count-pulse]="cartBadgePulse()"
+            >
+              {{ customerService.cartCount() }}
+            </span>
+          </button>
+
+          <div class="nav-dropdown cart-preview-panel animate-fade-in" *ngIf="showCartPreview()">
+            <div class="cart-preview-header">
+              <div>
+                <h4>Tu carrito</h4>
+                <p>{{ customerService.cartCount() }} producto(s) seleccionado(s)</p>
+              </div>
+              <button type="button" class="btn-clear-read" (click)="openCartPage($event)">Ver completo</button>
+            </div>
+
+            <div class="cart-preview-list" *ngIf="cartPreviewItems().length > 0; else emptyCartPreview">
+              <article class="cart-preview-item" *ngFor="let item of cartPreviewItems()">
+                <img [src]="item.imagen" [alt]="item.nombre" class="cart-preview-item__img" />
+                <div class="cart-preview-item__body">
+                  <strong>{{ item.nombre }}</strong>
+                  <span>{{ item.cantidad }} x S/ {{ item.precio | number:'1.2-2' }}</span>
+                  <small>{{ item.vendedorNombre }}</small>
+                </div>
+              </article>
+            </div>
+
+            <ng-template #emptyCartPreview>
+              <div class="empty-cart-preview">
+                <span class="material-symbols-outlined">shopping_cart_off</span>
+                <p>Aún no has agregado productos al carrito.</p>
+              </div>
+            </ng-template>
+
+            <div class="cart-preview-footer">
+              <div>
+                <span>Subtotal</span>
+                <strong>S/ {{ customerService.cartSubtotal() | number:'1.2-2' }}</strong>
+              </div>
+              <button type="button" class="cart-preview-cta" (click)="openCartPage($event)">
+                Ir al carrito
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Persistent Chat Shortcut -->
+        <button class="icon-action-btn" (click)="focusChatPanel()" title="Mensajes" *ngIf="canUseBuyerFeatures()">
+          <span class="material-symbols-outlined">chat</span>
+          <span class="badge bg-emerald" *ngIf="customerService.unreadChatsCount() > 0">
+            {{ customerService.unreadChatsCount() }}
           </span>
-        </a>
+        </button>
+
+        <button
+          type="button"
+          class="theme-nav-toggle"
+          (click)="themeService.toggleTheme()"
+          [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+        >
+          <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
+          <span class="theme-nav-toggle__text">{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+        </button>
 
         <!-- Notifications Bell dropdown -->
         <div class="dropdown-utility-wrapper">
@@ -150,7 +223,13 @@
             </div>
             <div class="divider-line"></div>
             <ul class="dropdown-links-list">
-              <li *ngIf="authService.currentUserRoles().includes('ADMINISTRADOR')">
+              <li>
+                <a [routerLink]="getDashboardRoute()" class="drop-link-item">
+                  <span class="material-symbols-outlined">dashboard</span>
+                  Mi Dashboard
+                </a>
+              </li>
+              <li *ngIf="authService.currentUserRoles().includes('ADMIN')">
                 <a routerLink="/admin/dashboard" class="drop-link-item" style="border: 1px solid rgba(167, 139, 250, 0.25); background: rgba(167, 139, 250, 0.08); font-weight: 600; color: var(--primary);">
                   <span class="material-symbols-outlined" style="color: var(--primary);">shield_person</span>
                   Panel Administrador
@@ -162,20 +241,14 @@
                   Panel Vendedor
                 </a>
               </li>
-              <li>
-                <a routerLink="/account" class="drop-link-item">
-                  <span class="material-symbols-outlined">dashboard</span>
-                  Mi Cuenta Dashboard
-                </a>
-              </li>
 
-              <li>
+              <li *ngIf="canUseBuyerFeatures()">
                 <a routerLink="/orders" class="drop-link-item">
                   <span class="material-symbols-outlined">local_shipping</span>
                   Mis Pedidos
                 </a>
               </li>
-              <li>
+              <li *ngIf="canUseBuyerFeatures()">
                 <a routerLink="/chat" class="drop-link-item">
                   <span class="material-symbols-outlined">chat</span>
                   Mis Mensajes
@@ -184,7 +257,7 @@
                   </span>
                 </a>
               </li>
-              <li>
+              <li *ngIf="canUseBuyerFeatures()">
                 <a routerLink="/profile" class="drop-link-item">
                   <span class="material-symbols-outlined">person</span>
                   Mi Perfil
@@ -227,7 +300,184 @@
   <!-- ================= MAIN VIEWPORT ================= -->
   <main class="main-viewport-content">
     <router-outlet></router-outlet>
-  </main>
+    </main>
+
+  <!-- ================= FLOATING CHAT BUTTON ================= -->
+  <div class="customer-chat-fab-shell" *ngIf="authService.isLoggedIn() && canUseBuyerFeatures() && showPersistentChatDock()">
+    <button
+      type="button"
+      class="customer-chat-fab"
+      [class.is-open]="chatDockOpen()"
+      (click)="toggleChatDock()"
+      [attr.aria-label]="chatDockOpen() ? 'Cerrar chat' : 'Abrir chat'"
+    >
+      <span class="customer-chat-fab__icon-wrap">
+        <span class="material-symbols-outlined">{{ chatDockOpen() ? 'close' : 'chat' }}</span>
+      </span>
+      <span class="customer-chat-fab__text">
+        <strong>Chat con tiendas</strong>
+        <small>{{ customerService.unreadChatsCount() > 0 ? customerService.unreadChatsCount() + ' sin leer' : 'Preguntas rápidas' }}</small>
+      </span>
+      <span class="customer-chat-fab__badge" *ngIf="customerService.unreadChatsCount() > 0">{{ customerService.unreadChatsCount() }}</span>
+    </button>
+
+    <aside
+      class="customer-chat-dock"
+      *ngIf="chatDockOpen()"
+      [class.is-expanded]="chatDockExpanded()"
+    >
+      <div class="customer-chat-dock__header">
+        <div class="customer-chat-dock__title-group">
+          <p class="customer-chat-dock__eyebrow">Mensajería activa</p>
+          <h3>Comprador / Vendedor</h3>
+          <p class="customer-chat-dock__subtitle">Pregunta sobre productos, stock, envíos y estado de pedidos sin salir del portal.</p>
+          <div class="customer-chat-dock__roles">
+            <span class="customer-chat-dock__role-pill role-buyer">Comprador: tú</span>
+            <span class="customer-chat-dock__role-pill role-vendor">Vendedor: tienda</span>
+            <span class="customer-chat-dock__role-pill role-state">{{ chatDockStateLabel() }}</span>
+          </div>
+        </div>
+        <div class="customer-chat-dock__meta">
+          <span class="customer-chat-dock__pill">
+            {{ customerService.unreadChatsCount() }} sin leer
+          </span>
+          <button type="button" class="customer-chat-dock__icon-btn" (click)="toggleExpandChatDock()" [attr.aria-label]="chatDockExpanded() ? 'Reducir chat' : 'Maximizar chat'">
+            <span class="material-symbols-outlined">{{ chatDockExpanded() ? 'close_fullscreen' : 'open_in_full' }}</span>
+          </button>
+          <button type="button" class="customer-chat-dock__icon-btn" (click)="toggleChatDock()" aria-label="Cerrar chat">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="customer-chat-dock__body">
+        <section class="customer-chat-dock__threads">
+          <div class="customer-chat-dock__threads-head">
+            <span>Conversaciones</span>
+            <button type="button" class="customer-chat-dock__threads-action" (click)="toggleExpandChatDock()">
+              {{ chatDockExpanded() ? 'Compactar' : 'Expandir' }}
+            </button>
+          </div>
+
+          <ng-container *ngIf="customerService.conversations().length > 0; else quickStartList">
+            <button
+              *ngFor="let conv of customerService.conversations()"
+              type="button"
+              class="customer-chat-thread"
+              [class.active]="activeChatConversation()?.id === conv.id"
+              (click)="selectChatConversation(conv.id)"
+            >
+              <img [src]="conv.vendedorLogo" [alt]="conv.vendedorNombreTienda" class="customer-chat-thread__avatar" />
+              <div class="customer-chat-thread__meta">
+                <div class="customer-chat-thread__row">
+                  <span class="customer-chat-thread__name">{{ conv.vendedorNombreTienda }}</span>
+                  <span class="customer-chat-thread__time">{{ conv.fechaUltimoMensaje | date:'shortTime' }}</span>
+                </div>
+                <p class="customer-chat-thread__snippet">{{ conv.ultimoMensaje || 'Sin mensajes aún' }}</p>
+              </div>
+              <span class="customer-chat-thread__badge" *ngIf="conv.noLeidos > 0">{{ conv.noLeidos }}</span>
+            </button>
+          </ng-container>
+
+          <ng-template #quickStartList>
+            <div class="customer-chat-start-block">
+              <div class="customer-chat-start-block__header">
+                <span class="material-symbols-outlined">storefront</span>
+                <div>
+                  <h4>Empieza un chat</h4>
+                  <p>Elige una tienda para abrir una conversación.</p>
+                </div>
+              </div>
+
+              <button
+                *ngFor="let vendor of portalService.vendors().slice(0, getSuggestedVendorsLimit())"
+                type="button"
+                class="customer-chat-start-card"
+                (click)="openConversationForVendor(vendor.id)"
+              >
+                <img [src]="vendor.logo" [alt]="vendor.nombreTienda" class="customer-chat-start-card__avatar" />
+                <div class="customer-chat-start-card__meta">
+                  <strong>{{ vendor.nombreTienda }}</strong>
+                  <span>{{ vendor.region }}</span>
+                </div>
+                <span class="material-symbols-outlined customer-chat-start-card__cta">chat</span>
+              </button>
+
+              <div class="customer-chat-empty-list" *ngIf="portalService.vendors().length === 0">
+                <span class="material-symbols-outlined">forum</span>
+                <p>No hay tiendas cargadas todavía.</p>
+              </div>
+            </div>
+          </ng-template>
+        </section>
+
+        <section class="customer-chat-dock__conversation" *ngIf="activeChatConversation() as conv; else emptyChatDock">
+          <header class="customer-chat-dock__conversation-header">
+            <div class="customer-chat-dock__conversation-title">
+              <img [src]="conv.vendedorLogo" [alt]="conv.vendedorNombreTienda" class="customer-chat-dock__avatar" />
+              <div>
+                <h4>{{ conv.vendedorNombreTienda }}</h4>
+                <p>Vendedor receptor de tus consultas</p>
+              </div>
+            </div>
+            <div class="customer-chat-dock__header-tags">
+              <span class="customer-chat-dock__status">{{ getSelectedChatRoleLabel() }}</span>
+              <span class="customer-chat-dock__status customer-chat-dock__status--soft">{{ getCounterpartyRoleLabel() }}</span>
+            </div>
+          </header>
+
+          <div class="customer-chat-dock__messages" #persistentChatScroll>
+            <div
+              *ngFor="let msg of conv.mensajes"
+              class="customer-chat-message"
+              [class.mine]="isOwnMessage(msg.remitente)"
+              [class.theirs]="!isOwnMessage(msg.remitente)"
+            >
+              <div class="customer-chat-message__bubble">
+                <div class="customer-chat-message__role-line">
+                  <span class="customer-chat-message__role" [class.mine]="isOwnMessage(msg.remitente)">
+                    {{ isOwnMessage(msg.remitente) ? 'Comprador' : 'Vendedor' }}
+                  </span>
+                  <span class="customer-chat-message__direction">
+                    {{ isOwnMessage(msg.remitente) ? 'emisor' : 'receptor' }}
+                  </span>
+                </div>
+                <p>{{ msg.contenido }}</p>
+                <span>{{ msg.fecha | date:'shortTime' }}</span>
+              </div>
+            </div>
+
+            <div class="customer-chat-dock__empty-messages" *ngIf="conv.mensajes.length === 0">
+              <span class="material-symbols-outlined">chat_bubble</span>
+              <p>Inicia la conversación con esta tienda.</p>
+            </div>
+          </div>
+
+          <footer class="customer-chat-dock__composer">
+            <input
+              type="text"
+              placeholder="Escribe un mensaje..."
+              [ngModel]="chatDraft()"
+              (ngModelChange)="chatDraft.set($event)"
+              (keyup.enter)="sendChatMessage()"
+              class="customer-chat-dock__input"
+            />
+            <button type="button" class="customer-chat-dock__send" (click)="sendChatMessage()" [disabled]="!chatDraft().trim()">
+              <span class="material-symbols-outlined">send</span>
+            </button>
+          </footer>
+        </section>
+
+        <ng-template #emptyChatDock>
+          <section class="customer-chat-dock__conversation customer-chat-dock__conversation--empty">
+            <span class="material-symbols-outlined">chat</span>
+            <h4>Selecciona una tienda</h4>
+            <p>Cuando abras una conversación, aparecerá aquí con roles claros de comprador y vendedor.</p>
+          </section>
+        </ng-template>
+      </div>
+    </aside>
+  </div>
 
   <!-- ================= FOOTER E-COMMERCE ================= -->
   <footer class="storefront-footer">

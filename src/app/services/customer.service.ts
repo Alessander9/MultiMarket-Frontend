@@ -133,7 +133,7 @@ export class CustomerService {
     apellidos: 'Torres Perez',
     correo: 'comprador@gmail.com',
     telefono: '+51 944 678 901',
-    foto: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80'
+    foto: '/img/AdultoMayor.jpg'
   });
 
   // 5. Preferencias
@@ -154,7 +154,7 @@ export class CustomerService {
       vendedorId: 1,
       vendedorNombreTienda: 'Café Altomayo Gourmet',
       items: [
-        { productoId: 101, nombre: 'Café Blend Premium - Grano 1kg', sku: 'CAF-BLE-PRE-1KG', precio: 59.90, cantidad: 2, imagen: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=100', vendedorId: 1, vendedorNombre: 'Café Altomayo Gourmet' }
+        { productoId: 101, nombre: 'Café Blend Premium - Grano 1kg', sku: 'CAF-BLE-PRE-1KG', precio: 59.90, cantidad: 2, imagen: '/img/aceite-coco.jpeg', vendedorId: 1, vendedorNombre: 'Café Altomayo Gourmet' }
       ],
       subtotal: 119.80,
       envio: 15.00,
@@ -177,7 +177,7 @@ export class CustomerService {
       vendedorId: 1,
       vendedorNombreTienda: 'Café Altomayo Gourmet',
       items: [
-        { productoId: 103, nombre: 'Café Espresso Roast - Grano 500g', sku: 'CAF-ESP-ROA-500G', precio: 38.00, cantidad: 1, imagen: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=100', vendedorId: 1, vendedorNombre: 'Café Altomayo Gourmet' }
+        { productoId: 103, nombre: 'Café Espresso Roast - Grano 500g', sku: 'CAF-ESP-ROA-500G', precio: 38.00, cantidad: 1, imagen: '/img/aceite-oliva.jpeg', vendedorId: 1, vendedorNombre: 'Café Altomayo Gourmet' }
       ],
       subtotal: 38.00,
       envio: 12.00,
@@ -201,7 +201,7 @@ export class CustomerService {
       id: 401,
       vendedorId: 1,
       vendedorNombreTienda: 'Café Altomayo Gourmet',
-      vendedorLogo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=150&auto=format&fit=crop&q=80',
+      vendedorLogo: '/img/frutosSecos.jpg',
       ultimoMensaje: 'Hola, acabo de realizar mi pedido. ¿Cuándo se despacha?',
       fechaUltimoMensaje: '2026-05-31T20:45:00-05:00',
       noLeidos: 0,
@@ -224,9 +224,9 @@ export class CustomerService {
 
   // 9. Vendedores recomendados
   readonly topVendors = signal<VendorMini[]>([
-    { id: 1, nombre: 'Café Altomayo Gourmet', region: 'San Martín', rating: 4.8, logo: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=100&q=80' },
-    { id: 2, nombre: 'Chocolates El Ceibo', region: 'Amazonas', rating: 4.7, logo: 'https://images.unsplash.com/photo-1511381939415-e44015466834?w=100&q=80' },
-    { id: 3, nombre: 'Artesanías Andinas', region: 'Cusco', rating: 4.9, logo: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=100&q=80' }
+    { id: 1, nombre: 'Café Altomayo Gourmet', region: 'San Martín', rating: 4.8, logo: '/img/frutosSecos.jpg' },
+    { id: 2, nombre: 'Chocolates El Ceibo', region: 'Amazonas', rating: 4.7, logo: '/img/miel.jpg' },
+    { id: 3, nombre: 'Artesanías Andinas', region: 'Cusco', rating: 4.9, logo: '/img/moringa.jpg' }
   ]);
 
   private normalizeOrder(order: any): BuyerOrder {
@@ -242,7 +242,7 @@ export class CustomerService {
         sku: item?.sku ?? '',
         precio: Number(item?.precioUnitario ?? item?.precio ?? 0),
         cantidad: Number(item?.cantidad ?? 0),
-        imagen: item?.imagen ?? item?.imagenes?.[0] ?? 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=100',
+        imagen: item?.imagen ?? item?.imagenes?.[0] ?? '/img/aceite-oliva.jpeg',
         vendedorId: Number(order?.vendedorId ?? 1),
         vendedorNombre: order?.vendedorNombreTienda ?? order?.vendedorTienda ?? order?.vendedorNombre ?? 'Tienda'
       })),
@@ -267,7 +267,7 @@ export class CustomerService {
       id: Number(conv?.id ?? 0),
       vendedorId: Number(conv?.vendedorId ?? 1),
       vendedorNombreTienda: vendorName,
-      vendedorLogo: conv?.vendedorLogo ?? 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=150&auto=format&fit=crop&q=80',
+      vendedorLogo: conv?.vendedorLogo ?? '/img/frutosSecos.jpg',
       ultimoMensaje: conv?.ultimoMensaje ?? '',
       fechaUltimoMensaje: conv?.fechaUltimoMensaje ?? conv?.fechaCreacion ?? new Date().toISOString(),
       noLeidos: Number(conv?.noLeidos ?? 0),
@@ -369,7 +369,7 @@ export class CustomerService {
       }));
     } else {
       const rawImg = prod.imagenes?.[0];
-      const imgUrl = typeof rawImg === 'string' ? rawImg : (rawImg?.url || 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=200');
+      const imgUrl = typeof rawImg === 'string' ? rawImg : (rawImg?.url || '/img/aceite-coco.jpeg');
 
       const newItem: CartItem = {
         productoId: prod.id,
@@ -571,6 +571,23 @@ export class CustomerService {
           }
           return c;
         }));
+      })
+    );
+  }
+
+  openConversation(vendedorId: number): Observable<BuyerConversation> {
+    const existing = this.conversations().find(c => c.vendedorId === vendedorId);
+    if (existing) {
+      return of(existing);
+    }
+
+    return this.http.post<any>(`${this.baseUrl}/chat/conversaciones`, { vendedorId }).pipe(
+      map(conv => this.normalizeConversation(conv)),
+      tap(conv => {
+        this.conversations.update(list => {
+          const withoutDuplicate = list.filter(c => c.id !== conv.id && c.vendedorId !== conv.vendedorId);
+          return [conv, ...withoutDuplicate];
+        });
       })
     );
   }

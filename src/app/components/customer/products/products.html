@@ -94,7 +94,7 @@
     <!-- Main Products Showcase -->
     <main class="catalog-products-main">
       <!-- Public Store Catalog Hero Banner (for filtered store view) -->
-      <div class="public-store-hero animate-fade-in" *ngIf="selectedVendorId() !== null" [style.background-image]="'linear-gradient(rgba(15, 14, 25, 0.82), rgba(15, 14, 25, 0.98)), url(' + (selectedVendor()?.banner || 'https://images.unsplash.com/photo-1498804103079-a6351b050096?w=1000') + ')'">
+      <div class="public-store-hero animate-fade-in" *ngIf="selectedVendorId() !== null" [style.background-image]="'linear-gradient(rgba(15, 14, 25, 0.82), rgba(15, 14, 25, 0.98)), url(' + (selectedVendor()?.banner || '/img/frutos-secos-bg.jpeg') + ')'">
         <div class="store-hero-left">
           <div class="store-hero-logo-container">
             <img [src]="selectedVendor()?.logo" class="store-hero-logo" alt="logo"/>
@@ -131,9 +131,13 @@
       <!-- Search top bar stats & sorting -->
       <div class="catalog-header-bar">
         <div class="results-meta">
-          Encontrados: <strong>{{ filteredCatalogProducts().length }}</strong> productos
-          <span *ngIf="selectedVendorId() !== null"> de {{ selectedVendorLabel() }}</span>
-          <span *ngIf="searchQuery()"> para "{{ searchQuery() }}"</span>
+          <span class="results-kicker">Catálogo activo</span>
+          <h3>Productos listos para compra</h3>
+          <p>
+            Encontrados <strong>{{ filteredCatalogProducts().length }}</strong> productos
+            <span *ngIf="selectedVendorId() !== null"> de {{ selectedVendorLabel() }}</span>
+            <span *ngIf="searchQuery()"> para "{{ searchQuery() }}"</span>
+          </p>
         </div>
 
         <div class="sorting-controls">
@@ -156,6 +160,12 @@
         >
           <div class="card-thumb-wrapper">
             <img [src]="prod.imagenes[0]" alt="Producto" class="card-img" />
+            <div class="card-thumb-overlay"></div>
+            <div class="card-thumb-badges">
+              <span class="stock-warn" *ngIf="prod.stock > 0 && prod.stock <= 10">Últimas unidades</span>
+              <span class="stock-out" *ngIf="prod.stock === 0">Agotado</span>
+              <span class="free-shipping-badge" *ngIf="prod.precio >= 150">Envío gratis</span>
+            </div>
             <button 
               class="btn-fav-overlap" 
               [class.favorited]="customerService.isFavorite(prod.id)"
@@ -164,28 +174,49 @@
             >
               <span class="material-symbols-outlined">favorite</span>
             </button>
-            <span class="stock-warn" *ngIf="prod.stock > 0 && prod.stock <= 10">¡Últimas unidades!</span>
-            <span class="stock-out" *ngIf="prod.stock === 0">Agotado</span>
           </div>
 
           <div class="card-details">
-            <span class="card-cat">{{ prod.categoriaNombre || 'Gourmet' }}</span>
+            <div class="card-topline">
+              <span class="card-cat">{{ prod.categoriaNombre || 'Gourmet' }}</span>
+              <span class="card-vendor">{{ prod.vendedorNombre || selectedVendorLabel() || 'Tienda Oficial' }}</span>
+            </div>
             <h4 class="card-title">{{ prod.nombre }}</h4>
+
             <div class="card-rating-vts">
-              <span class="material-symbols-outlined star">star</span>
-              <strong>4.8</strong>
-              <span class="count">• 80 vts</span>
+              <span class="rating-pill">
+                <span class="material-symbols-outlined star">star</span>
+                <strong>4.8</strong>
+              </span>
+              <span class="count">80 ventas</span>
             </div>
 
+            <p class="card-description">
+              {{ prod.descripcion || 'Producto local con presentación cuidada, compra rápida y soporte directo del vendedor.' }}
+            </p>
+
             <div class="card-price-action">
-              <div class="price-value">S/ {{ prod.precio | number:'1.2-2' }}</div>
+              <div class="price-block">
+                <div class="price-value">S/ {{ prod.precio | number:'1.2-2' }}</div>
+                <div class="price-note" *ngIf="prod.precio >= 150">Envío gratis desde este monto</div>
+                <div class="price-note" *ngIf="prod.precio < 150">Costo de envío según tienda</div>
+              </div>
               <button 
                 class="btn-add-cart" 
                 [disabled]="prod.stock === 0" 
                 (click)="addToCart(prod, $event)"
                 title="Añadir al Carrito"
+                [class.added-pulse]="lastAddedProductId() === prod.id"
+                [class.has-items]="cartQuantityForProduct(prod.id) > 0"
               >
                 <span class="material-symbols-outlined font-sm">shopping_cart</span>
+                <span
+                  class="btn-add-cart__count"
+                  *ngIf="cartQuantityForProduct(prod.id) > 0"
+                  [class.count-pulse]="lastAddedProductId() === prod.id"
+                >
+                  {{ cartQuantityForProduct(prod.id) }}
+                </span>
               </button>
             </div>
           </div>

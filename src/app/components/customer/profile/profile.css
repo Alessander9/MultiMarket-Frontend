@@ -207,7 +207,7 @@
 
 .btn-save-settings {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: #121214;
+  color: var(--on-primary-container);
   border: none;
   border-radius: var(--radius-md);
   padding: 12px 24px;
@@ -240,7 +240,7 @@
 
 .btn-primary-action {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: #121214;
+  color: var(--on-primary-container);
   border: none;
   border-radius: var(--radius-md);
   padding: 10px 18px;
@@ -535,7 +535,7 @@ input:checked + .slider-round {
 
 input:checked + .slider-round:before {
   transform: translateX(22px);
-  background-color: #121214;
+  background-color: var(--on-primary-container);
 }
 
 .w-160 {

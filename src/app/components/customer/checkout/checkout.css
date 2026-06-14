@@ -53,7 +53,7 @@
 .step-nav-item.active .step-num {
   border-color: var(--primary);
   background-color: var(--primary-container);
-  color: #121214;
+  color: var(--on-primary-container);
 }
 
 .step-nav-item.completed {
@@ -63,7 +63,7 @@
 .step-nav-item.completed .step-num {
   border-color: var(--tertiary);
   background-color: var(--tertiary-container);
-  color: #121214;
+  color: var(--on-tertiary);
 }
 
 .step-line {
@@ -245,7 +245,7 @@
 
 .btn-wizard-next, .btn-wizard-confirm {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: #121214;
+  color: var(--on-primary-container);
   border: none;
   border-radius: var(--radius-md);
   padding: 12px 24px;
@@ -389,7 +389,7 @@
 
 .btn-save-addr {
   background-color: var(--primary);
-  color: #121214;
+  color: var(--on-primary);
   border: none;
   padding: 10px 20px;
   border-radius: var(--radius-md);
@@ -857,7 +857,7 @@
 
 .btn-primary-action {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: #121214;
+  color: var(--on-primary-container);
   border: none;
   border-radius: var(--radius-md);
   padding: 12px 24px;

@@ -4,6 +4,7 @@ import { Productos } from './components/productos/productos';
 import { Dashboard } from './components/admin/dashboard/dashboard';
 import { SellerLayout } from './components/seller/seller-layout/seller-layout';
 import { sellerGuard } from './guards/seller.guard';
+import { buyerGuard } from './guards/buyer.guard';
 import { CustomerLayout } from './components/customer/customer-layout/customer-layout';
 
 export const routes: Routes = [
@@ -60,17 +61,17 @@ export const routes: Routes = [
       { path: 'products', loadComponent: () => import('./components/customer/products/products').then(m => m.CustomerProducts) },
       { path: 'products/:id', loadComponent: () => import('./components/customer/product-detail/product-detail').then(m => m.CustomerProductDetail) },
       { path: 'stores', loadComponent: () => import('./components/customer/stores/stores').then(m => m.CustomerStores) },
-      { path: 'favorites', loadComponent: () => import('./components/customer/favorites/favorites').then(m => m.CustomerFavorites) },
+      { path: 'dashboard', canActivate: [buyerGuard], loadComponent: () => import('./components/customer/dashboard/dashboard').then(m => m.CustomerDashboard) },
+      { path: 'favorites', canActivate: [buyerGuard], loadComponent: () => import('./components/customer/favorites/favorites').then(m => m.CustomerFavorites) },
       { path: 'cart', loadComponent: () => import('./components/customer/cart/cart').then(m => m.CustomerCart) },
-      { path: 'checkout', loadComponent: () => import('./components/customer/checkout/checkout').then(m => m.CustomerCheckout) },
-      { path: 'orders', loadComponent: () => import('./components/customer/orders/orders').then(m => m.CustomerOrders) },
-      { path: 'chat', loadComponent: () => import('./components/customer/chat/chat').then(m => m.CustomerChat) },
-      { path: 'notifications', loadComponent: () => import('./components/customer/notifications/notifications').then(m => m.CustomerNotifications) },
-      { path: 'profile', loadComponent: () => import('./components/customer/profile/profile').then(m => m.CustomerProfile) },
-      { path: 'account', loadComponent: () => import('./components/customer/account/account').then(m => m.CustomerAccount) }
+      { path: 'checkout', canActivate: [buyerGuard], loadComponent: () => import('./components/customer/checkout/checkout').then(m => m.CustomerCheckout) },
+      { path: 'orders', canActivate: [buyerGuard], loadComponent: () => import('./components/customer/orders/orders').then(m => m.CustomerOrders) },
+      { path: 'chat', canActivate: [buyerGuard], loadComponent: () => import('./components/customer/chat/chat').then(m => m.CustomerChat) },
+      { path: 'notifications', canActivate: [buyerGuard], loadComponent: () => import('./components/customer/notifications/notifications').then(m => m.CustomerNotifications) },
+      { path: 'profile', canActivate: [buyerGuard], loadComponent: () => import('./components/customer/profile/profile').then(m => m.CustomerProfile) },
+      { path: 'account', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },
 
   { path: '**', redirectTo: '' }
 ];
-

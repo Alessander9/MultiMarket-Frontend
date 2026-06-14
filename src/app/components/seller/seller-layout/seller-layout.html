@@ -213,6 +213,16 @@
           </div>
         </div>
 
+        <button
+          type="button"
+          class="theme-nav-toggle"
+          (click)="themeService.toggleTheme()"
+          [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+        >
+          <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
+          <span class="theme-nav-toggle__text">{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+        </button>
+
         <div class="header-divider-v"></div>
 
         <!-- User Profile Dropdown -->
@@ -236,6 +246,12 @@
             </div>
             <div class="profile-dropdown-divider"></div>
             <ul class="profile-dropdown-list">
+              <li>
+                <a [routerLink]="getDashboardRoute()" (click)="closeAllDropdowns()" class="profile-drop-link">
+                  <span class="material-symbols-outlined">dashboard</span>
+                  Mi Dashboard
+                </a>
+              </li>
               <li>
                 <a routerLink="/seller/store" (click)="closeAllDropdowns()" class="profile-drop-link">
                   <span class="material-symbols-outlined">storefront</span>

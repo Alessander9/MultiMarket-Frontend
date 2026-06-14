@@ -1,5 +1,16 @@
 <div class="app-shell">
   <div class="app-shell__ambient app-shell__ambient--violet"></div>
   <div class="app-shell__ambient app-shell__ambient--emerald"></div>
+  @if (showGlobalThemeToggle()) {
+    <button
+      type="button"
+      class="theme-toggle-fab"
+      (click)="themeService.toggleTheme()"
+      [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+    >
+      <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
+      <span>{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+    </button>
+  }
   <router-outlet></router-outlet>
 </div>

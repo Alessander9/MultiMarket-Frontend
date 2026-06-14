@@ -13,7 +13,7 @@ import { SellerService, SellerProduct } from '../../../services/seller.service';
 export class SellerProducts implements OnInit {
   protected readonly sellerService = inject(SellerService);
   private readonly fb = inject(FormBuilder);
-  readonly defaultPreviewImage = 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=900&auto=format&fit=crop&q=80';
+  readonly defaultPreviewImage = '/img/super-alimentos-bg.jpeg';
   private readonly fallbackCategories = ['Café', 'Chocolate', 'Miel', 'Artesanías', 'Textiles', 'Ferretería'];
 
   // Active view state: 'list' | 'create' | 'edit' | 'detail'

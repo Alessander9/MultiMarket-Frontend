@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { AdminDashboardService } from '../../../services/admin-dashboard.service';
 import { AdminPortalService, AdminUser, AdminRole, AdminVendor, AdminCategory, AdminProduct, InventoryMovement, AdminOrder, AdminPayment, SOAPLog, AdminChat, AdminNotification, XmlImportLog, JsonXmlExportLog } from '../../../services/admin-portal.service';
+import { ThemeService } from '../../../services/theme.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -18,6 +19,7 @@ export class Dashboard implements OnInit, OnDestroy {
   protected readonly authService = inject(AuthService);
   protected readonly dashboardService = inject(AdminDashboardService);
   protected readonly portalService = inject(AdminPortalService);
+  protected readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -75,6 +77,29 @@ export class Dashboard implements OnInit, OnDestroy {
       icon: 'warning'
     }
   ]);
+
+  readonly summaryKpis = computed(() => this.dashboardService.kpis().slice(0, 4));
+
+  readonly summaryAlerts = computed(() => ([
+    {
+      label: 'Pedidos pendientes',
+      value: this.dashboardService.criticalAlerts().pedidosPendientes,
+      hint: 'Revisar despacho y validación de pago',
+      tone: 'gold'
+    },
+    {
+      label: 'Stock bajo',
+      value: this.dashboardService.criticalAlerts().stockBajo,
+      hint: 'Reposición prioritaria',
+      tone: 'emerald'
+    },
+    {
+      label: 'Pagos fallidos',
+      value: this.dashboardService.criticalAlerts().pagosFallidos,
+      hint: 'Requiere seguimiento',
+      tone: 'rose'
+    }
+  ]));
 
   // Filter modifiers for specific sections
   readonly logFilterLevel = signal<string>('ALL');
@@ -208,8 +233,8 @@ export class Dashboard implements OnInit, OnDestroy {
       descripcion: ['', [Validators.required]],
       region: ['Cusco', [Validators.required]],
       direccion: ['', [Validators.required]],
-      logo: ['https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=100'],
-      banner: ['https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600'],
+      logo: ['/img/frutosSecos.jpg'],
+      banner: ['/img/frutos-secos-bg.jpeg'],
       correoUsuario: ['', [Validators.email]],
       activo: [true]
     });
@@ -230,7 +255,7 @@ export class Dashboard implements OnInit, OnDestroy {
       stock: [10, [Validators.required, Validators.min(0)]],
       peso: [0.10, [Validators.required, Validators.min(0.01)]],
       activo: [true],
-      imagenes: ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300']
+      imagenes: ['/img/aceite-coco.jpeg']
     });
 
     this.inventoryForm = this.fb.group({
@@ -936,7 +961,7 @@ export class Dashboard implements OnInit, OnDestroy {
       stock: 10,
       peso: 0.20,
       activo: true,
-      imagenes: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=300'
+      imagenes: '/img/aceite-coco.jpeg'
     });
     this.isCreatingProduct.set(true);
   }

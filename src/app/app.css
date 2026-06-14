@@ -35,7 +35,57 @@
   background: radial-gradient(circle, rgba(68, 215, 168, 0.12), transparent 68%);
 }
 
+:host-context([data-theme='light']) .app-shell__ambient--violet {
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.12), transparent 68%);
+  opacity: 0.55;
+}
+
+:host-context([data-theme='light']) .app-shell__ambient--emerald {
+  background: radial-gradient(circle, rgba(15, 159, 110, 0.08), transparent 68%);
+  opacity: 0.5;
+}
+
+:host-context([data-theme='light']) .theme-toggle-fab {
+  border-color: var(--outline-variant);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--on-surface);
+}
+
 router-outlet {
   position: relative;
   z-index: 1;
+}
+
+.theme-toggle-fab {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 2500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--outline-variant);
+  background: color-mix(in srgb, var(--surface-container) 88%, transparent);
+  color: var(--on-surface);
+  border-radius: var(--radius-full);
+  padding: 10px 14px;
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.theme-toggle-fab:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+}
+
+.theme-toggle-fab .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.theme-toggle-fab span:last-child {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }

@@ -1,0 +1,196 @@
+<div class="buyer-dashboard animate-fade-in">
+  <section class="hero card">
+    <div class="hero-copy">
+      <span class="eyebrow">Panel comprador</span>
+      <h1>Bienvenido, {{ profile().nombres }}</h1>
+      <p>
+        Aquí tienes una vista rápida de tu actividad de compra, mensajes, favoritos y accesos directos.
+        Todo está filtrado para mostrar solo funciones de comprador.
+      </p>
+
+      <div class="hero-actions">
+        <a routerLink="/products" class="action-pill primary">
+          <span class="material-symbols-outlined">search</span>
+          Buscar productos
+        </a>
+        <a routerLink="/chat" class="action-pill">
+          <span class="material-symbols-outlined">chat</span>
+          Abrir mensajes
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-aside">
+      <div class="profile-card">
+        <img [src]="profile().foto" [alt]="profile().nombres" class="profile-photo" />
+        <div>
+          <strong>{{ profile().nombres }} {{ profile().apellidos }}</strong>
+          <span>{{ profile().correo }}</span>
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div>
+          <span>Sin leer</span>
+          <strong>{{ unreadChats() + unreadNotifications() }}</strong>
+        </div>
+        <div>
+          <span>Gasto estimado</span>
+          <strong>S/ {{ totalSpent() | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="metrics-grid">
+    <article class="metric card">
+      <span class="material-symbols-outlined metric-icon">inventory_2</span>
+      <div>
+        <strong>{{ activeOrders().length }}</strong>
+        <p>Pedidos activos</p>
+      </div>
+    </article>
+    <article class="metric card">
+      <span class="material-symbols-outlined metric-icon">done_all</span>
+      <div>
+        <strong>{{ deliveredOrders().length }}</strong>
+        <p>Entregados</p>
+      </div>
+    </article>
+    <article class="metric card">
+      <span class="material-symbols-outlined metric-icon">favorite</span>
+      <div>
+        <strong>{{ favoriteCount() }}</strong>
+        <p>Favoritos</p>
+      </div>
+    </article>
+    <article class="metric card">
+      <span class="material-symbols-outlined metric-icon">location_on</span>
+      <div>
+        <strong>{{ addressCount() }}</strong>
+        <p>Direcciones</p>
+      </div>
+    </article>
+  </section>
+
+  <section class="content-grid">
+    <div class="main-column">
+      <section class="card panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Seguimiento</span>
+            <h2>Pedidos recientes</h2>
+          </div>
+          <a routerLink="/orders" class="panel-link">Ver historial</a>
+        </div>
+
+        <div class="order-list" *ngIf="recentOrders().length > 0; else noOrders">
+          <article class="order-item" *ngFor="let order of recentOrders()">
+            <div class="order-top">
+              <div>
+                <strong>{{ order.numeroPedido }}</strong>
+                <span>{{ order.vendedorNombreTienda }}</span>
+              </div>
+              <span class="status-pill" [ngClass]="getStatusClass(order.estado)">{{ order.estado }}</span>
+            </div>
+
+            <div class="order-foot">
+              <span>{{ order.fecha | date:'dd MMM yyyy' }}</span>
+              <strong>S/ {{ order.total | number:'1.2-2' }}</strong>
+            </div>
+
+            <div class="order-progress">
+              <div class="bar">
+                <span [style.width]="order.estado === 'PAGADO' ? '20%' : order.estado === 'PROCESANDO' ? '55%' : order.estado === 'ENVIADO' ? '100%' : '8%'"></span>
+              </div>
+              <small>Estado actualizado automáticamente desde tu historial.</small>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #noOrders>
+          <div class="empty-box">
+            <span class="material-symbols-outlined">shopping_bag</span>
+            <h3>No tienes pedidos aún</h3>
+            <p>Explora el catálogo para generar tu primera compra y ver aquí el seguimiento.</p>
+            <a routerLink="/products" class="action-pill primary">Explorar catálogo</a>
+          </div>
+        </ng-template>
+      </section>
+
+      <section class="card panel">
+        <div class="panel-head">
+          <div>
+            <span class="eyebrow">Atajos</span>
+            <h2>Accesos rápidos</h2>
+          </div>
+        </div>
+
+        <div class="quick-links">
+          <a *ngFor="let link of quickLinks" [routerLink]="link.route" class="quick-link">
+            <span class="material-symbols-outlined">{{ link.icon }}</span>
+            <div>
+              <strong>{{ link.label }}</strong>
+              <p>{{ link.desc }}</p>
+            </div>
+            <span class="material-symbols-outlined arrow">chevron_right</span>
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <aside class="side-column">
+      <section class="card panel compact">
+        <span class="eyebrow">Mensajes</span>
+        <h2>Bandeja de chat</h2>
+
+        <div class="list-stack" *ngIf="recentChats().length > 0; else noChats">
+          <div class="list-item" *ngFor="let conv of recentChats()">
+            <img [src]="conv.vendedorLogo" [alt]="conv.vendedorNombreTienda" />
+            <div>
+              <strong>{{ conv.vendedorNombreTienda }}</strong>
+              <p>{{ conv.ultimoMensaje || 'Sin mensajes aún' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <ng-template #noChats>
+          <div class="empty-small">
+            <span class="material-symbols-outlined">forum</span>
+            <p>No tienes conversaciones todavía.</p>
+          </div>
+        </ng-template>
+
+        <a routerLink="/chat" class="action-pill full">
+          <span class="material-symbols-outlined">forum</span>
+          Abrir chat
+        </a>
+      </section>
+
+      <section class="card panel compact">
+        <span class="eyebrow">Estado</span>
+        <h2>Alertas y perfil</h2>
+
+        <div class="status-list">
+          <div>
+            <span>Chats sin leer</span>
+            <strong>{{ unreadChats() }}</strong>
+          </div>
+          <div>
+            <span>Notificaciones</span>
+            <strong>{{ unreadNotifications() }}</strong>
+          </div>
+          <div>
+            <span>Dirección principal</span>
+            <strong *ngIf="customerService.addresses()[0] as addr">{{ addr.distrito }}, {{ addr.departamento }}</strong>
+          </div>
+        </div>
+
+        <a routerLink="/profile" class="action-pill full">
+          <span class="material-symbols-outlined">manage_accounts</span>
+          Administrar cuenta
+        </a>
+      </section>
+    </aside>
+  </section>
+</div>

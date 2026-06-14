@@ -1,207 +1,261 @@
-<div class="home-wrapper">
-  
-  <!-- Loading skeleton loader -->
-  <div class="skeleton-home-loader" *ngIf="isLoading()">
-    <div class="sk-hero animate-pulse"></div>
-    <div class="sk-grid">
-      <div class="sk-card animate-pulse" *ngFor="let i of [1,2,3,4]"></div>
+<div class="home-shell">
+  <div class="home-loader" *ngIf="isLoading()">
+    <div class="loader-hero">
+      <div class="loader-copy animate-pulse"></div>
+      <div class="loader-visual animate-pulse"></div>
+    </div>
+    <div class="loader-strip animate-pulse"></div>
+    <div class="loader-grid">
+      <div class="loader-card animate-pulse" *ngFor="let i of [1,2,3,4,5,6]"></div>
     </div>
   </div>
 
-  <!-- Main Storefront Content -->
-  <div class="home-content animate-fade-in" *ngIf="!isLoading()">
-    
-    <!-- ================= HERO PROMOTION CAROUSEL ================= -->
-    <div class="hero-carousel-wrapper">
-      <div class="carousel-slide">
-        <img [src]="promos[promoIndex()].img" alt="Promoción" class="slide-bg-img" />
-        <div class="slide-overlay-content">
-          <span class="slide-tag">Tendencias Locales</span>
-          <h1 class="slide-title">{{ promos[promoIndex()].title }}</h1>
-          <p class="slide-desc">{{ promos[promoIndex()].subtitle }}</p>
-          <button class="btn-slide-action" (click)="selectPromoCat(promos[promoIndex()].cat)">
-            {{ promos[promoIndex()].buttonText }}
-            <span class="material-symbols-outlined font-sm">arrow_forward</span>
-          </button>
+  <div class="home-page animate-fade-in" *ngIf="!isLoading()">
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="hero-kicker">
+          <span class="hero-kicker-dot"></span>
+          Marketplace moderno y premium
+        </span>
+
+        <h1>Compra local con una experiencia clara, bonita y confiable.</h1>
+        <p class="hero-text">
+          Descubre categorías, compara productos, conversa con vendedores y sigue un proceso de compra simple hasta la entrega de tu pedido.
+        </p>
+
+        <div class="hero-actions">
+          <a routerLink="/products" class="button button-primary">
+            Explorar productos
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </a>
+          <a routerLink="/stores" class="button button-secondary">
+            Ver tiendas
+            <span class="material-symbols-outlined">storefront</span>
+          </a>
+        </div>
+
+        <div class="hero-metrics">
+          <article class="metric-card home-card home-card--metric" *ngFor="let stat of trustStats">
+            <strong>{{ stat.value }}</strong>
+            <span>{{ stat.label }}</span>
+          </article>
         </div>
       </div>
-      
-      <!-- Dots controls -->
-      <div class="carousel-dots-row">
-        <span 
-          *ngFor="let promo of promos; let idx = index" 
-          class="carousel-dot" 
-          [class.active]="promoIndex() === idx"
-          (click)="promoIndex.set(idx)"
-        ></span>
-      </div>
-    </div>
 
-    <!-- ================= CATEGORIES CIRCULAR BUBBLE BAR (MERCADOLIBRE STYLE) ================= -->
-    <section class="home-section categories-section">
-      <h3 class="section-title">Categorías Destacadas</h3>
-      <p class="section-subtitle">Busca entre las categorías más populares del marketplace</p>
-      
-      <div class="categories-bubbles-row">
-        <a [routerLink]="['/products']" [queryParams]="{ category: 'Café' }" class="cat-bubble-card">
-          <div class="cat-bubble-circle bg-coffee">
-            <span class="material-symbols-outlined">coffee</span>
-          </div>
-          <h4>Café Gourmet</h4>
-        </a>
-
-        <a [routerLink]="['/products']" [queryParams]="{ category: 'Chocolate' }" class="cat-bubble-card">
-          <div class="cat-bubble-circle bg-cacao">
-            <span class="material-symbols-outlined">bakery_dining</span>
-          </div>
-          <h4>Cacao</h4>
-        </a>
-
-        <a [routerLink]="['/products']" [queryParams]="{ category: 'Miel' }" class="cat-bubble-card">
-          <div class="cat-bubble-circle bg-miel">
-            <span class="material-symbols-outlined">hive</span>
-          </div>
-          <h4>Miel Pura</h4>
-        </a>
-
-        <a [routerLink]="['/products']" [queryParams]="{ category: 'Artesanías' }" class="cat-bubble-card">
-          <div class="cat-bubble-circle bg-art">
-            <span class="material-symbols-outlined">brush</span>
-          </div>
-          <h4>Artesanías</h4>
-        </a>
-
-        <a [routerLink]="['/products']" [queryParams]="{ category: 'Textiles' }" class="cat-bubble-card">
-          <div class="cat-bubble-circle bg-apparel">
-            <span class="material-symbols-outlined">apparel</span>
-          </div>
-          <h4>Textiles</h4>
-        </a>
-
-        <a [routerLink]="['/products']" [queryParams]="{ category: 'Ferretería' }" class="cat-bubble-card">
-          <div class="cat-bubble-circle bg-iron">
-            <span class="material-symbols-outlined">build</span>
-          </div>
-          <h4>Ferretería</h4>
-        </a>
-      </div>
-    </section>
-
-    <!-- ================= OFFICIAL STORES SHOWCASE (TIENDAS OFICIALES) ================= -->
-    <section class="home-section vendors-section">
-      <div class="section-header-row">
-        <div>
-          <h3 class="section-title">Tiendas Oficiales</h3>
-          <p class="section-subtitle">Compra directamente a las mejores marcas y productores del país</p>
-        </div>
-        <a routerLink="/stores" class="btn-view-all-prod">Ver todas las tiendas</a>
-      </div>
-
-      <div class="home-stores-grid">
-        <div class="home-store-card card" *ngFor="let vendor of featuredVendors()">
-          <!-- Banner bg -->
-          <div class="home-store-banner" [style.background-image]="'url(' + vendor.banner + ')'">
-            <span class="home-store-rating-badge">
-              <span class="material-symbols-outlined star-icon">star</span>
-              <span>{{ vendor.calificacionPromedio | number:'1.1-1' }}</span>
-            </span>
-          </div>
-          
-          <!-- Store logo overlap -->
-          <div class="home-store-logo-wrapper">
-            <img [src]="vendor.logo" alt="Logo" class="home-store-logo-img" />
+      <div class="hero-visual">
+        <div class="hero-stage">
+          <div class="hero-image-frame">
+            <img [src]="currentPromo().img" [alt]="currentPromo().title" class="hero-image" />
+            <div class="hero-overlay"></div>
+            <div class="hero-chip hero-chip--top">
+              <span class="material-symbols-outlined">verified</span>
+              Tiendas verificadas
+            </div>
           </div>
 
-          <div class="home-store-card-body">
-            <h4>{{ vendor.nombreTienda }}</h4>
-            <span class="home-store-region">
-              <span class="material-symbols-outlined geo-pin">location_on</span>
-              {{ vendor.region }}
-            </span>
-            <p class="home-store-desc">{{ vendor.descripcion }}</p>
-            <button type="button" (click)="browseVendor(vendor.id, vendor.nombreTienda)" class="btn-home-store-visit highlight-btn">
-              Visitar Tienda
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ================= RECOMMENDED PRODUCTS GRID (MERCADOLIBRE STYLE) ================= -->
-    <section class="home-section products-showcase-section">
-      <div class="section-header-row">
-        <div>
-          <h3 class="section-title">Recomendados para ti</h3>
-          <p class="section-subtitle">Las mejores ofertas y productos de alta calidad del catálogo</p>
-        </div>
-        <a routerLink="/products" class="btn-view-all-prod">Ver catálogo completo</a>
-      </div>
-
-      <div class="products-showcase-grid">
-        
-        <div 
-          *ngFor="let prod of recommendedProducts()" 
-          class="product-item-card card animate-fade-in"
-          [routerLink]="['/products', prod.id]"
-        >
-          <!-- Thumb container -->
-          <div class="item-thumb-wrapper">
-            <img [src]="prod.imagenes[0]" alt="Producto" class="item-img" />
-            <button 
-              class="btn-fav-card-overlap" 
-              [class.favorited]="customerService.isFavorite(prod.id)"
-              (click)="toggleFavorite(prod.id, $event)"
-              title="Añadir a favoritos"
-            >
-              <span class="material-symbols-outlined">favorite</span>
-            </button>
-            <span class="out-stock-label" *ngIf="prod.stock === 0">Agotado</span>
-          </div>
-
-          <!-- Product Details -->
-          <div class="item-details">
-            <span class="item-cat">{{ prod.categoriaNombre || 'Gourmet' }}</span>
-            <h4 class="item-title">{{ prod.nombre }}</h4>
-            
-            <div class="item-footer-rating">
-              <span class="material-symbols-outlined star">star</span>
-              <strong>{{ 4.5 + (prod.id % 6) / 10 | number:'1.1-1' }}</strong>
-              <span class="rating-vts"> • Tienda Oficial</span>
+          <div class="hero-stage__content">
+            <div class="hero-card home-card hero-card--main">
+              <span class="hero-card-label">Destacado ahora</span>
+              <strong>{{ currentPromo().title }}</strong>
+              <p>{{ currentPromo().subtitle }}</p>
             </div>
 
-            <!-- Installment simulated pricing (MercadoLibre style!) -->
-            <div class="price-action-row">
-              <div class="price-block">
-                <div class="actual-price">
-                  <span class="currency">S/</span>
-                  <span class="val">{{ prod.precio | number:'1.2-2' }}</span>
-                </div>
-                <div class="installment-text">
-                  en 12x <span class="text-emerald">S/ {{ prod.precio / 12 | number:'1.2-2' }} sin interés</span>
-                </div>
-                <div class="free-shipping-text text-emerald" *ngIf="prod.precio >= 150">
-                  Envío gratis
-                </div>
+            <div class="hero-card home-card hero-card--side">
+              <span class="material-symbols-outlined">chat_bubble</span>
+              <div>
+                <strong>Chat comprador-vendedor</strong>
+                <p>Resuelve stock, envíos y detalles antes de pagar.</p>
               </div>
-              
-              <button 
-                class="btn-card-buy" 
-                [disabled]="prod.stock === 0" 
-                (click)="addToCart(prod, $event)"
-                title="Añadir al Carrito"
-              >
-                <span class="material-symbols-outlined">shopping_cart</span>
-              </button>
             </div>
-
-            <!-- Brand indicator -->
-            <span class="item-brand-seller">Por {{ getVendorName(prod.vendedorId) }}</span>
           </div>
         </div>
 
+        <div class="promo-dots">
+          <button
+            *ngFor="let promo of promos; let idx = index"
+            type="button"
+            class="promo-dot"
+            [class.active]="promoIndex() === idx"
+            (click)="promoIndex.set(idx)"
+            [attr.aria-label]="'Ver promoción ' + (idx + 1)"
+          ></button>
+        </div>
       </div>
     </section>
 
-  </div>
+    <section class="highlights">
+      <article class="highlight-card home-card" *ngFor="let item of marketplaceHighlights">
+        <span class="material-symbols-outlined">{{ item.icon }}</span>
+        <h3>{{ item.title }}</h3>
+        <p>{{ item.desc }}</p>
+      </article>
+    </section>
 
+    <section class="section-block">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Categorías</span>
+          <h2 class="section-title">Explora las categorías más importantes</h2>
+          <p class="section-subtitle">Organizamos el catálogo para que encuentres rápido lo que buscas.</p>
+        </div>
+        <a routerLink="/products" class="section-link">Ir al catálogo</a>
+      </div>
+
+      <div class="category-grid">
+        <a
+          *ngFor="let category of catalogCategories()"
+          [routerLink]="['/products']"
+          [queryParams]="{ category: category.cat }"
+          class="category-card home-card"
+          [attr.data-tone]="category.tone"
+        >
+          <span class="material-symbols-outlined category-icon">{{ category.icon }}</span>
+          <div class="category-copy">
+            <strong>{{ category.name }}</strong>
+            <span>{{ category.count || 'Varios' }} productos</span>
+            <p>{{ category.description }}</p>
+          </div>
+          <span class="material-symbols-outlined category-arrow">arrow_forward</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Productos</span>
+          <h2 class="section-title">Productos destacados en una Bento Grid comercial</h2>
+          <p class="section-subtitle">Una composición editorial para explorar productos con una jerarquía visual clara y enfocada solo en el catálogo.</p>
+        </div>
+        <a routerLink="/products" class="section-link">Ver catálogo</a>
+      </div>
+
+      <div class="marketplace-bento-grid">
+        <article
+          *ngFor="let card of productBentoCards()"
+          class="marketplace-bento-card home-card"
+          [ngClass]="['marketplace-bento-card--' + card.kind, 'marketplace-bento-card--' + card.size, card.slotClass]"
+        >
+          <div class="marketplace-bento-card__media">
+            <img [src]="card.image" [alt]="card.title" class="marketplace-bento-card__image" />
+            <div class="marketplace-bento-card__overlay"></div>
+
+            <div class="marketplace-bento-card__topline">
+              <span class="marketplace-bento-rating" *ngIf="card.rating !== undefined && card.size !== 'small'">
+                <span class="material-symbols-outlined">star</span>
+                {{ card.rating | number:'1.1-1' }}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="marketplace-bento-card__cta"
+              (click)="openMarketplaceCard(card, $event)"
+              [attr.aria-label]="card.cta"
+              [attr.title]="card.cta"
+            >
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          </div>
+
+          <div class="marketplace-bento-card__body">
+            <h3>{{ card.title }}</h3>
+            <div class="marketplace-bento-price">{{ card.footerPrimary }}</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Tiendas</span>
+          <h2 class="section-title">Tiendas destacadas para explorar solo vendedores</h2>
+          <p class="section-subtitle">El mismo lenguaje visual, pero enfocado únicamente en tiendas para comparar, abrir catálogos y contactar rápido.</p>
+        </div>
+        <a routerLink="/stores" class="section-link">Ver todas las tiendas</a>
+      </div>
+
+      <div class="marketplace-bento-grid marketplace-bento-grid--stores">
+        <article
+          *ngFor="let card of storeBentoCards()"
+          class="marketplace-bento-card home-card"
+          [ngClass]="['marketplace-bento-card--' + card.kind, 'marketplace-bento-card--' + card.size, card.slotClass]"
+        >
+          <div class="marketplace-bento-card__media">
+            <img [src]="card.image" [alt]="card.title" class="marketplace-bento-card__image" />
+            <div class="marketplace-bento-card__overlay"></div>
+
+            <div class="marketplace-bento-card__topline">
+              <span class="marketplace-bento-badge">{{ card.badge }}</span>
+              <span class="marketplace-bento-rating" *ngIf="card.rating !== undefined">
+                <span class="material-symbols-outlined">star</span>
+                {{ card.rating | number:'1.1-1' }}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="marketplace-bento-card__cta"
+              (click)="openMarketplaceCard(card, $event)"
+              [attr.aria-label]="card.cta"
+              [attr.title]="card.cta"
+            >
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          </div>
+
+          <div class="marketplace-bento-card__body">
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.subtitle }}</p>
+
+            <div class="marketplace-bento-card__footer">
+              <strong>{{ card.footerPrimary }}</strong>
+              <span>{{ card.footerSecondary }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-block process-block">
+      <div class="section-head">
+        <div>
+          <span class="section-kicker">Proceso</span>
+          <h2 class="section-title">Nuestro proceso hasta entregarte el producto</h2>
+          <p class="section-subtitle">Una ruta simple para que la compra se entienda desde el inicio hasta la entrega.</p>
+        </div>
+      </div>
+
+      <div class="process-grid">
+        <article class="process-card home-card" *ngFor="let step of howItWorks">
+          <span class="process-step">{{ step.step }}</span>
+          <span class="material-symbols-outlined process-icon">{{ step.icon }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.desc }}</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="cta-block">
+      <div>
+        <span class="section-kicker">Siguiente paso</span>
+        <h2>Haz tu primera compra con una experiencia más clara y ordenada.</h2>
+        <p>
+          Si ya viste una tienda o un producto, el siguiente paso es conversar, confirmar detalles y avanzar al pedido.
+        </p>
+      </div>
+
+      <div class="cta-actions">
+        <a routerLink="/chat" class="button button-primary">
+          Abrir chat
+          <span class="material-symbols-outlined">chat</span>
+        </a>
+        <a routerLink="/checkout" class="button button-secondary">
+          Ir al checkout
+          <span class="material-symbols-outlined">shopping_bag</span>
+        </a>
+      </div>
+    </section>
+  </div>
 </div>

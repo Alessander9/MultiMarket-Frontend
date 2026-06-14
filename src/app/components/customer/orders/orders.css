@@ -281,7 +281,7 @@
 
 .bullet-icon {
   font-size: 12px;
-  color: #121214;
+  color: var(--on-surface);
   font-weight: 700;
 }
 
@@ -537,7 +537,7 @@
 
 .btn-primary-action {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: #121214;
+  color: var(--on-primary-container);
   border: none;
   border-radius: var(--radius-md);
   padding: 12px 24px;

@@ -80,10 +80,10 @@
             <span class="material-symbols-outlined">inventory</span>
             <span>Ver Productos</span>
           </button>
-          <a [routerLink]="['/chat']" [queryParams]="{ vendorId: vendor.id }" class="btn-chat-store">
+          <button type="button" (click)="openChat(vendor.id)" class="btn-chat-store">
             <span class="material-symbols-outlined">chat</span>
             <span>Preguntar</span>
-          </a>
+          </button>
         </div>
       </div>
 

@@ -188,7 +188,10 @@ export class CustomerCheckout {
                 this.stripeSuccessState.set(false);
               },
               error: (err) => {
-                alert('Ocurrió un error al procesar el pago en base de datos. Por favor intente nuevamente.');
+                alert(this.getBackendErrorMessage(
+                  err,
+                  'Ocurrió un error al procesar el pago en base de datos. Por favor intente nuevamente.'
+                ));
                 this.isSubmitting.set(false);
                 this.stripeSuccessState.set(false);
               }
@@ -209,10 +212,27 @@ export class CustomerCheckout {
           this.isSubmitting.set(false);
         },
         error: (err) => {
-          alert('Ocurrió un error al procesar el pago. Por favor intente nuevamente.');
+          alert(this.getBackendErrorMessage(
+            err,
+            'Ocurrió un error al procesar el pago. Por favor intente nuevamente.'
+          ));
           this.isSubmitting.set(false);
         }
       });
     }
+  }
+
+  private getBackendErrorMessage(err: any, fallback: string): string {
+    const backendMessage =
+      err?.error?.message ||
+      err?.error?.errors?.message ||
+      err?.error?.detail ||
+      err?.message;
+
+    if (typeof backendMessage === 'string' && backendMessage.trim().length > 0) {
+      return backendMessage;
+    }
+
+    return fallback;
   }
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminPortalService } from '../../../services/admin-portal.service';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-customer-stores',
@@ -21,9 +22,16 @@ export class CustomerStores implements OnInit {
 
   ngOnInit(): void {
     this.isLoading.set(true);
-    setTimeout(() => {
-      this.isLoading.set(false);
-    }, 400);
+
+    this.portalService.loadVendors().pipe(
+      finalize(() => {
+        this.isLoading.set(false);
+      })
+    ).subscribe({
+      error: (err) => {
+        console.error('No se pudieron cargar las tiendas:', err);
+      }
+    });
   }
 
   readonly filteredStores = computed(() => {
@@ -54,5 +62,9 @@ export class CustomerStores implements OnInit {
 
   visitStore(vendorId: number, vendorName: string): void {
     this.router.navigate(['/products'], { queryParams: { vendorId, vendorName } });
+  }
+
+  openChat(vendorId: number): void {
+    this.router.navigate(['/stores'], { queryParams: { chatVendorId: vendorId } });
   }
 }

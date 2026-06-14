@@ -4,6 +4,13 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
+interface QuickAccessAccount {
+  label: string;
+  correo: string;
+  password: string;
+  description: string;
+}
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -15,6 +22,27 @@ export class Login {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+
+  readonly quickAccessAccounts: QuickAccessAccount[] = [
+    {
+      label: 'Admin',
+      correo: 'admin@multimarket.com',
+      password: 'admin123',
+      description: 'Acceso total al panel'
+    },
+    {
+      label: 'Vendedor',
+      correo: 'vendedor@multimarket.com',
+      password: 'vendedor123',
+      description: 'Portal de tienda y ventas'
+    },
+    {
+      label: 'Comprador',
+      correo: 'comprador@multimarket.com',
+      password: 'comprador123',
+      description: 'Experiencia de compra'
+    }
+  ] as const;
 
   // Form definition
   readonly loginForm: FormGroup = this.fb.group({
@@ -47,15 +75,8 @@ export class Login {
     this.authService.login(loginRequest).subscribe({
       next: (response) => {
         this.isLoading.set(false);
-        // Successful login: route user based on their roles
-        const roles = response.roles || [];
-        if (roles.includes('ADMIN')) {
-          this.router.navigate(['/admin/dashboard']);
-        } else if (roles.includes('VENDEDOR')) {
-          this.router.navigate(['/seller/dashboard']); // Vendedores manage their shop portal
-        } else {
-          this.router.navigate(['/productos']); // Buyers browse products
-        }
+        const roles = Array.isArray(response.roles) ? response.roles : [];
+        this.redirectAfterLogin(roles);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -70,9 +91,33 @@ export class Login {
     });
   }
 
+  private redirectAfterLogin(roles: string[]): void {
+    if (roles.includes('ADMIN')) {
+      this.router.navigate(['/admin/dashboard']);
+      return;
+    }
+
+    if (roles.includes('VENDEDOR')) {
+      this.router.navigate(['/seller/dashboard']);
+      return;
+    }
+
+    this.router.navigate(['/dashboard']);
+  }
+
   // Toggles password input type between 'password' and 'text'
   togglePasswordVisibility(): void {
     this.showPassword.update(show => !show);
+  }
+
+  // Fills the form with seeded test credentials and logs in immediately
+  useQuickLogin(account: QuickAccessAccount): void {
+    this.loginForm.patchValue({
+      correo: account.correo,
+      password: account.password,
+      rememberMe: true
+    });
+    this.onSubmit();
   }
 
   // Checks validation errors for rendering CSS classes

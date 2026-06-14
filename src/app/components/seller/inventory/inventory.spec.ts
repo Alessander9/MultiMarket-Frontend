@@ -21,7 +21,7 @@ describe('SellerInventory', () => {
     stock: 12,
     peso: 1.5,
     estado: 'ACTIVO',
-    imagenes: ['https://example.com/prod.png']
+    imagenes: ['/img/aceite-coco.jpeg']
   };
 
   const sellerServiceMock = {

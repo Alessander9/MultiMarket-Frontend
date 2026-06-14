@@ -124,11 +124,14 @@ export class CustomerProductDetail implements OnInit {
   chatWithVendor(): void {
     const prod = this.product();
     if (!prod) return;
+    const vendorId = prod.vendorId;
+    if (!vendorId) return;
 
-    // Trigger chat thread creation with mock vendedorId
-    this.customerService.sendChatMessage(1, `Hola, estoy interesado en el producto "${prod.nombre}" (SKU: ${prod.sku}). ¿Tienen envío inmediato?`).subscribe({
+    this.customerService.openConversation(vendorId).subscribe({
       next: () => {
-        this.router.navigate(['/chat']);
+        this.router.navigate(['/products', prod.id], {
+          queryParams: { chatVendorId: vendorId }
+        });
       }
     });
   }

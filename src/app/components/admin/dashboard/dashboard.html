@@ -28,6 +28,16 @@
           {{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
         </span>
       </button>
+
+      <button
+        type="button"
+        class="theme-nav-toggle"
+        (click)="themeService.toggleTheme()"
+        [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+      >
+        <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
+        <span class="theme-nav-toggle__text">{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+      </button>
     </div>
 
     <!-- Navigation Menu Sections -->
@@ -315,7 +325,7 @@
 
         <!-- KPI Grid -->
         <section class="kpi-grid">
-          <div *ngFor="let kpi of dashboardService.kpis()" class="kpi-card">
+          <div *ngFor="let kpi of summaryKpis()" class="kpi-card">
             <div class="kpi-card-header">
               <span class="kpi-title">{{ kpi.titulo }}</span>
               <div class="kpi-icon-container">
@@ -331,8 +341,33 @@
           </div>
         </section>
 
+        <section class="dashboard-block-card">
+          <h4 class="block-title">Alertas clave</h4>
+          <p class="block-subtitle">Solo lo que necesita revisión inmediata</p>
+          <div class="alerts-list">
+            <div *ngFor="let alert of summaryAlerts()" class="alert-item"
+                 [class.warning]="alert.tone === 'gold'"
+                 [class.success]="alert.tone === 'emerald'"
+                 [class.danger]="alert.tone === 'rose'">
+              <span class="material-symbols-outlined alert-item-icon">
+                {{ alert.tone === 'gold' ? 'shopping_cart_checkout' : alert.tone === 'emerald' ? 'inventory_2' : 'sms_failed' }}
+              </span>
+              <div class="alert-meta">
+                <span class="alert-item-title">{{ alert.label }}</span>
+                <span>{{ alert.hint }}</span>
+              </div>
+              <span class="alert-count"
+                    [class.warning-tag]="alert.tone === 'gold'"
+                    [class.success-tag]="alert.tone === 'emerald'"
+                    [class.danger-tag]="alert.tone === 'rose'">
+                {{ alert.value }}
+              </span>
+            </div>
+          </div>
+        </section>
+
         <!-- Charts Grid -->
-        <section class="charts-section-grid">
+        <section class="charts-section-grid" *ngIf="false">
           <div class="dashboard-block-card chart-card">
             <div class="block-header">
               <div>
@@ -391,7 +426,7 @@
         </section>
 
         <!-- Sub Grid: Categories & Vendors -->
-        <section class="multi-column-grid-2">
+        <section class="multi-column-grid-2" *ngIf="false">
           <div class="dashboard-block-card">
             <h4 class="block-title">Top Categorías por Ingreso</h4>
             <p class="block-subtitle">Distribución y cuota de participación en ventas</p>
@@ -441,7 +476,7 @@
         </section>
 
         <!-- System Alerts & Activities -->
-        <section class="multi-column-grid-2-3">
+        <section class="multi-column-grid-2-3" *ngIf="false">
           <div class="dashboard-block-card table-card">
             <h4 class="block-title">Actividad Reciente del Sistema</h4>
             <p class="block-subtitle">Logs de auditoría del backend y eventos del broker</p>
@@ -508,7 +543,7 @@
         </section>
 
         <!-- Quick actions buttons row -->
-        <section class="quick-actions-section">
+        <section class="quick-actions-section" *ngIf="false">
           <div class="dashboard-block-card">
             <h4 class="block-title">Acciones Rápidas del Administrador</h4>
             <p class="block-subtitle">Acceso directo a formularios operacionales</p>

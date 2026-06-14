@@ -261,7 +261,7 @@
 
 .btn-checkout-proceed {
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
-  color: #121214;
+  color: var(--on-primary-container);
   border: none;
   border-radius: var(--radius-lg);
   padding: 14px 20px;

@@ -4,6 +4,7 @@ import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/ro
 import { AuthService } from '../../../services/auth.service';
 import { SellerService } from '../../../services/seller.service';
 import { ChatService } from '../../../services/chat.service';
+import { ThemeService } from '../../../services/theme.service';
 import { filter, Subscription } from 'rxjs';
 
 interface SidebarMenuItem {
@@ -29,6 +30,7 @@ export class SellerLayout implements OnInit, OnDestroy {
   protected readonly authService = inject(AuthService);
   protected readonly sellerService = inject(SellerService);
   protected readonly chatService = inject(ChatService);
+  protected readonly themeService = inject(ThemeService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -183,6 +185,10 @@ export class SellerLayout implements OnInit, OnDestroy {
   toggleProfile(): void {
     this.closeAllDropdowns('profile');
     this.showProfileDropdown.update(val => !val);
+  }
+
+  getDashboardRoute(): string {
+    return '/seller/dashboard';
   }
 
   closeAllDropdowns(except?: 'notifications' | 'messages' | 'profile'): void {

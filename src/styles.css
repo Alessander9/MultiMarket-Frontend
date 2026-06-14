@@ -1,5 +1,6 @@
 /* Global design system for MultiMarket */
 :root {
+  color-scheme: dark;
   --background: #07080b;
   --background-elevated: #0b0d12;
   --surface: #0f1116;
@@ -49,6 +50,48 @@
   --font-mono: 'Geist Mono', SFMono-Regular, Consolas, monospace;
 }
 
+:root[data-theme='light'] {
+  color-scheme: light;
+  --background: #f5f7fb;
+  --background-elevated: #eef2f8;
+  --surface: #ffffff;
+  --surface-container: #ffffff;
+  --surface-container-low: #f3f5fa;
+  --surface-container-high: #e9eef7;
+  --surface-container-highest: #dde5f1;
+  --surface-dim: #edf1f8;
+  --surface-bright: #ffffff;
+
+  --primary: #5a3fd7;
+  --primary-container: #7c5cff;
+  --primary-fixed: #ede9fe;
+  --primary-fixed-dim: #6b5bd3;
+  --on-primary: #ffffff;
+  --on-primary-container: #180f46;
+
+  --secondary: #556074;
+  --secondary-container: #dde3ee;
+  --on-secondary: #1e2430;
+
+  --tertiary: #0f9f6e;
+  --tertiary-container: #dff7ee;
+  --on-tertiary: #ffffff;
+
+  --on-background: #111827;
+  --on-surface: #111827;
+  --on-surface-variant: #4b5563;
+
+  --outline: #96a1b5;
+  --outline-variant: #d6deeb;
+
+  --error: #dc2626;
+  --error-container: #fee2e2;
+  --on-error: #ffffff;
+
+  --shadow-soft: 0 12px 28px rgba(17, 24, 39, 0.08);
+  --shadow-strong: 0 20px 42px rgba(17, 24, 39, 0.12);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -61,9 +104,14 @@ html, body {
   background-color: var(--background);
   color: var(--on-background);
   overflow-x: hidden;
+  overflow-y: auto;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-top: 88px;
 }
 
 body {
@@ -71,6 +119,14 @@ body {
     radial-gradient(circle at top left, rgba(109, 74, 255, 0.18), transparent 30%),
     radial-gradient(circle at top right, rgba(68, 215, 168, 0.11), transparent 26%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 18%),
+    var(--background);
+}
+
+:root[data-theme='light'] body {
+  background:
+    radial-gradient(circle at top left, rgba(124, 92, 255, 0.12), transparent 30%),
+    radial-gradient(circle at top right, rgba(15, 159, 110, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.65), transparent 18%),
     var(--background);
 }
 
@@ -185,6 +241,36 @@ img {
   height: 1px;
   width: 100%;
   background: linear-gradient(90deg, transparent, var(--outline-variant), transparent);
+}
+
+.theme-nav-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--outline-variant);
+  background: color-mix(in srgb, var(--surface-container) 92%, transparent);
+  color: var(--on-surface);
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  font-weight: 800;
+}
+
+.theme-nav-toggle:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+}
+
+.theme-nav-toggle .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.theme-nav-toggle__text {
+  font-size: 12px;
+  letter-spacing: 0.02em;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -392,6 +478,198 @@ img {
 .delete-confirm-modal .btn-cancel-modal:active,
 .delete-confirm-modal .btn-confirm-modal:active {
   transform: translateY(0);
+}
+
+/* =================================================== */
+/* LIGHT THEME OVERRIDES FOR LEGACY COMPONENT COLORS   */
+/* =================================================== */
+:root[data-theme='light'] .login-card,
+:root[data-theme='light'] .customer-layout,
+:root[data-theme='light'] .app-layout,
+:root[data-theme='light'] .dashboard-layout {
+  background:
+    radial-gradient(circle at top left, rgba(124, 92, 255, 0.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(15, 159, 110, 0.06), transparent 26%),
+    var(--background) !important;
+}
+
+:root[data-theme='light'] .login-card,
+:root[data-theme='light'] .navbar-header,
+:root[data-theme='light'] .nav-dropdown,
+:root[data-theme='light'] .profile-menu-panel,
+:root[data-theme='light'] .header-dropdown,
+:root[data-theme='light'] .app-sidebar,
+:root[data-theme='light'] .app-header,
+:root[data-theme='light'] .dashboard-block-card,
+:root[data-theme='light'] .kpi-card,
+:root[data-theme='light'] .surface-card,
+:root[data-theme='light'] .customer-chat-dock,
+:root[data-theme='light'] .customer-chat-fab,
+:root[data-theme='light'] .customer-chat-thread.active,
+:root[data-theme='light'] .customer-chat-message__bubble,
+:root[data-theme='light'] .quick-access-panel,
+:root[data-theme='light'] .social-btn,
+:root[data-theme='light'] .form-input,
+:root[data-theme='light'] .header-search-bar,
+:root[data-theme='light'] .nav-search-bar,
+:root[data-theme='light'] .nav-btn-categories,
+:root[data-theme='light'] .icon-action-btn,
+:root[data-theme='light'] .profile-trigger-btn,
+:root[data-theme='light'] .toggle-sidebar-btn,
+:root[data-theme='light'] .page-body,
+:root[data-theme='light'] .main-viewport-content,
+:root[data-theme='light'] .storefront-footer,
+:root[data-theme='light'] .store-catalog-hero,
+:root[data-theme='light'] .dashboard-hero,
+:root[data-theme='light'] .search-filter-bar,
+:root[data-theme='light'] .flex-row-filter,
+:root[data-theme='light'] .delete-confirm-modal,
+:root[data-theme='light'] .form-panel,
+:root[data-theme='light'] .detail-drawer,
+:root[data-theme='light'] .new-address-form-box,
+:root[data-theme='light'] .address-form-box,
+:root[data-theme='light'] .adjustment-form {
+  background-color: var(--surface-container) !important;
+  background-image: none !important;
+  border-color: var(--outline-variant) !important;
+}
+
+:root[data-theme='light'] .login-card::before,
+:root[data-theme='light'] .dropdown-header,
+:root[data-theme='light'] .profile-dropdown-header,
+:root[data-theme='light'] .sidebar-brand-wrapper,
+:root[data-theme='light'] .store-mini-profile,
+:root[data-theme='light'] .top-header,
+:root[data-theme='light'] .app-footer,
+:root[data-theme='light'] .promo-top-bar,
+:root[data-theme='light'] .navbar-container,
+:root[data-theme='light'] .footer-grid,
+:root[data-theme='light'] .footer-bottom-bar {
+  background: transparent !important;
+}
+
+:root[data-theme='light'] .navbar-header,
+:root[data-theme='light'] .app-header,
+:root[data-theme='light'] .top-header,
+:root[data-theme='light'] .sidebar,
+:root[data-theme='light'] .app-sidebar,
+:root[data-theme='light'] .profile-menu-panel,
+:root[data-theme='light'] .nav-dropdown,
+:root[data-theme='light'] .header-dropdown,
+:root[data-theme='light'] .storefront-footer,
+:root[data-theme='light'] .customer-chat-dock,
+:root[data-theme='light'] .delete-confirm-modal,
+:root[data-theme='light'] .dashboard-block-card,
+:root[data-theme='light'] .kpi-card,
+:root[data-theme='light'] .customer-chat-fab,
+:root[data-theme='light'] .login-card {
+  box-shadow: var(--shadow-soft) !important;
+}
+
+:root[data-theme='light'] .customer-chat-fab,
+:root[data-theme='light'] .customer-chat-dock,
+:root[data-theme='light'] .nav-dropdown,
+:root[data-theme='light'] .profile-menu-panel,
+:root[data-theme='light'] .header-dropdown,
+:root[data-theme='light'] .login-card,
+:root[data-theme='light'] .app-sidebar,
+:root[data-theme='light'] .app-header,
+:root[data-theme='light'] .top-header,
+:root[data-theme='light'] .dashboard-block-card,
+:root[data-theme='light'] .kpi-card {
+  background-color: #ffffff !important;
+  color: var(--on-surface) !important;
+}
+
+:root[data-theme='light'] .navbar-header,
+:root[data-theme='light'] .app-header,
+:root[data-theme='light'] .top-header,
+:root[data-theme='light'] .sidebar-brand-wrapper,
+:root[data-theme='light'] .store-mini-profile,
+:root[data-theme='light'] .sidebar-collapser-area,
+:root[data-theme='light'] .page-body,
+:root[data-theme='light'] .main-viewport-content,
+:root[data-theme='light'] .customer-chat-dock__header,
+:root[data-theme='light'] .customer-chat-dock__conversation-header,
+:root[data-theme='light'] .customer-chat-dock__composer,
+:root[data-theme='light'] .dropdown-header,
+:root[data-theme='light'] .profile-dropdown-header,
+:root[data-theme='light'] .storefront-footer {
+  border-color: var(--outline-variant) !important;
+}
+
+:root[data-theme='light'] .nav-btn-categories,
+:root[data-theme='light'] .nav-search-bar,
+:root[data-theme='light'] .icon-action-btn,
+:root[data-theme='light'] .header-action-btn,
+:root[data-theme='light'] .header-search-bar,
+:root[data-theme='light'] .profile-trigger-btn,
+:root[data-theme='light'] .menu-link-btn,
+:root[data-theme='light'] .toggle-sidebar-btn,
+:root[data-theme='light'] .drop-link-item,
+:root[data-theme='light'] .profile-drop-link,
+:root[data-theme='light'] .social-btn,
+:root[data-theme='light'] .quick-access-btn,
+:root[data-theme='light'] .form-input,
+:root[data-theme='light'] .customer-chat-thread,
+:root[data-theme='light'] .customer-chat-start-card,
+:root[data-theme='light'] .customer-chat-dock__icon-btn,
+:root[data-theme='light'] .customer-chat-dock__threads-action,
+:root[data-theme='light'] .customer-chat-dock__input {
+  background-color: var(--surface-container-low) !important;
+  border-color: var(--outline-variant) !important;
+}
+
+:root[data-theme='light'] .nav-btn-categories:hover,
+:root[data-theme='light'] .nav-btn-categories.active,
+:root[data-theme='light'] .nav-search-bar:focus-within,
+:root[data-theme='light'] .header-search-bar:focus-within,
+:root[data-theme='light'] .icon-action-btn:hover,
+:root[data-theme='light'] .header-action-btn:hover,
+:root[data-theme='light'] .profile-trigger-btn:hover,
+:root[data-theme='light'] .menu-link-btn:hover,
+:root[data-theme='light'] .toggle-sidebar-btn:hover,
+:root[data-theme='light'] .drop-link-item:hover,
+:root[data-theme='light'] .profile-drop-link:hover,
+:root[data-theme='light'] .social-btn:hover:not(:disabled),
+:root[data-theme='light'] .quick-access-btn:hover:not(:disabled),
+:root[data-theme='light'] .customer-chat-thread:hover,
+:root[data-theme='light'] .customer-chat-start-card:hover,
+:root[data-theme='light'] .customer-chat-dock__icon-btn:hover,
+:root[data-theme='light'] .customer-chat-dock__threads-action:hover {
+  background-color: var(--surface-container-high) !important;
+}
+
+:root[data-theme='light'] .navbar-header,
+:root[data-theme='light'] .app-header,
+:root[data-theme='light'] .top-header,
+:root[data-theme='light'] .customer-chat-dock,
+:root[data-theme='light'] .nav-dropdown,
+:root[data-theme='light'] .profile-menu-panel,
+:root[data-theme='light'] .header-dropdown,
+:root[data-theme='light'] .storefront-footer {
+  backdrop-filter: blur(12px);
+}
+
+:root[data-theme='light'] .customer-chat-message.mine .customer-chat-message__bubble {
+  color: var(--on-primary);
+}
+
+:root[data-theme='light'] .customer-chat-message.mine .customer-chat-message__bubble p,
+:root[data-theme='light'] .customer-chat-message.mine .customer-chat-message__bubble span,
+:root[data-theme='light'] .customer-chat-message.mine .customer-chat-message__role,
+:root[data-theme='light'] .customer-chat-message.mine .customer-chat-message__direction {
+  color: var(--on-primary);
+}
+
+:root[data-theme='light'] .customer-chat-message.mine .customer-chat-message__role {
+  opacity: 0.9;
+}
+
+:root[data-theme='light'] .btn-login-header,
+:root[data-theme='light'] .customer-chat-dock__restore,
+:root[data-theme='light'] .theme-toggle-fab {
+  box-shadow: var(--shadow-soft);
 }
 
 /* =================================================== */

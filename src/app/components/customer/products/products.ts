@@ -33,6 +33,7 @@ export class CustomerProducts implements OnInit {
 
   // Sorting
   readonly sortBy = signal<string>('sales'); // sales, priceAsc, priceDesc, newest
+  readonly lastAddedProductId = signal<number | null>(null);
 
   ngOnInit(): void {
     // Bind query params
@@ -149,6 +150,12 @@ export class CustomerProducts implements OnInit {
     event.stopPropagation();
     this.customerService.addToCart(prod, 1);
     this.customerService.showToast(`¡"${prod.nombre}" añadido al carrito!`, 'success');
+    this.lastAddedProductId.set(prod.id);
+    window.setTimeout(() => {
+      if (this.lastAddedProductId() === prod.id) {
+        this.lastAddedProductId.set(null);
+      }
+    }, 850);
   }
 
   toggleFavorite(prodId: number, event: Event): void {
@@ -166,5 +173,9 @@ export class CustomerProducts implements OnInit {
     this.selectedRating.set('ALL');
     this.selectedAvailability.set('ALL');
     this.sortBy.set('sales');
+  }
+
+  cartQuantityForProduct(productId: number): number {
+    return this.customerService.cart().find(item => item.productoId === productId)?.cantidad ?? 0;
   }
 }
