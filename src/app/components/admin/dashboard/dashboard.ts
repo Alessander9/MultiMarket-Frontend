@@ -204,6 +204,11 @@ export class Dashboard implements OnInit, OnDestroy {
     this.portalService.loadExportHistory().subscribe();
   }
 
+  private reloadVendorData(): void {
+    this.portalService.loadVendors().subscribe();
+    this.portalService.loadProducts().subscribe();
+  }
+
   ngOnDestroy(): void {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
@@ -838,6 +843,7 @@ export class Dashboard implements OnInit, OnDestroy {
       this.portalService.addVendor(this.vendorForm.value).subscribe({
         next: () => {
           this.showToast('Vendedor regional registrado con éxito.', 'success');
+          this.reloadVendorData();
           this.resetAllFormToggles();
         },
         error: (err) => {
@@ -849,6 +855,7 @@ export class Dashboard implements OnInit, OnDestroy {
       this.portalService.updateVendor(this.selectedVendorId()!, this.vendorForm.value).subscribe({
         next: () => {
           this.showToast('Datos de la tienda del vendedor actualizados.', 'success');
+          this.reloadVendorData();
           this.resetAllFormToggles();
         },
         error: (err) => {
@@ -1041,6 +1048,7 @@ export class Dashboard implements OnInit, OnDestroy {
       this.portalService.deleteVendor(data.id).subscribe({
         next: () => {
           this.showToast('Vendedor desactivado con éxito.', 'success');
+          this.reloadVendorData();
         },
         error: (err) => {
           console.error(err);
