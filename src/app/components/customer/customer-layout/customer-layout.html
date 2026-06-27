@@ -153,11 +153,11 @@
         <button
           type="button"
           class="theme-nav-toggle"
-          (click)="themeService.toggleTheme()"
-          [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+          (click)="themeService.setTheme('dark')"
+          aria-label="Modo oscuro fijo"
         >
-          <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
-          <span class="theme-nav-toggle__text">{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+          <span class="material-symbols-outlined">dark_mode</span>
+          <span class="theme-nav-toggle__text">Dark</span>
         </button>
 
         <!-- Notifications Bell dropdown -->
@@ -185,6 +185,7 @@
                 *ngFor="let n of customerService.notifications()" 
                 class="dropdown-item notif-row"
                 [class.unread]="!n.leido"
+                (click)="openNotification(n, $event)"
               >
                 <div class="notif-icon-wrapper" [ngClass]="n.tipo.toLowerCase()">
                   <span class="material-symbols-outlined">
@@ -196,6 +197,9 @@
                   <p>{{ n.contenido }}</p>
                   <span class="notif-time-text">{{ n.fecha | date:'shortTime' }}</span>
                 </div>
+                <button type="button" class="notif-open-btn" *ngIf="n.tipo === 'CHAT'" (click)="openNotification(n, $event)" title="Abrir chat">
+                  <span class="material-symbols-outlined">chat</span>
+                </button>
               </div>
               <div *ngIf="customerService.notifications().length === 0" class="empty-dropdown-state">
                 <span class="material-symbols-outlined">notifications_off</span>
@@ -230,15 +234,15 @@
                 </a>
               </li>
               <li *ngIf="authService.currentUserRoles().includes('ADMIN')">
-                <a routerLink="/admin/dashboard" class="drop-link-item" style="border: 1px solid rgba(167, 139, 250, 0.25); background: rgba(167, 139, 250, 0.08); font-weight: 600; color: var(--primary);">
-                  <span class="material-symbols-outlined" style="color: var(--primary);">shield_person</span>
-                  Panel Administrador
+                <a routerLink="/admin/dashboard" class="drop-link-item drop-link-item--accent drop-link-item--admin">
+                  <span class="material-symbols-outlined">shield_person</span>
+                  <span class="drop-link-label">Panel Administrador</span>
                 </a>
               </li>
               <li *ngIf="authService.currentUserRoles().includes('VENDEDOR')">
-                <a routerLink="/seller/dashboard" class="drop-link-item" style="border: 1px solid rgba(52, 211, 153, 0.25); background: rgba(52, 211, 153, 0.08); font-weight: 600; color: var(--tertiary);">
-                  <span class="material-symbols-outlined" style="color: var(--tertiary);">storefront</span>
-                  Panel Vendedor
+                <a routerLink="/seller/dashboard" class="drop-link-item drop-link-item--accent drop-link-item--seller">
+                  <span class="material-symbols-outlined">storefront</span>
+                  <span class="drop-link-label">Panel Vendedor</span>
                 </a>
               </li>
 
@@ -426,7 +430,7 @@
             </div>
           </header>
 
-          <div class="customer-chat-dock__messages" #persistentChatScroll>
+          <div class="customer-chat-dock__messages" #persistentChatScroll (scroll)="onPersistentChatScroll()">
             <div
               *ngFor="let msg of conv.mensajes"
               class="customer-chat-message"
@@ -452,6 +456,17 @@
               <p>Inicia la conversación con esta tienda.</p>
             </div>
           </div>
+
+          <button
+            type="button"
+            class="customer-chat-dock__scroll-to-latest-btn"
+            *ngIf="showScrollToBottom()"
+            (click)="scrollToLatestMessage()"
+            aria-label="Ir al último mensaje"
+          >
+            <span class="material-symbols-outlined">south</span>
+            <span>Ir al último mensaje</span>
+          </button>
 
           <footer class="customer-chat-dock__composer">
             <input

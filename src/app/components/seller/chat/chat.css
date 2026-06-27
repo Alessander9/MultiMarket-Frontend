@@ -1,20 +1,29 @@
 /* --- CHAT WEB COMPONENT CSS --- */
 .chat-wrapper {
   display: flex;
-  height: calc(100vh - 180px);
+  height: min(720px, calc(100dvh - 156px));
+  min-height: min(680px, calc(100dvh - 156px));
   padding: 0 !important;
   overflow: hidden;
+  box-sizing: border-box;
   border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(circle at top right, rgba(167, 139, 250, 0.12), transparent 32%),
+    radial-gradient(circle at bottom left, rgba(52, 211, 153, 0.08), transparent 28%),
+    var(--surface-container);
+  box-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.55);
 }
 
 /* LEFT SIDEBAR */
 .chat-sidebar {
   width: 320px;
-  background-color: var(--surface);
+  background: linear-gradient(180deg, var(--surface), var(--surface-container-low));
   border-right: 1px solid var(--outline-variant);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
@@ -72,6 +81,9 @@
 .threads-list {
   flex: 1;
   overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: rgba(191, 168, 255, 0.95) rgba(20, 24, 34, 0.92);
 }
 
 .thread-row {
@@ -168,21 +180,27 @@
 /* RIGHT MAIN CHAT WINDOW */
 .chat-main {
   flex: 1;
-  background-color: var(--surface-container-low);
+  background:
+    radial-gradient(circle at top right, rgba(167, 139, 250, 0.05), transparent 30%),
+    linear-gradient(180deg, var(--surface-container-low), var(--surface));
   display: flex;
   flex-direction: column;
   position: relative;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .active-chat-content-wrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+  position: relative;
 }
 
 .chat-main-header {
   height: 64px;
-  background-color: var(--surface);
+  background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid var(--outline-variant);
   display: flex;
   align-items: center;
@@ -246,15 +264,56 @@
 /* MESSAGES CONSOLE */
 .chat-messages-container {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 24px;
-  background: radial-gradient(circle at top right, rgba(167, 139, 250, 0.02) 0%, transparent 80%);
+  background:
+    radial-gradient(circle at top right, rgba(167, 139, 250, 0.04) 0%, transparent 52%),
+    radial-gradient(circle at bottom left, rgba(52, 211, 153, 0.03) 0%, transparent 42%);
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  min-height: 0;
+  scrollbar-width: auto;
+  scrollbar-color: rgba(191, 168, 255, 0.95) rgba(20, 24, 34, 0.92);
 }
 
 .messages-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
+  padding-right: 2px;
+}
+
+.chat-empty-thread {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  border: 1px dashed var(--outline-variant);
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+  color: var(--on-surface-variant);
+}
+
+.chat-empty-thread .material-symbols-outlined {
+  font-size: 34px;
+  color: var(--primary);
+}
+
+.chat-empty-thread h4 {
+  font-size: 15px;
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.chat-empty-thread p {
+  max-width: 340px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .message-bubble-wrapper {
@@ -271,23 +330,23 @@
 }
 
 .message-bubble {
-  max-width: 60%;
-  padding: 10px 14px 8px;
-  border-radius: var(--radius-xl);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  max-width: 68%;
+  padding: 12px 16px 10px;
+  border-radius: 18px;
+  box-shadow: 0 12px 26px -18px rgba(0,0,0,0.55);
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .mine .message-bubble {
-  background-color: var(--primary-container);
+  background: linear-gradient(135deg, var(--primary-container), rgba(167, 139, 250, 0.78));
   color: var(--on-primary-container);
   border-bottom-right-radius: 2px;
 }
 
 .theirs .message-bubble {
-  background-color: var(--surface-container-high);
+  background: linear-gradient(180deg, var(--surface-container-high), var(--surface-container));
   color: var(--on-surface);
   border-bottom-left-radius: 2px;
   border: 1px solid var(--outline-variant);
@@ -304,6 +363,59 @@
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
+}
+
+.chat-messages-container::-webkit-scrollbar,
+.threads-list::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+.chat-messages-container::-webkit-scrollbar-track,
+.threads-list::-webkit-scrollbar-track {
+  background: rgba(20, 24, 34, 0.92);
+  border-radius: 999px;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb,
+.threads-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(191, 168, 255, 0.98), rgba(122, 255, 205, 0.82));
+  border-radius: 999px;
+  border: 3px solid rgba(20, 24, 34, 0.96);
+  min-height: 56px;
+  background-clip: padding-box;
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb:hover,
+.threads-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(214, 197, 255, 1), rgba(150, 255, 223, 0.92));
+}
+
+.scroll-to-latest-btn {
+  position: absolute;
+  right: 22px;
+  bottom: 92px;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(191, 168, 255, 0.32);
+  background: linear-gradient(135deg, rgba(119, 86, 255, 0.92), rgba(52, 211, 153, 0.82));
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.scroll-to-latest-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.scroll-to-latest-btn .material-symbols-outlined {
+  font-size: 22px;
 }
 
 .msg-time {
@@ -344,7 +456,7 @@
 /* FOOTER INPUT CONTROLS */
 .chat-main-footer {
   padding: 16px 24px;
-  background-color: var(--surface);
+  background: rgba(255, 255, 255, 0.02);
   border-top: 1px solid var(--outline-variant);
   flex-shrink: 0;
 }
@@ -359,8 +471,8 @@
   flex: 1;
   background-color: var(--surface-container-low);
   border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-xl);
-  padding: 12px 16px;
+  border-radius: 999px;
+  padding: 13px 18px;
   color: var(--on-surface);
   font-family: inherit;
   font-size: 13.5px;
@@ -377,7 +489,7 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background-color: var(--primary);
+  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 72%, #3ddc97));
   color: var(--on-primary);
   border: none;
   display: flex;

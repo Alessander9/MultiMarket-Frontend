@@ -1,7 +1,11 @@
-import { Component, inject, signal, computed, effect, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit, OnDestroy, ViewChild, ElementRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SellerService, SellerConversation, SellerMessage } from '../../../services/seller.service';
+import { ChatService } from '../../../services/chat.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-seller-chat',
@@ -10,35 +14,92 @@ import { SellerService, SellerConversation, SellerMessage } from '../../../servi
   templateUrl: './chat.html',
   styleUrl: './chat.css'
 })
-export class SellerChat implements OnInit, AfterViewChecked {
+export class SellerChat implements OnInit, OnDestroy {
   protected readonly sellerService = inject(SellerService);
+  private readonly chatService = inject(ChatService);
+  private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('chatScrollContainer') private chatScrollContainer!: ElementRef;
 
   // Selected thread conversation ID
   readonly activeConvId = signal<number | null>(null);
 
+  // Pending conversation selected from route before the backend list finishes loading.
+  readonly pendingConversationId = signal<number | null>(null);
+
   // New message input
   readonly messageText = signal('');
 
   // Local state helper
   readonly isSending = signal(false);
+  readonly showScrollToBottom = signal(false);
+  private lastScrollSignature = '';
+  private scrollAnimationFrame: number | null = null;
 
   constructor() {
     effect(() => {
       const convs = this.sellerService.conversations();
-      if (convs.length > 0 && this.activeConvId() === null) {
-        setTimeout(() => this.selectConversation(convs[0].id));
+      const backendLoaded = this.sellerService.backendLoaded();
+      const pendingConversationId = this.pendingConversationId();
+      const activeConversationId = this.activeConvId();
+      const activeConversation = activeConversationId !== null ? convs.find(conv => conv.id === activeConversationId) : null;
+      const signature = `${activeConversationId ?? 'none'}:${activeConversation?.mensajes?.length ?? 0}`;
+
+      if (pendingConversationId !== null) {
+        const pendingConversation = convs.find(conv => conv.id === pendingConversationId);
+        if (pendingConversation) {
+          if (activeConversationId !== pendingConversation.id) {
+            this.selectConversation(pendingConversation.id);
+          }
+          this.pendingConversationId.set(null);
+          return;
+        }
+
+        return;
+      }
+
+      if (backendLoaded && convs.length > 0 && activeConversationId === null) {
+        this.selectConversation(convs[0].id);
+      }
+
+      if (signature !== this.lastScrollSignature && activeConversation) {
+        this.lastScrollSignature = signature;
+        this.scheduleScrollToBottom();
       }
     });
   }
 
   ngOnInit(): void {
-    // Auto-selection is handled by the constructor effect once conversations are loaded
+    this.sellerService.loadBackendData().subscribe();
+
+    const email = this.authService.currentUserEmail();
+    if (email) {
+      this.chatService.connect(email);
+    }
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        const rawConversationId = params.get('conversationId') ?? params.get('chatConversationId');
+        if (!rawConversationId) return;
+
+        const conversationId = Number(rawConversationId);
+        if (!Number.isFinite(conversationId)) return;
+
+        this.pendingConversationId.set(conversationId);
+
+        const existing = this.sellerService.conversations().find(c => c.id === conversationId);
+        if (existing) {
+          this.pendingConversationId.set(null);
+          this.selectConversation(conversationId);
+        }
+      });
   }
 
-  ngAfterViewChecked(): void {
-    this.scrollToBottom();
+  ngOnDestroy(): void {
+    this.chatService.disconnect();
   }
 
   // --- GETTERS ---
@@ -67,7 +128,7 @@ export class SellerChat implements OnInit, AfterViewChecked {
           }
           return c;
         }));
-        this.scrollToBottom();
+        this.scheduleScrollToBottom();
       }
     });
   }
@@ -83,7 +144,7 @@ export class SellerChat implements OnInit, AfterViewChecked {
       next: () => {
         this.isSending.set(false);
         this.messageText.set('');
-        this.scrollToBottom();
+        this.scheduleScrollToBottom();
       },
       error: () => {
         this.isSending.set(false);
@@ -97,10 +158,38 @@ export class SellerChat implements OnInit, AfterViewChecked {
     }
   }
 
-  private scrollToBottom(): void {
+  onChatScroll(): void {
+    const el = this.chatScrollContainer?.nativeElement;
+    if (!el) return;
+
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.showScrollToBottom.set(distanceFromBottom > 120);
+  }
+
+  scrollToLatestMessage(): void {
+    this.scrollToBottom(true);
+  }
+
+  private scheduleScrollToBottom(): void {
+    if (this.scrollAnimationFrame !== null) {
+      cancelAnimationFrame(this.scrollAnimationFrame);
+    }
+
+    this.scrollAnimationFrame = requestAnimationFrame(() => {
+      this.scrollAnimationFrame = null;
+      this.scrollToBottom(true);
+    });
+  }
+
+  private scrollToBottom(smooth = false): void {
     if (this.chatScrollContainer) {
       try {
-        this.chatScrollContainer.nativeElement.scrollTop = this.chatScrollContainer.nativeElement.scrollHeight;
+        const el = this.chatScrollContainer.nativeElement;
+        el.scrollTo({
+          top: el.scrollHeight,
+          behavior: smooth ? 'smooth' : 'auto'
+        });
+        this.showScrollToBottom.set(false);
       } catch (err) {
         // Safe fail
       }

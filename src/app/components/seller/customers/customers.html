@@ -20,7 +20,7 @@
               type="text" 
               placeholder="Buscar por nombre, correo, ciudad..." 
               [value]="searchFilter()" 
-              (input)="searchFilter.set($any($event.target).value)"
+              (input)="searchFilter.set($any($event.target).value); resetPage()"
               class="filter-input"
             />
           </div>
@@ -44,7 +44,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let cust of filteredCustomers()" (click)="openDetail(cust)" class="clickable-row">
+            <tr *ngFor="let cust of filteredCustomers() | paginate: currentPage(): pageSize" (click)="openDetail(cust)" class="clickable-row">
               <td>
                 <div class="cust-info-cell">
                   <div class="avatar-circle">
@@ -81,6 +81,16 @@
         <h3>No se encontraron compradores</h3>
         <p>No hay registros de clientes que correspondan al filtro de búsqueda.</p>
       </div>
+
+      <app-pagination-controls
+        *ngIf="filteredCustomers().length > 0"
+        [totalItems]="filteredCustomers().length"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize"
+        itemLabel="comprador"
+        itemLabelPlural="compradores"
+        (pageChange)="currentPage.set($event)"
+      ></app-pagination-controls>
     </div>
   </div>
 
@@ -118,7 +128,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let order of customerOrdersHistory()">
+                <tr *ngFor="let order of customerOrdersHistory() | paginate: historyPage(): pageSize">
                   <td>
                     <span class="order-num">{{ order.numeroPedido }}</span>
                   </td>
@@ -139,6 +149,16 @@
             <span class="material-symbols-outlined empty-icon">shopping_bag</span>
             <p>Este comprador no tiene pedidos registrados para esta tienda.</p>
           </div>
+
+          <app-pagination-controls
+            *ngIf="customerOrdersHistory().length > 0"
+            [totalItems]="customerOrdersHistory().length"
+            [currentPage]="historyPage()"
+            [pageSize]="pageSize"
+            itemLabel="pedido"
+            itemLabelPlural="pedidos"
+            (pageChange)="historyPage.set($event)"
+          ></app-pagination-controls>
         </div>
       </div>
 

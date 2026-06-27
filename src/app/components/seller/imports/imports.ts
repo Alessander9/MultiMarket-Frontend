@@ -1,11 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SellerService, XmlImportLog } from '../../../services/seller.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-seller-imports',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './imports.html',
   styleUrl: './imports.css'
 })
@@ -16,6 +18,8 @@ export class SellerImports {
   readonly selectedFile = signal<File | null>(null);
   readonly uploadFeedback = signal<string | null>(null);
   readonly uploadError = signal<string | null>(null);
+  readonly currentPage = signal(1);
+  readonly pageSize = 8;
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -57,5 +61,9 @@ export class SellerImports {
         this.uploadError.set('Error en la conexión SOAP/REST con el servidor durante la validación del esquema.');
       }
     });
+  }
+
+  resetPage(): void {
+    this.currentPage.set(1);
   }
 }

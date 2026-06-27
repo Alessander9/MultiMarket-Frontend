@@ -146,14 +146,19 @@
 
         <div class="review-items-list">
           <h5>Productos en tu pedido ({{ customerService.cartCount() }})</h5>
-          <div class="review-item-row" *ngFor="let item of customerService.cart()">
-            <img [src]="item.imagen" alt="Thumbnail" class="row-thumb" />
-            <div class="row-meta">
-              <h6>{{ item.nombre }}</h6>
-              <span class="vendor">Vendido por: {{ item.vendedorNombre }}</span>
-              <span class="qty">Cant: {{ item.cantidad }}</span>
+          <div class="review-vendor-group" *ngFor="let group of cartGroups()">
+            <div class="group-header">
+              <h6>{{ group.vendedorNombre }}</h6>
+              <span class="group-total">S/ {{ group.total | number:'1.2-2' }}</span>
             </div>
-            <span class="row-price">S/ {{ item.precio * item.cantidad | number:'1.2-2' }}</span>
+            <div class="review-item-row" *ngFor="let item of group.items">
+              <img [src]="item.imagen" alt="Thumbnail" class="row-thumb" />
+              <div class="row-meta">
+                <h6>{{ item.nombre }}</h6>
+                <span class="vendor">Cant: {{ item.cantidad }}</span>
+              </div>
+              <span class="row-price">S/ {{ item.precio * item.cantidad | number:'1.2-2' }}</span>
+            </div>
           </div>
         </div>
 
@@ -311,7 +316,7 @@
           <div class="mobile-pay-box" *ngIf="selectedPaymentMethod() === 'YAPE' || selectedPaymentMethod() === 'PLIN'">
             <div class="qr-content-split">
               <div class="qr-image-wrapper">
-                <img src="/img/miel.jpg" alt="QR Code Mock" class="qr-mock" />
+                <img src="/img/miel.jpg" alt="QR del comprobante" class="qr-mock" />
                 <span class="qr-instructions">Escanea este código QR desde tu app oficial de Yape/Plin</span>
               </div>
               <div class="mobile-form">
@@ -388,8 +393,8 @@
 
           <div class="summary-row">
             <span>Costo de Envío</span>
-            <span class="text-emerald" *ngIf="customerService.cartSubtotal() >= 150">Gratis</span>
-            <span *ngIf="customerService.cartSubtotal() < 150">S/ {{ customerService.cartShipping() | number:'1.2-2' }}</span>
+            <span class="text-emerald" *ngIf="customerService.cartShipping() === 0">Gratis</span>
+            <span *ngIf="customerService.cartShipping() > 0">S/ {{ customerService.cartShipping() | number:'1.2-2' }}</span>
           </div>
 
           <div class="summary-row">
@@ -420,41 +425,42 @@
   </div>
 
   <!-- STEP 4: SUCCESS SUMMARY -->
-  <div class="checkout-success-view animate-scale-up" *ngIf="currentStep() === 4 && createdOrder() as order">
+  <div class="checkout-success-view animate-scale-up" *ngIf="currentStep() === 4">
     <div class="card success-receipt-card">
       <div class="success-icon-area">
         <span class="material-symbols-outlined check-success">check_circle</span>
       </div>
       
       <h2>¡Gracias por tu compra!</h2>
-      <p class="success-lead">Tu pedido ha sido procesado exitosamente con el número de orden <strong>{{ order.numeroPedido }}</strong></p>
-      
-      <div class="receipt-split">
+      <p class="success-lead">Tu compra fue procesada exitosamente y se dividió en {{ createdOrders().length }} pedido(s) por tienda.</p>
+
+      <div class="receipt-split" *ngIf="createdOrders().length > 0">
         <div class="receipt-col">
-          <h5>Detalles del Despacho</h5>
-          <p><strong>Vendedor:</strong> {{ order.vendedorNombreTienda }}</p>
-          <p><strong>Destino:</strong> {{ order.direccionEntrega?.direccion }}, {{ order.direccionEntrega?.distrito }} - {{ order.direccionEntrega?.departamento }}</p>
-          <p><strong>Método de Pago:</strong> {{ order.metodoPago }}</p>
-          <p><strong>Fecha:</strong> {{ order.fecha | date:'medium' }}</p>
+          <h5>Pedidos Generados</h5>
+          <div class="generated-order" *ngFor="let order of createdOrders()">
+            <p><strong>{{ order.vendedorNombreTienda }}</strong></p>
+            <p>{{ order.numeroPedido }}</p>
+            <p>S/ {{ order.total | number:'1.2-2' }}</p>
+          </div>
         </div>
 
         <div class="receipt-col pricing">
-          <h5>Resumen de Pago</h5>
+          <h5>Resumen de Compra</h5>
           <div class="price-row">
             <span>Subtotal:</span>
-            <span>S/ {{ order.subtotal | number:'1.2-2' }}</span>
+            <span>S/ {{ checkoutSummary()?.subtotal | number:'1.2-2' }}</span>
           </div>
           <div class="price-row">
             <span>Envío:</span>
-            <span>S/ {{ order.envio | number:'1.2-2' }}</span>
+            <span>S/ {{ checkoutSummary()?.costoEnvioTotal | number:'1.2-2' }}</span>
           </div>
           <div class="price-row">
             <span>Impuestos:</span>
-            <span>S/ {{ order.impuesto | number:'1.2-2' }}</span>
+            <span>S/ {{ checkoutSummary()?.impuesto | number:'1.2-2' }}</span>
           </div>
           <div class="price-row grand-total">
             <span>Total Cargado:</span>
-            <span class="text-emerald">S/ {{ order.total | number:'1.2-2' }}</span>
+            <span class="text-emerald">S/ {{ checkoutSummary()?.total | number:'1.2-2' }}</span>
           </div>
         </div>
       </div>
@@ -484,6 +490,9 @@
       <div class="success-actions">
         <a routerLink="/products" class="btn-secondary-action">Seguir Comprando</a>
         <a routerLink="/orders" class="btn-primary-action">Hacer Seguimiento de mi Compra</a>
+        <button class="btn-secondary-action" type="button" (click)="downloadReceipt()" [disabled]="isDownloadingReceipt()">
+          {{ isDownloadingReceipt() ? 'Descargando...' : 'Descargar boleta' }}
+        </button>
       </div>
     </div>
   </div>

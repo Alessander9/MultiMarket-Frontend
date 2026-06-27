@@ -99,7 +99,7 @@
 }
 
 html, body {
-  height: 100%;
+  min-height: 100%;
   font-family: var(--font-sans);
   background-color: var(--background);
   color: var(--on-background);
@@ -115,6 +115,7 @@ html, body {
 }
 
 body {
+  min-height: 100vh;
   background:
     radial-gradient(circle at top left, rgba(109, 74, 255, 0.18), transparent 30%),
     radial-gradient(circle at top right, rgba(68, 215, 168, 0.11), transparent 26%),

@@ -19,7 +19,7 @@
 
     <!-- Active Store Quick view -->
     <div class="store-mini-profile" *ngIf="!sidebarCollapsed()">
-      <img [src]="sellerService.storeProfile().logo" alt="Logo Tienda" class="store-mini-logo" />
+      <img [src]="sellerService.storeProfile().logo || '/img/frutosSecos.jpg'" alt="Logo Tienda" class="store-mini-logo" />
       <div class="store-mini-details">
         <h4 class="store-mini-title">{{ sellerService.storeProfile().nombre }}</h4>
         <span class="store-mini-region">
@@ -134,6 +134,7 @@
                 *ngFor="let n of sellerService.notifications().slice(0, 5)" 
                 class="dropdown-item notification-item"
                 [class.item-unread]="!n.leido"
+                (click)="openNotification(n, $event)"
               >
                 <div class="notif-icon-circle" [ngClass]="n.tipo.toLowerCase()">
                   <span class="material-symbols-outlined">
@@ -182,13 +183,13 @@
           <div class="header-dropdown messages-dropdown animate-fade-in" *ngIf="showMessagesDropdown()">
             <div class="dropdown-header">
               <h3 class="dropdown-title">Mensajes de Clientes</h3>
+              <span class="dropdown-counter">{{ sellerService.unreadChatsCount() }} sin leer</span>
             </div>
             <div class="dropdown-scroll-content">
               <div 
-                *ngFor="let c of sellerService.conversations()" 
+                *ngFor="let c of recentChatPreviews()" 
                 class="dropdown-item message-item"
-                [routerLink]="['/seller/chat']"
-                (click)="closeAllDropdowns()"
+                (click)="openChatConversation(c.id)"
               >
                 <img [src]="c.compradorAvatar" alt="Avatar" class="chat-item-avatar" />
                 <div class="chat-item-body">
@@ -197,12 +198,13 @@
                     <span class="chat-item-time">{{ c.fechaUltimoMensaje | date:'shortTime' }}</span>
                   </div>
                   <p class="chat-item-excerpt" [class.font-bold]="c.noLeidos > 0">
-                    {{ c.ultimoMensaje }}
+                    {{ c.previewText }}
                   </p>
+                  <span class="chat-item-meta">{{ c.metaText }}</span>
                 </div>
                 <span class="unread-dot bg-emerald" *ngIf="c.noLeidos > 0"></span>
               </div>
-              <div *ngIf="sellerService.conversations().length === 0" class="dropdown-empty-state">
+              <div *ngIf="recentChatPreviews().length === 0" class="dropdown-empty-state">
                 <span class="material-symbols-outlined empty-icon">mail_lock</span>
                 <p>No hay conversaciones activas.</p>
               </div>
@@ -216,11 +218,11 @@
         <button
           type="button"
           class="theme-nav-toggle"
-          (click)="themeService.toggleTheme()"
-          [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+          (click)="themeService.setTheme('dark')"
+          aria-label="Modo oscuro fijo"
         >
-          <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
-          <span class="theme-nav-toggle__text">{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+          <span class="material-symbols-outlined">dark_mode</span>
+          <span class="theme-nav-toggle__text">Dark</span>
         </button>
 
         <div class="header-divider-v"></div>

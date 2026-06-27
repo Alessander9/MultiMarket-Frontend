@@ -1,14 +1,15 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { AdminPortalService } from '../../../services/admin-portal.service';
 import { finalize } from 'rxjs';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-customer-stores',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './stores.html',
   styleUrl: './stores.css'
 })
@@ -19,11 +20,13 @@ export class CustomerStores implements OnInit {
   readonly isLoading = signal(false);
   readonly searchQuery = signal('');
   readonly selectedRegion = signal('ALL');
+  readonly currentPage = signal(1);
+  readonly pageSize = 8;
 
   ngOnInit(): void {
     this.isLoading.set(true);
 
-    this.portalService.loadVendors().pipe(
+      this.portalService.loadVendors().pipe(
       finalize(() => {
         this.isLoading.set(false);
       })
@@ -66,5 +69,9 @@ export class CustomerStores implements OnInit {
 
   openChat(vendorId: number): void {
     this.router.navigate(['/stores'], { queryParams: { chatVendorId: vendorId } });
+  }
+
+  resetPage(): void {
+    this.currentPage.set(1);
   }
 }

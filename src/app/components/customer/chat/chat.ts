@@ -1,16 +1,18 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CustomerService } from '../../../services/customer.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-customer-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './chat.html',
-  styleUrl: './chat.css'
+  styleUrls: ['./chat.css']
 })
 export class CustomerChat {
   protected readonly customerService = inject(CustomerService);
@@ -23,6 +25,9 @@ export class CustomerChat {
   readonly selectedConvId = signal<number | null>(null);
   readonly typedMessage = signal<string>('');
   readonly isOpeningConversation = signal(false);
+  readonly currentPage = signal(1);
+  readonly showScrollToBottom = signal(false);
+  readonly pageSize = 6;
   readonly quickPrompts = [
     'Hola, quisiera saber si hay stock disponible.',
     '¿Cuánto demora el envío a mi distrito?',
@@ -34,6 +39,9 @@ export class CustomerChat {
     if (selectedId === null) return undefined;
     return this.customerService.conversations().find(c => c.id === selectedId);
   });
+
+  // Backward-compatible alias for older templates/cached builds.
+  readonly getSelectedConversation = computed(() => this.activeConversation());
 
   readonly sortedConversations = computed(() => {
     return [...this.customerService.conversations()].sort((a, b) => {
@@ -47,6 +55,8 @@ export class CustomerChat {
     const conversationVendorIds = new Set(this.customerService.conversations().map(conv => conv.vendedorId));
     return this.customerService.topVendors().filter(vendor => !conversationVendorIds.has(vendor.id)).slice(0, 3);
   });
+  private lastScrollSignature = '';
+  private scrollAnimationFrame: number | null = null;
 
   constructor() {
     effect(() => {
@@ -69,6 +79,16 @@ export class CustomerChat {
         }
       }
     });
+
+    effect(() => {
+      const conv = this.activeConversation();
+      const signature = conv ? `${conv.id}:${conv.mensajes.length}` : 'none';
+
+      if (conv && signature !== this.lastScrollSignature) {
+        this.lastScrollSignature = signature;
+        this.scheduleScrollToBottom();
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -86,10 +106,6 @@ export class CustomerChat {
 
         this.openConversationForVendor(vendorId);
       });
-  }
-
-  ngAfterViewChecked(): void {
-    this.scrollToBottom();
   }
 
   selectConversation(id: number): void {
@@ -123,6 +139,10 @@ export class CustomerChat {
     this.typedMessage.set(prompt);
   }
 
+  resetPage(): void {
+    this.currentPage.set(1);
+  }
+
   getMessageRoleLabel(role: 'COMPRADOR' | 'VENDEDOR'): string {
     return role === 'COMPRADOR' ? 'Comprador' : 'Vendedor';
   }
@@ -150,7 +170,7 @@ export class CustomerChat {
     this.customerService.loadMessageHistory(conversationId).subscribe({
       next: () => {
         this.markSelectedAsRead();
-        this.scrollToBottom();
+        this.scheduleScrollToBottom();
       }
     });
   }
@@ -175,28 +195,56 @@ export class CustomerChat {
     this.customerService.sendChatMessage(conv.vendedorId, text).subscribe({
       next: () => {
         this.typedMessage.set('');
-        this.scrollToBottom();
+        this.scheduleScrollToBottom();
       }
     });
   }
 
-  // Simulate attaching an image (e.g. coffee quality checks or receipt uploads)
+  // Attach a photo or receipt reference to the chat
   attachImage(): void {
     const conv = this.activeConversation();
     if (!conv) return;
 
-    const mockImgUrl = '/img/aceite-coco.jpeg';
-    this.customerService.sendChatMessage(conv.vendedorId, `📷 Foto adjunta del lote: ${mockImgUrl}`).subscribe({
+    const attachmentUrl = '/img/aceite-coco.jpeg';
+    this.customerService.sendChatMessage(conv.vendedorId, `📷 Foto adjunta del lote: ${attachmentUrl}`).subscribe({
       next: () => {
-        this.scrollToBottom();
+        this.scheduleScrollToBottom();
       }
     });
   }
 
-  private scrollToBottom(): void {
+  onChatScroll(): void {
+    const el = this.chatScrollContainer?.nativeElement;
+    if (!el) return;
+
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.showScrollToBottom.set(distanceFromBottom > 120);
+  }
+
+  scrollToLatestMessage(): void {
+    this.scrollToBottom(true);
+  }
+
+  private scheduleScrollToBottom(): void {
+    if (this.scrollAnimationFrame !== null) {
+      cancelAnimationFrame(this.scrollAnimationFrame);
+    }
+
+    this.scrollAnimationFrame = requestAnimationFrame(() => {
+      this.scrollAnimationFrame = null;
+      this.scrollToBottom(true);
+    });
+  }
+
+  private scrollToBottom(smooth = false): void {
     try {
       if (this.chatScrollContainer) {
-        this.chatScrollContainer.nativeElement.scrollTop = this.chatScrollContainer.nativeElement.scrollHeight;
+        const el = this.chatScrollContainer.nativeElement;
+        el.scrollTo({
+          top: el.scrollHeight,
+          behavior: smooth ? 'smooth' : 'auto'
+        });
+        this.showScrollToBottom.set(false);
       }
     } catch (err) {}
   }

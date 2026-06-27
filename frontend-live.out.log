@@ -1,0 +1,53 @@
+
+> multi-market-frontend@0.0.0 start
+> ng serve --port 4200
+
+[33m>[39m Building...
+[32m√[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m         [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m          [2m | [22m  [36m1.14 MB[39m[2m | [22m
+[32mchunk-F4LYW2OB.js[39m  [2m | [22m[2m-[22m             [2m | [22m [36m32.28 kB[39m[2m | [22m
+[32mchunk-D5HF6KP4.js[39m  [2m | [22m[2m-[22m             [2m | [22m [36m27.87 kB[39m[2m | [22m
+[32mchunk-522RFBK5.js[39m  [2m | [22m[2m-[22m             [2m | [22m [36m20.61 kB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m        [2m | [22m [36m20.02 kB[39m[2m | [22m
+[32mchunk-4ISUKY5L.js[39m  [2m | [22m[2m-[22m             [2m | [22m [36m10.86 kB[39m[2m | [22m
+[32mchunk-MT57DQXP.js[39m  [2m | [22m[2m-[22m             [2m | [22m  [36m7.35 kB[39m[2m | [22m
+[32mchunk-44MVKM6K.js[39m  [2m | [22m[2m-[22m             [2m | [22m  [36m1.07 kB[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m [2m | [22m  [1m1.26 MB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m         [2m | [22m [1mRaw size[22m
+[32mchunk-EZ33PWTF.js[39m  [2m | [22m[2mproducts[22m      [2m | [22m[36m203.04 kB[39m[2m | [22m
+[32mchunk-UASY6Y7P.js[39m  [2m | [22m[2mcheckout[22m      [2m | [22m[36m151.11 kB[39m[2m | [22m
+[32mchunk-KNSSZZ3J.js[39m  [2m | [22m[2morders[22m        [2m | [22m [36m96.39 kB[39m[2m | [22m
+[32mchunk-TABNIU26.js[39m  [2m | [22m[2mproducts[22m      [2m | [22m [36m88.73 kB[39m[2m | [22m
+[32mchunk-IG6KCZN2.js[39m  [2m | [22m[2mdashboard[22m     [2m | [22m [36m85.72 kB[39m[2m | [22m
+[32mchunk-JUBIZF2V.js[39m  [2m | [22m[2mprofile[22m       [2m | [22m [36m81.56 kB[39m[2m | [22m
+[32mchunk-KKTAYHSG.js[39m  [2m | [22m[2mchat[22m          [2m | [22m [36m79.50 kB[39m[2m | [22m
+[32mchunk-L4LEZCZM.js[39m  [2m | [22m[2mhome[22m          [2m | [22m [36m68.92 kB[39m[2m | [22m
+[32mchunk-JQP4Q3IG.js[39m  [2m | [22m[2mstore[22m         [2m | [22m [36m67.81 kB[39m[2m | [22m
+[32mchunk-YQDMSH4A.js[39m  [2m | [22m[2minventory[22m     [2m | [22m [36m63.53 kB[39m[2m | [22m
+[32mchunk-CRIIUJLG.js[39m  [2m | [22m[2morders[22m        [2m | [22m [36m63.38 kB[39m[2m | [22m
+[32mchunk-ZU2HMFB6.js[39m  [2m | [22m[2mdashboard[22m     [2m | [22m [36m55.22 kB[39m[2m | [22m
+[32mchunk-RE4ACZKS.js[39m  [2m | [22m[2mchat[22m          [2m | [22m [36m52.71 kB[39m[2m | [22m
+[32mchunk-VZDQAJQX.js[39m  [2m | [22m[2mproduct-detail[22m[2m | [22m [36m49.15 kB[39m[2m | [22m
+[32mchunk-QDUS45Z6.js[39m  [2m | [22m[2mcustomers[22m     [2m | [22m [36m49.09 kB[39m[2m | [22m
+[2m...and 10 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [72.109 seconds] - 2026-06-27T20:35:59.397Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m   [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m    [2m | [22m  [36m1.14 MB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m   [2m | [22m [1mRaw size[22m
+[32mchunk-VUM2DYO5.js[39m  [2m | [22m[2mproducts[22m[2m | [22m[36m203.09 kB[39m[2m | [22m
+
+Application bundle generation complete. [47.973 seconds] - 2026-06-27T21:00:33.852Z
+
+Page reload sent to client(s).

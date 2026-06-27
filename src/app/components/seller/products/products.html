@@ -16,6 +16,24 @@
       <div class="page-title-area">
         <h2>Catálogo de Productos</h2>
         <p>Publica, edita y gestiona el stock de tus artículos en la tienda</p>
+        <div class="header-metrics-strip">
+          <div class="header-metric-pill">
+            <span>Total catálogo</span>
+            <strong>{{ catalogMetrics().total }}</strong>
+          </div>
+          <div class="header-metric-pill header-metric-pill--success">
+            <span>Activos</span>
+            <strong>{{ catalogMetrics().active }}</strong>
+          </div>
+          <div class="header-metric-pill header-metric-pill--warn">
+            <span>Stock bajo</span>
+            <strong>{{ catalogMetrics().lowStock }}</strong>
+          </div>
+          <div class="header-metric-pill">
+            <span>Precio promedio</span>
+            <strong>S/ {{ catalogMetrics().averagePrice }}</strong>
+          </div>
+        </div>
       </div>
       <button class="btn-create-prod" (click)="openCreate()">
         <span class="material-symbols-outlined">add</span>
@@ -233,9 +251,30 @@
       <div class="page-title-area">
         <h2>{{ viewState() === 'create' ? 'Crear Nuevo Producto' : 'Editar Producto' }}</h2>
         <p>Completa la ficha comercial y deja listo el producto para publicar en tu tienda</p>
+        <div class="header-metrics-strip">
+          <div class="header-metric-pill">
+            <span>Avance</span>
+            <strong>{{ formCompletion() }}%</strong>
+          </div>
+          <div class="header-metric-pill header-metric-pill--success">
+            <span>Estado</span>
+            <strong>{{ productForm.get('estado')?.value || 'ACTIVO' }}</strong>
+          </div>
+          <div class="header-metric-pill">
+            <span>Categoría</span>
+            <strong>{{ getSelectedCategoryName() }}</strong>
+          </div>
+          <div class="header-metric-pill header-metric-pill--accent">
+            <span>Precio</span>
+            <strong>S/ {{ getPreviewPrice() }}</strong>
+          </div>
+        </div>
       </div>
       <button class="btn-cancel-top" (click)="viewState.set('list')">
-        Regresar al Listado
+        <span class="btn-action-content">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Regresar al Listado</span>
+        </span>
       </button>
     </div>
 
@@ -246,20 +285,58 @@
             <div class="form-hero-copy">
               <span class="section-kicker">Registro Comercial</span>
               <h3>{{ viewState() === 'create' ? 'Define un producto sólido desde el inicio' : 'Ajusta la ficha sin perder claridad comercial' }}</h3>
-              <p>La vista se organiza por bloques para que no tengas que buscar cada dato. SKU, precio, stock y categoría quedan a la mano.</p>
+              <p>Organizamos la ficha como un estudio de publicación: identidad, operación comercial e imagen, con una vista previa viva al costado.</p>
+              <div class="hero-progress">
+                <div class="hero-progress__label">
+                  <span>Avance de la ficha</span>
+                  <strong>{{ formCompletion() }}%</strong>
+                </div>
+                <div class="hero-progress__bar">
+                  <span [style.width.%]="formCompletion()"></span>
+                </div>
+              </div>
             </div>
-            <div class="form-hero-stats">
-              <div class="hero-stat">
-                <span>Estado</span>
-                <strong>{{ productForm.get('estado')?.value || 'ACTIVO' }}</strong>
+            <div class="form-hero-aside">
+              <div class="hero-aside-card">
+                <span class="hero-aside-card__eyebrow">Lectura rápida</span>
+                <div class="hero-aside-card__rows">
+                  <div class="hero-aside-row">
+                    <span>Estado</span>
+                    <strong>{{ previewStateLabel() }}</strong>
+                  </div>
+                  <div class="hero-aside-row">
+                    <span>Categoría</span>
+                    <strong>{{ getSelectedCategoryName() }}</strong>
+                  </div>
+                  <div class="hero-aside-row">
+                    <span>Vista</span>
+                    <strong>{{ productForm.get('imagenUrl')?.value?.trim() ? 'Personalizada' : 'Base visual' }}</strong>
+                  </div>
+                </div>
               </div>
-              <div class="hero-stat">
-                <span>Categorías</span>
-                <strong>{{ categoryOptions().length }}</strong>
+            </div>
+          </div>
+
+          <div class="form-stage-strip">
+            <div class="form-stage-card">
+              <span class="material-symbols-outlined">fingerprint</span>
+              <div>
+                <strong>Identidad clara</strong>
+                <p>Nombre, descripción y SKU listos para catálogo.</p>
               </div>
-              <div class="hero-stat">
-                <span>Vista previa</span>
-                <strong>{{ productForm.get('imagenUrl')?.value?.trim() ? 'Personalizada' : 'Por defecto' }}</strong>
+            </div>
+            <div class="form-stage-card">
+              <span class="material-symbols-outlined">monitoring</span>
+              <div>
+                <strong>Operación visible</strong>
+                <p>Precio, stock y peso unidos en una sola zona.</p>
+              </div>
+            </div>
+            <div class="form-stage-card">
+              <span class="material-symbols-outlined">image</span>
+              <div>
+                <strong>Imagen protagonista</strong>
+                <p>La portada manda en la vista previa y el listado.</p>
               </div>
             </div>
           </div>
@@ -288,8 +365,14 @@
 
           <div class="form-section">
             <div class="section-header">
-              <span class="section-kicker">Identidad del producto</span>
-              <h4>SKU, categoría y publicación</h4>
+              <div class="section-header__badge">
+                <span class="material-symbols-outlined">badge</span>
+              </div>
+              <div class="section-header__copy">
+                <span class="section-eyebrow">Identidad del producto</span>
+                <h4>SKU, categoría y publicación</h4>
+                <p>Define cómo se reconoce este producto en tu inventario y cómo se mostrará al cliente.</p>
+              </div>
             </div>
             <div class="form-grid">
               <div class="form-group">
@@ -323,8 +406,14 @@
 
           <div class="form-section">
             <div class="section-header">
-              <span class="section-kicker">Comercial e inventario</span>
-              <h4>Precio, stock y peso</h4>
+              <div class="section-header__badge">
+                <span class="material-symbols-outlined">local_shipping</span>
+              </div>
+              <div class="section-header__copy">
+                <span class="section-eyebrow">Comercial e inventario</span>
+                <h4>Precio, stock y peso</h4>
+                <p>Reúne los datos operativos que impactan publicación, entrega y disponibilidad.</p>
+              </div>
             </div>
             <div class="form-grid">
               <div class="form-group">
@@ -363,8 +452,14 @@
 
           <div class="form-section">
             <div class="section-header">
-              <span class="section-kicker">Imagen principal</span>
-              <h4>Enlace de portada</h4>
+              <div class="section-header__badge">
+                <span class="material-symbols-outlined">photo_library</span>
+              </div>
+              <div class="section-header__copy">
+                <span class="section-eyebrow">Imagen principal</span>
+                <h4>Portada y presencia visual</h4>
+                <p>Usa una imagen limpia para que el producto destaque mejor en catálogo y detalle.</p>
+              </div>
             </div>
             <div class="form-grid">
               <div class="form-group full-width">
@@ -381,13 +476,24 @@
 
         <aside class="form-preview-panel">
           <div class="preview-card">
-            <span class="section-kicker">Vista previa</span>
+            <div class="preview-card__header">
+              <span class="section-kicker">Vista previa</span>
+              <span class="preview-live-badge">Ficha en vivo</span>
+            </div>
+            <div class="preview-card__ambient"></div>
             <div class="preview-image-wrap">
               <img [src]="getSelectedPreviewImage()" alt="Vista previa del producto" class="preview-image" />
             </div>
             <div class="preview-copy">
               <h4>{{ productForm.get('nombre')?.value || 'Nombre del producto' }}</h4>
               <p>{{ productForm.get('descripcion')?.value || 'La descripción aparecerá aquí cuando llenes el formulario.' }}</p>
+            </div>
+            <div class="preview-mini-banner">
+              <span class="material-symbols-outlined">insights</span>
+              <div>
+                <strong>{{ previewStateLabel() }}</strong>
+                <p>Así verá el cliente este producto en tu catálogo.</p>
+              </div>
             </div>
             <div class="preview-meta">
               <div>
@@ -396,7 +502,7 @@
               </div>
               <div>
                 <span>Precio</span>
-                <strong>S/ {{ productForm.get('precio')?.value || '0.00' }}</strong>
+                <strong>S/ {{ getPreviewPrice() }}</strong>
               </div>
               <div>
                 <span>Stock</span>
@@ -412,19 +518,38 @@
                 {{ productForm.get('estado')?.value || 'ACTIVO' }}
               </span>
               <span class="preview-badge muted">{{ getStockState(+productForm.get('stock')?.value || 0) }}</span>
+              <span class="preview-badge muted">{{ getSelectedCategoryName() }}</span>
+            </div>
+            <div class="preview-studio-footer">
+              <div class="preview-studio-footer__block">
+                <span>Entrega</span>
+                <strong>{{ productForm.get('peso')?.value || 0 }} kg</strong>
+              </div>
+              <div class="preview-studio-footer__block">
+                <span>Min. stock</span>
+                <strong>{{ productForm.get('stockMinimo')?.value || 0 }} und</strong>
+              </div>
             </div>
             <div class="preview-note">
               <span class="material-symbols-outlined">tips_and_updates</span>
-              <p>Usa una imagen clara y un SKU legible para acelerar búsquedas internas y ventas.</p>
+              <p>Usa una imagen clara y un SKU legible para acelerar búsquedas internas, filtros y ventas.</p>
             </div>
           </div>
         </aside>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="viewState.set('list')">Cancelar</button>
+        <button type="button" class="btn-cancel" (click)="viewState.set('list')">
+          <span class="btn-action-content">
+            <span class="material-symbols-outlined">close</span>
+            <span>Cancelar</span>
+          </span>
+        </button>
         <button type="submit" class="btn-save" [disabled]="productForm.invalid || isLoading()">
-          {{ isLoading() ? 'Guardando...' : (viewState() === 'create' ? 'Publicar Producto' : 'Guardar Cambios') }}
+          <span class="btn-action-content">
+            <span class="material-symbols-outlined">{{ isLoading() ? 'progress_activity' : (viewState() === 'create' ? 'rocket_launch' : 'save') }}</span>
+            <span>{{ isLoading() ? 'Guardando...' : (viewState() === 'create' ? 'Publicar Producto' : 'Guardar Cambios') }}</span>
+          </span>
         </button>
       </div>
     </form>
@@ -438,38 +563,57 @@
         <p>Información técnica y visual expuesta al comprador final</p>
       </div>
       <button class="btn-cancel-top" (click)="closeToDetails()">
-        Regresar al Listado
+        <span class="btn-action-content">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Regresar al Listado</span>
+        </span>
       </button>
     </div>
 
     <div class="product-detail-grid">
-      <!-- Media / Galería -->
-      <div class="detail-gallery card">
-        <div class="gallery-main-view">
-          <img [src]="selectedProduct()?.imagenes?.[0]" alt="Producto principal" class="gallery-main-img" />
+      <!-- Media / Hero -->
+      <div class="detail-visual card">
+        <div class="detail-visual__hero">
+          <div class="detail-visual__copy">
+            <span class="section-eyebrow">Vista principal</span>
+            <h3>{{ selectedProduct()?.nombre }}</h3>
+            <p>{{ selectedProduct()?.descripcion }}</p>
+          </div>
+          <div class="detail-visual__status">
+            <span class="specs-category">{{ selectedProduct()?.categoria }}</span>
+            <span class="status-badge" [ngClass]="selectedProduct()?.estado?.toLowerCase() ?? ''">
+              {{ selectedProduct()?.estado }}
+            </span>
+          </div>
+          <img [src]="getDetailPrimaryImage()" alt="Producto principal" class="detail-visual__image" />
         </div>
-        <div class="gallery-thumbs-row">
-          <div class="thumb-box active">
-            <img [src]="selectedProduct()?.imagenes?.[0]" alt="Thumbnail" />
-          </div>
-          <!-- Mock alternate images -->
-          <div class="thumb-box">
-            <img src="/img/aceite-oliva.jpeg" alt="Thumbnail Mock" />
-          </div>
+        <div class="detail-visual__thumbs">
+          <button
+            type="button"
+            class="detail-thumb"
+            *ngFor="let image of getDetailImages(); let i = index"
+            [class.active]="i === 0"
+          >
+            <img [src]="image" alt="Vista secundaria del producto" />
+          </button>
         </div>
       </div>
 
       <!-- Especificaciones -->
       <div class="detail-specs card">
-        <div class="specs-header">
-          <span class="specs-category">{{ selectedProduct()?.categoria }}</span>
-          <span class="status-badge" [ngClass]="selectedProduct()?.estado?.toLowerCase() ?? ''">
-            {{ selectedProduct()?.estado }}
-          </span>
+        <div class="specs-header specs-header--stacked">
+          <div>
+            <span class="section-eyebrow">Resumen comercial</span>
+            <h3 class="specs-title">{{ selectedProduct()?.nombre }}</h3>
+          </div>
+          <div class="specs-header__chips">
+            <span class="specs-category">{{ selectedProduct()?.categoria }}</span>
+            <span class="status-badge" [ngClass]="selectedProduct()?.estado?.toLowerCase() ?? ''">
+              {{ selectedProduct()?.estado }}
+            </span>
+          </div>
         </div>
 
-        <h3 class="specs-title">{{ selectedProduct()?.nombre }}</h3>
-        
         <div class="price-stock-hero-row">
           <div class="hero-block">
             <span class="hero-label">Precio Sugerido</span>
@@ -482,24 +626,28 @@
               {{ selectedProduct()?.stock }} und
             </span>
           </div>
+          <div class="hero-block hero-block--compact">
+            <span class="hero-label">Peso de envío</span>
+            <span class="hero-val">{{ selectedProduct()?.peso }} kg</span>
+          </div>
         </div>
 
-        <div class="specs-divider"></div>
-
-        <div class="specs-technical-list">
-          <div class="technical-row">
-            <span class="tech-label">SKU de Venta</span>
-            <span class="tech-val font-mono">{{ selectedProduct()?.sku }}</span>
+        <div class="specs-kpi-grid">
+          <div class="spec-kpi">
+            <span>SKU</span>
+            <strong class="font-mono">{{ selectedProduct()?.sku }}</strong>
           </div>
-
-          <div class="technical-row">
-            <span class="tech-label">Peso Neto de Envío</span>
-            <span class="tech-val">{{ selectedProduct()?.peso }} kg</span>
+          <div class="spec-kpi">
+            <span>Registro</span>
+            <strong class="font-mono">#PRD-{{ selectedProduct()?.id }}</strong>
           </div>
-
-          <div class="technical-row">
-            <span class="tech-label">ID Registro de Sistema</span>
-            <span class="tech-val font-mono">#PRD-{{ selectedProduct()?.id }}</span>
+          <div class="spec-kpi">
+            <span>Categoría</span>
+            <strong>{{ selectedProduct()?.categoria }}</strong>
+          </div>
+          <div class="spec-kpi">
+            <span>Estado</span>
+            <strong>{{ selectedProduct()?.estado }}</strong>
           </div>
         </div>
 
@@ -512,8 +660,10 @@
 
         <div class="specs-actions">
           <button class="btn-edit-specs" (click)="openEdit(selectedProduct()!)">
-            <span class="material-symbols-outlined font-sm">edit</span>
-            Editar Ficha Completa
+            <span class="btn-action-content">
+              <span class="material-symbols-outlined">edit</span>
+              <span>Editar Ficha Completa</span>
+            </span>
           </button>
         </div>
       </div>
@@ -528,8 +678,18 @@
     <h3>Eliminar Producto</h3>
     <p>{{ deleteConfirm()?.message }}</p>
     <div class="modal-btn-group">
-      <button class="btn-cancel-modal" (click)="deleteConfirm.set(null)">Cancelar</button>
-      <button class="btn-confirm-modal" (click)="confirmDelete()">Eliminar</button>
+      <button class="btn-cancel-modal" (click)="deleteConfirm.set(null)">
+        <span class="btn-action-content">
+          <span class="material-symbols-outlined">close</span>
+          <span>Cancelar</span>
+        </span>
+      </button>
+      <button class="btn-confirm-modal" (click)="confirmDelete()">
+        <span class="btn-action-content">
+          <span class="material-symbols-outlined">delete</span>
+          <span>Eliminar</span>
+        </span>
+      </button>
     </div>
   </div>
 

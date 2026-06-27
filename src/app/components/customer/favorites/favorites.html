@@ -11,7 +11,7 @@
   <div class="fav-grid" *ngIf="favoritedProductsList().length > 0">
     
     <div 
-      *ngFor="let prod of favoritedProductsList()" 
+      *ngFor="let prod of favoritedProductsList() | paginate: currentPage(): pageSize" 
       class="fav-item-card card"
       [routerLink]="['/products', prod.id]"
     >
@@ -45,5 +45,15 @@
     <p>Navega en el catálogo de productos y haz clic en el corazón para guardar tus artículos predilectos aquí.</p>
     <a routerLink="/products" class="btn-browse-catalog">Explorar Catálogo</a>
   </div>
+
+  <app-pagination-controls
+    *ngIf="favoritedProductsList().length > 0"
+    [totalItems]="favoritedProductsList().length"
+    [currentPage]="currentPage()"
+    [pageSize]="pageSize"
+    itemLabel="favorito"
+    itemLabelPlural="favoritos"
+    (pageChange)="currentPage.set($event)"
+  ></app-pagination-controls>
 
 </div>

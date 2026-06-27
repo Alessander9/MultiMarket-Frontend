@@ -45,9 +45,9 @@
   <!-- ================= VIEW TAB ================= -->
   <div class="store-tab-content view-tab" *ngIf="activeTab() === 'view'">
     <div class="banner-container">
-      <img [src]="sellerService.storeProfile().banner" alt="Banner Tienda" class="store-banner-img" />
+      <img [src]="sellerService.storeProfile().banner || '/img/frutos-secos-bg.jpeg'" alt="Banner Tienda" class="store-banner-img" />
       <div class="logo-overlap-container">
-        <img [src]="sellerService.storeProfile().logo" alt="Logo Tienda" class="store-logo-img" />
+        <img [src]="sellerService.storeProfile().logo || '/img/frutosSecos.jpg'" alt="Logo Tienda" class="store-logo-img" />
       </div>
     </div>
 
@@ -218,9 +218,17 @@
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="resetForm()">Cancelar</button>
+        <button type="button" class="btn-cancel" (click)="resetForm()">
+          <span class="btn-action-content">
+            <span class="material-symbols-outlined">close</span>
+            <span>Cancelar</span>
+          </span>
+        </button>
         <button type="submit" class="btn-save" [disabled]="storeForm.invalid || isSaving()">
-          {{ isSaving() ? 'Guardando...' : 'Guardar Cambios' }}
+          <span class="btn-action-content">
+            <span class="material-symbols-outlined">{{ isSaving() ? 'progress_activity' : 'save' }}</span>
+            <span>{{ isSaving() ? 'Guardando...' : 'Guardar Cambios' }}</span>
+          </span>
         </button>
       </div>
     </form>
@@ -229,32 +237,30 @@
   <!-- ================= STATS TAB ================= -->
   <div class="store-tab-content stats-tab" *ngIf="activeTab() === 'stats'">
     <div class="kpi-grid-mini">
-      <!-- Visitas Totales -->
       <div class="mini-kpi card">
         <span class="mini-label">Visitas Totales</span>
-        <h3>45,820</h3>
-        <span class="mini-change text-emerald">+18% este mes</span>
+        <h3>Sin dato</h3>
+        <span class="mini-change text-neutral">Metrica no integrada</span>
       </div>
 
-      <!-- Tasa de Conversión -->
       <div class="mini-kpi card">
-        <span class="mini-label">Conversión Promedio</span>
-        <h3>2.84%</h3>
-        <span class="mini-change text-emerald">+0.4% vs mes anterior</span>
+        <span class="mini-label">Tasa de Conversión</span>
+        <h3>Sin dato</h3>
+        <span class="mini-change text-neutral">Requiere tracking analítico</span>
       </div>
 
-      <!-- Ticket Promedio -->
       <div class="mini-kpi card">
         <span class="mini-label">Ticket Promedio</span>
-        <h3>S/ 115.30</h3>
-        <span class="mini-change text-emerald">+2.5% vs mes anterior</span>
+        <h3>S/ {{ averageOrderTotal | number:'1.2-2' }}</h3>
+        <span class="mini-change text-emerald" *ngIf="sellerService.orders().length > 0">Calculado desde pedidos reales</span>
+        <span class="mini-change text-neutral" *ngIf="sellerService.orders().length === 0">Sin pedidos aún</span>
       </div>
 
-      <!-- Calificación -->
       <div class="mini-kpi card">
         <span class="mini-label">Calificación Promedio</span>
-        <h3>4.8 / 5.0</h3>
-        <span class="mini-change text-purple">98% Satisfacción</span>
+        <h3>{{ sellerService.storeProfile().calificacionPromedio ?? 'Sin dato' }}</h3>
+        <span class="mini-change text-neutral" *ngIf="!sellerService.storeProfile().calificacionPromedio">Sin calificaciones verificadas</span>
+        <span class="mini-change text-purple" *ngIf="sellerService.storeProfile().calificacionPromedio">Valor real de la tienda</span>
       </div>
     </div>
 
@@ -266,27 +272,27 @@
         <h3>Ventas por Categoría</h3>
         <div class="breakdown-list">
           <div class="breakdown-item">
-            <span class="breakdown-name">Café Gourmet</span>
+            <span class="breakdown-name">Ventas por tienda</span>
             <div class="progress-bar-wrapper">
-              <div class="progress-bar" style="width: 70%; background-color: var(--primary);"></div>
+              <div class="progress-bar" style="width: 100%; background-color: var(--primary);"></div>
             </div>
-            <span class="breakdown-val">70%</span>
+            <span class="breakdown-val">Real</span>
           </div>
 
           <div class="breakdown-item">
-            <span class="breakdown-name">Chocolate y Dulces</span>
+            <span class="breakdown-name">Conversión</span>
             <div class="progress-bar-wrapper">
-              <div class="progress-bar" style="width: 20%; background-color: var(--tertiary);"></div>
+              <div class="progress-bar" style="width: 0%; background-color: var(--tertiary);"></div>
             </div>
-            <span class="breakdown-val">20%</span>
+            <span class="breakdown-val">N/D</span>
           </div>
 
           <div class="breakdown-item">
-            <span class="breakdown-name">Miel Pura</span>
+            <span class="breakdown-name">Ticket promedio</span>
             <div class="progress-bar-wrapper">
-              <div class="progress-bar" style="width: 10%; background-color: #fbbf24;"></div>
+              <div class="progress-bar" style="width: 0%; background-color: #fbbf24;"></div>
             </div>
-            <span class="breakdown-val">10%</span>
+            <span class="breakdown-val">N/D</span>
           </div>
         </div>
       </div>

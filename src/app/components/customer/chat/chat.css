@@ -134,6 +134,7 @@
   overflow-y: auto;
   padding: 8px;
   min-height: 0;
+  scrollbar-gutter: stable;
 }
 
 .thread-card {
@@ -306,6 +307,8 @@
   min-width: 0;
   min-height: 0;
   background: var(--chat-main-bg);
+  position: relative;
+  overflow: hidden;
 }
 
 .chat-header {
@@ -412,12 +415,14 @@
 
 .message-surface {
   flex: 1;
-  overflow-y: auto;
+  overflow-y: scroll;
   min-height: 0;
   padding: 18px 18px 16px;
   background:
     radial-gradient(circle at top right, rgba(167, 139, 250, 0.06), transparent 34%),
     radial-gradient(circle at bottom left, rgba(20, 184, 166, 0.05), transparent 34%);
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
 :host-context([data-theme='light']) .message-surface {
@@ -630,6 +635,56 @@
   cursor: not-allowed;
   opacity: 0.45;
   transform: none;
+}
+
+.message-surface::-webkit-scrollbar,
+.threads-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.message-surface::-webkit-scrollbar-track,
+.threads-list::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.08);
+  border-radius: 999px;
+}
+
+.message-surface::-webkit-scrollbar-thumb,
+.threads-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(15, 76, 92, 0.65), rgba(255, 107, 74, 0.52));
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+}
+
+.message-surface::-webkit-scrollbar-thumb:hover,
+.threads-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(15, 76, 92, 0.82), rgba(255, 107, 74, 0.72));
+}
+
+.scroll-to-latest-btn {
+  position: absolute;
+  right: 20px;
+  bottom: 92px;
+  width: 46px;
+  height: 46px;
+  border: 1px solid color-mix(in srgb, var(--home-primary) 32%, transparent);
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--home-primary), var(--home-accent));
+  color: #ffffff;
+  box-shadow: 0 14px 28px rgba(15, 76, 92, 0.22);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.scroll-to-latest-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.scroll-to-latest-btn .material-symbols-outlined {
+  font-size: 22px;
 }
 
 .empty-panel {

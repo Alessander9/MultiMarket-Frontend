@@ -14,11 +14,11 @@
   <!-- Filters chips row -->
   <div class="filters-card card">
     <div class="chips-row">
-      <button class="chip" [class.active]="activeFilter() === 'ALL'" (click)="activeFilter.set('ALL')">Todas</button>
-      <button class="chip" [class.active]="activeFilter() === 'PEDIDO'" (click)="activeFilter.set('PEDIDO')">Pedidos</button>
-      <button class="chip" [class.active]="activeFilter() === 'PAGO'" (click)="activeFilter.set('PAGO')">Pagos</button>
-      <button class="chip" [class.active]="activeFilter() === 'CHAT'" (click)="activeFilter.set('CHAT')">Mensajes</button>
-      <button class="chip" [class.active]="activeFilter() === 'SISTEMA'" (click)="activeFilter.set('SISTEMA')">Sistema</button>
+      <button class="chip" [class.active]="activeFilter() === 'ALL'" (click)="activeFilter.set('ALL'); resetPage()">Todas</button>
+      <button class="chip" [class.active]="activeFilter() === 'PEDIDO'" (click)="activeFilter.set('PEDIDO'); resetPage()">Pedidos</button>
+      <button class="chip" [class.active]="activeFilter() === 'PAGO'" (click)="activeFilter.set('PAGO'); resetPage()">Pagos</button>
+      <button class="chip" [class.active]="activeFilter() === 'CHAT'" (click)="activeFilter.set('CHAT'); resetPage()">Mensajes</button>
+      <button class="chip" [class.active]="activeFilter() === 'SISTEMA'" (click)="activeFilter.set('SISTEMA'); resetPage()">Sistema</button>
     </div>
   </div>
 
@@ -27,9 +27,10 @@
     <div class="notifications-list" *ngIf="filteredNotifications().length > 0">
       
       <div 
-        *ngFor="let n of filteredNotifications()" 
+        *ngFor="let n of filteredNotifications() | paginate: currentPage(): pageSize" 
         class="notification-item-row"
         [class.unread]="!n.leido"
+        (click)="openNotification(n)"
       >
         <div class="notif-icon-circle" [ngClass]="n.tipo.toLowerCase()">
           <span class="material-symbols-outlined">
@@ -46,10 +47,13 @@
         </div>
 
         <div class="notif-actions">
-          <button *ngIf="!n.leido" class="btn-check-read" (click)="markRead(n.id)" title="Marcar como leido">
+          <button *ngIf="!n.leido" class="btn-check-read" (click)="markRead(n.id); $event.stopPropagation()" title="Marcar como leido">
             <span class="material-symbols-outlined">done</span>
           </button>
           <span class="read-indicator-dot" *ngIf="!n.leido"></span>
+          <button *ngIf="n.tipo === 'CHAT'" class="btn-open-chat" (click)="openNotification(n); $event.stopPropagation()" title="Abrir chat">
+            <span class="material-symbols-outlined">chat</span>
+          </button>
         </div>
       </div>
 
@@ -62,5 +66,15 @@
       <p>No se encontraron alertas en la categoría seleccionada.</p>
     </div>
   </div>
+
+  <app-pagination-controls
+    *ngIf="filteredNotifications().length > 0"
+    [totalItems]="filteredNotifications().length"
+    [currentPage]="currentPage()"
+    [pageSize]="pageSize"
+    itemLabel="notificación"
+    itemLabelPlural="notificaciones"
+    (pageChange)="currentPage.set($event)"
+  ></app-pagination-controls>
 
 </div>

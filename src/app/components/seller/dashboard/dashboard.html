@@ -24,10 +24,10 @@
       </div>
       <div class="kpi-content">
         <span class="kpi-label">Ventas Hoy</span>
-        <h2 class="kpi-value">S/ 2,540.00</h2>
+        <h2 class="kpi-value">S/ {{ sellerService.salesToday() | number:'1.2-2' }}</h2>
         <span class="kpi-trend trend-up">
           <span class="material-symbols-outlined">trending_up</span>
-          +12.4% vs ayer
+          {{ sellerService.salesTodayTrend() }}
         </span>
       </div>
     </div>
@@ -39,10 +39,10 @@
       </div>
       <div class="kpi-content">
         <span class="kpi-label">Ventas Mes</span>
-        <h2 class="kpi-value">S/ 32,500.00</h2>
+        <h2 class="kpi-value">S/ {{ sellerService.salesMonth() | number:'1.2-2' }}</h2>
         <span class="kpi-trend trend-up">
           <span class="material-symbols-outlined">trending_up</span>
-          +24.1% vs mes ant.
+          {{ sellerService.salesMonthTrend() }}
         </span>
       </div>
     </div>
@@ -73,10 +73,10 @@
       </div>
       <div class="kpi-content">
         <span class="kpi-label">Pedidos Entregados</span>
-        <h2 class="kpi-value">132</h2>
+        <h2 class="kpi-value">{{ sellerService.deliveredOrdersCount() }}</h2>
         <span class="kpi-trend trend-up">
           <span class="material-symbols-outlined">trending_up</span>
-          98.2% efectividad
+          {{ sellerService.deliveredOrdersTrend() }}
         </span>
       </div>
     </div>
@@ -102,10 +102,10 @@
       </div>
       <div class="kpi-content">
         <span class="kpi-label">Clientes Nuevos</span>
-        <h2 class="kpi-value">25</h2>
+        <h2 class="kpi-value">{{ sellerService.newCustomersCount() }}</h2>
         <span class="kpi-trend trend-up">
           <span class="material-symbols-outlined">arrow_upward</span>
-          +8 este mes
+          {{ sellerService.newCustomersTrend() }}
         </span>
       </div>
     </div>
@@ -136,10 +136,10 @@
       </div>
       <div class="kpi-content">
         <span class="kpi-label">Calificación</span>
-        <h2 class="kpi-value">4.8 <span class="rating-max">/ 5.0</span></h2>
+        <h2 class="kpi-value">{{ sellerService.storeRating() | number:'1.1-1' }} <span class="rating-max">/ 5.0</span></h2>
         <span class="kpi-trend text-yellow">
           <span class="material-symbols-outlined font-sm">grade</span>
-          95 excelentes
+          {{ sellerService.storeRatingTrend() }}
         </span>
       </div>
     </div>
@@ -301,7 +301,7 @@
 
       <div class="top-products-list">
         
-        <div class="top-prod-row" *ngFor="let prod of sellerService.products().slice(0, 4); let i = index">
+        <div class="top-prod-row" *ngFor="let prod of getTopProductsSummary(); let i = index">
           <div class="rank-badge">{{ i + 1 }}</div>
           <img [src]="prod.imagenes[0]" alt="Producto" class="top-prod-thumb" />
           <div class="top-prod-meta">
@@ -309,9 +309,14 @@
             <span class="top-prod-sku">{{ prod.sku }}</span>
           </div>
           <div class="top-prod-sales">
-            <span class="sales-number">{{ 80 - (i * 15) }} vts</span>
-            <span class="sales-money">S/ {{ (80 - (i * 15)) * prod.precio | number:'1.2-2' }}</span>
+            <span class="sales-number">{{ prod.sold }} vts</span>
+            <span class="sales-money">S/ {{ prod.revenue | number:'1.2-2' }}</span>
           </div>
+        </div>
+
+        <div class="empty-state" *ngIf="getTopProductsSummary().length === 0">
+          <span class="material-symbols-outlined">inventory_2</span>
+          <p>Aún no hay ventas suficientes para mostrar un ranking real.</p>
         </div>
 
       </div>

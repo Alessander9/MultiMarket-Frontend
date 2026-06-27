@@ -58,8 +58,8 @@
 
           <div class="summary-row">
             <span>Costo de Envío</span>
-            <span class="text-emerald" *ngIf="customerService.cartSubtotal() >= 150">Gratis</span>
-            <span *ngIf="customerService.cartSubtotal() < 150">S/ {{ customerService.cartShipping() | number:'1.2-2' }}</span>
+            <span class="text-emerald" *ngIf="customerService.cartShipping() === 0">Gratis</span>
+            <span *ngIf="customerService.cartShipping() > 0">S/ {{ customerService.cartShipping() | number:'1.2-2' }}</span>
           </div>
 
           <div class="summary-row">

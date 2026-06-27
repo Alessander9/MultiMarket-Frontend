@@ -52,7 +52,7 @@
     <h3>Descargas e Historial de Archivos</h3>
     
     <div class="table-responsive">
-      <table class="history-logs-table">
+      <table class="history-logs-table" *ngIf="sellerService.exports().length > 0">
         <thead>
           <tr>
             <th>Fecha Generado</th>
@@ -63,7 +63,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of sellerService.exports()">
+          <tr *ngFor="let log of sellerService.exports() | paginate: currentPage(): pageSize">
             <td>
               <div class="date-col">
                 <span>{{ log.fecha | date:'mediumDate' }}</span>
@@ -91,6 +91,22 @@
         </tbody>
       </table>
     </div>
+
+    <div class="empty-state" *ngIf="sellerService.exports().length === 0">
+      <span class="material-symbols-outlined">download</span>
+      <h4>Sin exportaciones generadas</h4>
+      <p>Cuando se genere una exportación real del catálogo, aparecerá aquí con su formato, archivo y cantidad de productos.</p>
+    </div>
+
+    <app-pagination-controls
+      *ngIf="sellerService.exports().length > 0"
+      [totalItems]="sellerService.exports().length"
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize"
+      itemLabel="exportación"
+      itemLabelPlural="exportaciones"
+      (pageChange)="currentPage.set($event)"
+    ></app-pagination-controls>
   </div>
 
 </div>

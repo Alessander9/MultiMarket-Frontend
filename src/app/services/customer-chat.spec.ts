@@ -1,25 +1,27 @@
 import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { firstValueFrom } from 'rxjs';
+import { Subject, of } from 'rxjs';
 
-// 1. Mock Angular's inject helper before importing the services
+let activeAuthMock: any;
+let activeChatMock: any;
+let activeHttpMock: any;
+
 vi.mock('@angular/core', async (importOriginal) => {
   const original = await importOriginal<typeof import('@angular/core')>();
   return {
     ...original,
     inject: (token: any) => {
-      // Return a lightweight mock of HttpClient when injected
-      return {
-        get: () => ({ pipe: () => ({ subscribe: (cb: any) => cb() }) }),
-        post: () => ({ pipe: () => ({ subscribe: (cb: any) => cb() }) }),
-        put: () => ({ pipe: () => ({ subscribe: (cb: any) => cb() }) }),
-        delete: () => ({ pipe: () => ({ subscribe: (cb: any) => cb() }) })
-      };
+      if (token?.name === 'AuthService') {
+        return activeAuthMock;
+      }
+      if (token?.name === 'ChatService') {
+        return activeChatMock;
+      }
+      return activeHttpMock;
     }
   };
 });
 
-// Mock environment import to prevent resolution errors during testing
 vi.mock('../../environments/environment', () => ({
   environment: {
     production: false,
@@ -30,83 +32,160 @@ vi.mock('../../environments/environment', () => ({
 import { CustomerService } from './customer.service';
 import { SellerService } from './seller.service';
 
-describe('E-Commerce Chat System: Sender-Receiver Flows Integration', () => {
-  let customerService: CustomerService;
-  let sellerService: SellerService;
+function createCustomerMocks(notifications: any[] = []) {
+  const messageReceived$ = new Subject<any>();
+  activeAuthMock = {
+    currentUserEmail: () => 'buyer@test.com',
+    currentUserRoles: () => ['COMPRADOR']
+  };
+  activeChatMock = {
+    messageReceived$,
+    connectionStatus$: new Subject<any>(),
+    sendMessageViaSocket: () => false,
+    createConversation: () => of(null),
+    getConversations: () => of([]),
+    getMessageHistory: () => of([]),
+    sendMessage: () => of({})
+  };
+  activeHttpMock = {
+    get: (url: string) => {
+      if (url.includes('/notificaciones')) {
+        return of(notifications);
+      }
+      if (url.includes('/chat/conversaciones')) {
+        return of([]);
+      }
+      return of([]);
+    },
+    post: () => of({}),
+    put: () => of({}),
+    delete: () => of({})
+  };
 
-  beforeEach(() => {
-    // Instantiate the services directly, using our mocked DI injection context
-    customerService = new CustomerService();
-    sellerService = new SellerService();
+  return messageReceived$;
+}
+
+function createSellerMocks(notifications: any[] = []) {
+  const messageReceived$ = new Subject<any>();
+  activeAuthMock = {
+    currentUserEmail: () => 'seller@test.com',
+    currentUserRoles: () => ['VENDEDOR']
+  };
+  activeChatMock = {
+    messageReceived$,
+    connectionStatus$: new Subject<any>(),
+    sendMessageViaSocket: () => false,
+    createConversation: () => of(null),
+    getConversations: () => of([]),
+    getMessageHistory: () => of([]),
+    sendMessage: () => of({})
+  };
+  activeHttpMock = {
+    get: (url: string) => {
+      if (url.includes('/notificaciones')) {
+        return of(notifications);
+      }
+      if (url.includes('/chat/conversaciones')) {
+        return of([]);
+      }
+      return of([]);
+    },
+    post: () => of({}),
+    put: () => of({}),
+    delete: () => of({})
+  };
+
+  return messageReceived$;
+}
+
+describe('Chat notifications integration', () => {
+  it('refreshes buyer notifications when a seller message arrives', () => {
+    const buyerNotifications = [
+      {
+        id: 901,
+        tipo: 'CHAT',
+        titulo: 'Respuesta de Tienda QA',
+        contenido: 'La tienda Tienda QA te respondió: Tenemos stock disponible.',
+        fecha: new Date().toISOString(),
+        leido: false
+      }
+    ];
+    const messageReceived$ = createCustomerMocks(buyerNotifications);
+    const customerService = new CustomerService();
+
+    customerService.conversations.set([
+      {
+        id: 11,
+        vendedorId: 10,
+        vendedorNombreTienda: 'Tienda QA',
+        vendedorLogo: '/img/frutosSecos.jpg',
+        ultimoMensaje: '',
+        fechaUltimoMensaje: new Date().toISOString(),
+        noLeidos: 0,
+        mensajes: []
+      }
+    ]);
+
+    messageReceived$.next({
+      type: 'NEW_MESSAGE',
+      conversacionId: 11,
+      data: {
+        id: 71,
+        contenido: 'Tenemos stock disponible.',
+        fechaEnvio: new Date().toISOString(),
+        leido: false,
+        remitenteCorreo: 'seller@test.com'
+      }
+    });
+
+    expect(customerService.conversations()[0].noLeidos).toBe(1);
+    expect(customerService.notifications()).toHaveLength(1);
+    expect(customerService.unreadNotificationsCount()).toBe(1);
+    expect(customerService.notifications()[0].tipo).toBe('CHAT');
   });
 
-  // --- FLOW A: BUYER SENDING -> SELLER RECEIVING ---
-  it('Flow A: Buyer (Comprador) sends a chat query, updates state, and receives Seller (Vendedor) response', async () => {
-    // 1. Initial State Check
-    const initialConvs = customerService.conversations();
-    expect(initialConvs.length).toBeGreaterThan(0);
-    
-    const activeConv = initialConvs[0];
-    const initialMsgCount = activeConv.mensajes.length;
-    const vendorId = activeConv.vendedorId;
+  it('refreshes seller notifications when a buyer message arrives', () => {
+    const sellerNotifications = [
+      {
+        id: 777,
+        tipo: 'CHAT',
+        titulo: 'Nuevo mensaje de Buyer',
+        contenido: 'El comprador Buyer te escribió: ¿Tienen envío hoy?',
+        fecha: new Date().toISOString(),
+        leido: false
+      }
+    ];
+    const messageReceived$ = createSellerMocks(sellerNotifications);
+    const sellerService = new SellerService();
 
-    // 2. Emisor: Comprador sends query
-    const buyerQuery = '¿Tienen stock del Café Blend Premium de Grano de 1kg?';
-    await firstValueFrom(customerService.sendChatMessage(vendorId, buyerQuery));
-    
-    const updatedConvs = customerService.conversations();
-    const updatedConv = updatedConvs.find(c => c.vendedorId === vendorId)!;
-    
-    // Verify buyer query is appended immediately
-    expect(updatedConv.mensajes.length).toBe(initialMsgCount + 1);
-    expect(updatedConv.mensajes[updatedConv.mensajes.length - 1].remitente).toBe('COMPRADOR');
-    expect(updatedConv.mensajes[updatedConv.mensajes.length - 1].contenido).toBe(buyerQuery);
-    expect(updatedConv.ultimoMensaje).toBe(buyerQuery);
+    sellerService.conversations.set([
+      {
+        id: 22,
+        compradorNombre: 'Buyer',
+        compradorCorreo: 'buyer@test.com',
+        compradorAvatar: '/img/AdultoMayor.jpg',
+        ultimoMensaje: '',
+        fechaUltimoMensaje: new Date().toISOString(),
+        noLeidos: 0,
+        mensajes: []
+      }
+    ]);
 
-    // 3. Receptor: Trigger the vendor response simulation directly to test the receiver processing
-    (customerService as any).simulateVendorReply(vendorId);
+    messageReceived$.next({
+      type: 'NEW_MESSAGE',
+      conversacionId: 22,
+      data: {
+        id: 72,
+        contenido: '¿Tienen envío hoy?',
+        fechaEnvio: new Date().toISOString(),
+        leido: false,
+        remitenteCorreo: 'buyer@test.com'
+      }
+    });
 
-    const finalConvs = customerService.conversations();
-    const finalConv = finalConvs.find(c => c.vendedorId === vendorId)!;
-
-    // Verify vendor reply is appended and inbox notifications update reactively
-    expect(finalConv.mensajes.length).toBe(initialMsgCount + 2);
-    expect(finalConv.mensajes[finalConv.mensajes.length - 1].remitente).toBe('VENDEDOR');
-    expect(customerService.notifications().some(n => n.tipo === 'CHAT')).toBe(true);
-  });
-
-  // --- FLOW B: SELLER SENDING -> BUYER RECEIVING ---
-  it('Flow B: Seller (Vendedor) replies back to thread, updates state, and receives Buyer (Comprador) acknowledgement', async () => {
-    // 1. Initial State Check
-    const initialConvs = sellerService.conversations();
-    expect(initialConvs.length).toBeGreaterThan(0);
-    
-    const activeConv = initialConvs[0];
-    const initialMsgCount = activeConv.mensajes.length;
-    const convId = activeConv.id;
-
-    // 2. Emisor: Vendedor sends response
-    const sellerReply = 'Hola, sí, tenemos stock fresco tostado hace 3 días. Realice su pedido seguro.';
-    await firstValueFrom(sellerService.sendChatMessage(convId, sellerReply));
-    
-    const updatedConvs = sellerService.conversations();
-    const updatedConv = updatedConvs.find(c => c.id === convId)!;
-
-    // Verify seller reply is appended
-    expect(updatedConv.mensajes.length).toBe(initialMsgCount + 1);
-    expect(updatedConv.mensajes[updatedConv.mensajes.length - 1].remitente).toBe('VENDEDOR');
-    expect(updatedConv.mensajes[updatedConv.mensajes.length - 1].contenido).toBe(sellerReply);
-    expect(updatedConv.ultimoMensaje).toBe(sellerReply);
-
-    // 3. Receptor: Trigger the buyer response simulation directly
-    (sellerService as any).simulateBuyerReply(convId);
-
-    const finalConvs = sellerService.conversations();
-    const finalConv = finalConvs.find(c => c.id === convId)!;
-
-    // Verify buyer reply is appended and seller notification alerts register
-    expect(finalConv.mensajes.length).toBe(initialMsgCount + 2);
-    expect(finalConv.mensajes[finalConv.mensajes.length - 1].remitente).toBe('COMPRADOR');
-    expect(sellerService.notifications().some(n => n.tipo === 'CHAT')).toBe(true);
+    expect(sellerService.conversations()[0].noLeidos).toBe(1);
+    expect(sellerService.notifications()).toHaveLength(1);
+    expect(sellerService.unreadNotificationsCount()).toBe(1);
+    expect(sellerService.notifications()[0].tipo).toBe('CHAT');
   });
 });

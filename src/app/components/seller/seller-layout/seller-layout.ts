@@ -2,10 +2,11 @@ import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
-import { SellerService } from '../../../services/seller.service';
+import { SellerService, SellerConversation } from '../../../services/seller.service';
 import { ChatService } from '../../../services/chat.service';
 import { ThemeService } from '../../../services/theme.service';
 import { filter, Subscription } from 'rxjs';
+import { SellerNotification } from '../../../services/seller.service';
 
 interface SidebarMenuItem {
   label: string;
@@ -17,6 +18,11 @@ interface SidebarMenuItem {
 interface SidebarSection {
   title: string;
   items: SidebarMenuItem[];
+}
+
+interface ChatPreviewItem extends SellerConversation {
+  previewText: string;
+  metaText: string;
 }
 
 @Component({
@@ -43,6 +49,26 @@ export class SellerLayout implements OnInit, OnDestroy {
   
   // Breadcrumbs
   readonly breadcrumbs = signal<{ label: string; url: string }[]>([]);
+  readonly recentChatPreviews = computed<ChatPreviewItem[]>(() => {
+    return [...this.sellerService.conversations()]
+      .sort((a, b) => {
+        const unreadDiff = (b.noLeidos ?? 0) - (a.noLeidos ?? 0);
+        if (unreadDiff !== 0) return unreadDiff;
+        return new Date(b.fechaUltimoMensaje).getTime() - new Date(a.fechaUltimoMensaje).getTime();
+      })
+      .slice(0, 5)
+      .map(conv => {
+        const previewText = (conv.ultimoMensaje ?? '').trim() || 'Sin mensajes aún';
+        const metaText = conv.noLeidos > 0
+          ? `${conv.noLeidos} sin leer`
+          : `${conv.mensajes?.length ?? 0} mensajes`;
+        return {
+          ...conv,
+          previewText,
+          metaText
+        };
+      });
+  });
 
   private routerSubscription!: Subscription;
 
@@ -109,8 +135,8 @@ export class SellerLayout implements OnInit, OnDestroy {
     {
       title: 'OPERACIONES XML',
       items: [
-        { label: 'Importar XML', route: '/seller/imports', icon: 'upload_file' },
-        { label: 'Exportar Catálogo', route: '/seller/exports', icon: 'download_file' }
+        { label: 'Importaciones XML', route: '/seller/imports', icon: 'upload' },
+        { label: 'Exportaciones', route: '/seller/exports', icon: 'download' }
       ]
     },
     {
@@ -174,11 +200,13 @@ export class SellerLayout implements OnInit, OnDestroy {
 
   toggleNotifications(): void {
     this.closeAllDropdowns('notifications');
+    this.sellerService.refreshRealtimeInbox();
     this.showNotificationsDropdown.update(val => !val);
   }
 
   toggleMessages(): void {
     this.closeAllDropdowns('messages');
+    this.sellerService.refreshRealtimeInbox();
     this.showMessagesDropdown.update(val => !val);
   }
 
@@ -206,6 +234,33 @@ export class SellerLayout implements OnInit, OnDestroy {
     this.sellerService.markAllNotificationsAsRead();
   }
 
+  openNotification(notification: SellerNotification, event?: Event): void {
+    event?.stopPropagation();
+
+    if (notification.tipo === 'CHAT') {
+      const conversationId = this.resolveConversationIdFromNotification(notification);
+      if (conversationId !== null) {
+        this.router.navigate(['/seller/chat'], {
+          queryParams: { conversationId }
+        });
+      } else {
+        this.router.navigate(['/seller/chat']);
+      }
+      this.sellerService.markNotificationAsRead(notification.id);
+      this.closeAllDropdowns();
+      return;
+    }
+
+    this.sellerService.markNotificationAsRead(notification.id);
+  }
+
+  openChatConversation(conversationId: number): void {
+    this.closeAllDropdowns('messages');
+    this.router.navigate(['/seller/chat'], {
+      queryParams: { conversationId }
+    });
+  }
+
   handleSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     console.log('Buscador Global Seller:', input.value);
@@ -219,7 +274,8 @@ export class SellerLayout implements OnInit, OnDestroy {
   }
 
   private updateBreadcrumbs(url: string): void {
-    const segments = url.split('/').filter(p => p && p !== 'seller');
+    const cleanUrl = url.split('?')[0]?.split('#')[0] ?? url;
+    const segments = cleanUrl.split('/').filter(p => p && p !== 'seller');
     const crumbs = [{ label: 'Inicio', url: '/seller/dashboard' }];
     
     let cumulativeUrl = '/seller';
@@ -247,5 +303,30 @@ export class SellerLayout implements OnInit, OnDestroy {
     });
 
     this.breadcrumbs.set(crumbs);
+  }
+
+  private resolveConversationIdFromNotification(notification: SellerNotification): number | null {
+    const title = String(notification.titulo ?? '').toLowerCase();
+    const content = String(notification.contenido ?? '').toLowerCase();
+
+    const conversations = this.sellerService.conversations();
+
+    if (title.includes('respuesta de')) {
+      const storeName = notification.titulo.replace(/^Respuesta de\s+/i, '').trim().toLowerCase();
+      const match = conversations.find(conv => conv.compradorNombre.toLowerCase() === storeName || conv.compradorCorreo.toLowerCase().includes(storeName));
+      return match?.id ?? null;
+    }
+
+    if (title.includes('nuevo mensaje de')) {
+      const senderName = notification.titulo.replace(/^Nuevo mensaje de\s+/i, '').trim().toLowerCase();
+      const match = conversations.find(conv =>
+        conv.compradorNombre.toLowerCase() === senderName.toLowerCase() ||
+        conv.compradorCorreo.toLowerCase().includes(senderName.toLowerCase()) ||
+        content.includes(conv.compradorNombre.toLowerCase())
+      );
+      return match?.id ?? null;
+    }
+
+    return null;
   }
 }

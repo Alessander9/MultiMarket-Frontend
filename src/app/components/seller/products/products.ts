@@ -46,6 +46,41 @@ export class SellerProducts implements OnInit {
     return this.fallbackCategories.map((nombre, index) => ({ id: index + 1, nombre }));
   });
 
+  readonly catalogMetrics = computed(() => {
+    const products = this.sellerService.products();
+    const active = products.filter(product => product.estado === 'ACTIVO').length;
+    const lowStock = products.filter(product => product.stock > 0 && product.stock <= 10).length;
+    const withoutStock = products.filter(product => product.stock <= 0 || product.estado === 'SIN_STOCK').length;
+    const averagePrice = products.length
+      ? products.reduce((acc, product) => acc + product.precio, 0) / products.length
+      : 0;
+
+    return {
+      total: products.length,
+      active,
+      lowStock,
+      withoutStock,
+      averagePrice: averagePrice.toFixed(2)
+    };
+  });
+
+  readonly formCompletion = computed(() => {
+    if (!this.productForm) return 0;
+
+    const fields = ['nombre', 'descripcion', 'sku', 'categoriaId', 'precio', 'stock', 'peso'];
+    const filled = fields.filter(field => {
+      const value = this.productForm.get(field)?.value;
+      return value !== null && value !== undefined && String(value).trim() !== '' && String(value) !== '0';
+    }).length;
+
+    return Math.round((filled / fields.length) * 100);
+  });
+
+  readonly previewStateLabel = computed(() => {
+    const state = this.productForm?.get('estado')?.value || 'ACTIVO';
+    return state === 'ACTIVO' ? 'Publicación lista' : state === 'INACTIVO' ? 'Borrador seguro' : 'Sin stock';
+  });
+
   // Reactive Form
   productForm!: FormGroup;
 
@@ -216,13 +251,23 @@ export class SellerProducts implements OnInit {
     if (this.viewState() === 'create') {
       this.sellerService.createProduct(prodData).subscribe({
         next: () => {
-          this.isLoading.set(false);
-          this.showFeedback('Producto creado exitosamente.', 'success');
-          this.viewState.set('list');
+          this.sellerService.loadBackendData().subscribe({
+            next: () => {
+              this.isLoading.set(false);
+              this.showFeedback('Producto creado exitosamente.', 'success');
+              this.viewState.set('list');
+              this.currentPage.set(1);
+            },
+            error: () => {
+              this.isLoading.set(false);
+              this.showFeedback('Producto creado, pero no se pudo sincronizar la vista.', 'error');
+              this.viewState.set('list');
+            }
+          });
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.showFeedback(err.message || 'Error al crear producto.', 'error');
+          this.showFeedback(err?.error?.message || err?.message || 'Error al crear producto.', 'error');
         }
       });
     } else { // edit
@@ -230,13 +275,23 @@ export class SellerProducts implements OnInit {
       if (id) {
         this.sellerService.updateProduct(id, prodData).subscribe({
           next: () => {
-            this.isLoading.set(false);
-            this.showFeedback('Producto actualizado exitosamente.', 'success');
-            this.viewState.set('list');
+            this.sellerService.loadBackendData().subscribe({
+              next: () => {
+                this.isLoading.set(false);
+                this.showFeedback('Producto actualizado exitosamente.', 'success');
+                this.viewState.set('list');
+                this.currentPage.set(1);
+              },
+              error: () => {
+                this.isLoading.set(false);
+                this.showFeedback('Producto actualizado, pero no se pudo sincronizar la vista.', 'error');
+                this.viewState.set('list');
+              }
+            });
           },
           error: (err) => {
             this.isLoading.set(false);
-            this.showFeedback(err.message || 'Error al actualizar producto.', 'error');
+            this.showFeedback(err?.error?.message || err?.message || 'Error al actualizar producto.', 'error');
           }
         });
       }
@@ -259,9 +314,18 @@ export class SellerProducts implements OnInit {
     this.isLoading.set(true);
     this.sellerService.deleteProduct(data.id).subscribe({
       next: () => {
-        this.isLoading.set(false);
-        this.showFeedback('Producto eliminado con éxito.', 'success');
-        this.currentPage.set(1);
+        this.sellerService.loadBackendData().subscribe({
+          next: () => {
+            this.isLoading.set(false);
+            this.showFeedback('Producto eliminado con éxito.', 'success');
+            this.currentPage.set(1);
+          },
+          error: () => {
+            this.isLoading.set(false);
+            this.showFeedback('Producto eliminado, pero no se pudo sincronizar la vista.', 'error');
+            this.currentPage.set(1);
+          }
+        });
       },
       error: () => {
         this.isLoading.set(false);
@@ -303,6 +367,28 @@ export class SellerProducts implements OnInit {
     return imageUrl || this.selectedProduct()?.imagenes?.[0] || this.defaultPreviewImage;
   }
 
+  getDetailImages(): string[] {
+    const images = this.selectedProduct()?.imagenes?.filter(Boolean) ?? [];
+    const fallbackPool = [
+      this.defaultPreviewImage,
+      '/img/aceite-oliva.jpeg',
+      '/img/super-alimentos-bg.jpeg'
+    ];
+
+    const merged = [...images];
+    fallbackPool.forEach(image => {
+      if (merged.length < 4 && !merged.includes(image)) {
+        merged.push(image);
+      }
+    });
+
+    return merged.slice(0, 4);
+  }
+
+  getDetailPrimaryImage(): string {
+    return this.getDetailImages()[0] || this.defaultPreviewImage;
+  }
+
   getSelectedStateLabel(): string {
     const state = this.selectedProduct();
     if (!state) return '';
@@ -318,5 +404,10 @@ export class SellerProducts implements OnInit {
   getSelectedCategoryName(): string {
     const selectedId = Number(this.productForm?.get('categoriaId')?.value);
     return this.categoryOptions().find(cat => cat.id === selectedId)?.nombre ?? 'Sin categoría';
+  }
+
+  getPreviewPrice(): string {
+    const price = Number(this.productForm?.get('precio')?.value ?? 0);
+    return price > 0 ? price.toFixed(2) : '0.00';
   }
 }

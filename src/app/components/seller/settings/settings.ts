@@ -78,7 +78,7 @@ export class SellerSettingsComponent implements OnInit {
     this.sellerService.saveSettings(updated).subscribe({
       next: () => {
         this.isSaving.set(false);
-        this.showToast('Datos de cuenta actualizados.');
+        this.showToast('Datos de sesión actualizados.');
       },
       error: () => this.isSaving.set(false)
     });

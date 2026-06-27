@@ -17,6 +17,7 @@ export interface StoreProfile {
   banner: string;
   correo: string;
   telefono: string;
+  calificacionPromedio?: number;
   redesSociales: {
     facebook?: string;
     instagram?: string;
@@ -68,6 +69,7 @@ export interface SellerOrder {
   clienteCorreo: string;
   items: OrderItem[];
   subtotal: number;
+  impuesto?: number;
   envio: number;
   total: number;
   estado: 'PENDIENTE' | 'PROCESANDO' | 'ENVIADO' | 'ENTREGADO' | 'CANCELADO';
@@ -136,6 +138,17 @@ export interface SellerPayout {
   cuentaDestino: string;
 }
 
+export interface SellerPaymentRecord {
+  id: number;
+  monto: number;
+  metodoPago: string;
+  estadoPago: string;
+  fechaPago: string;
+  codigoOperacion: string;
+  pedidoId: number;
+  numeroPedido: string;
+}
+
 export interface SellerNotification {
   id: number;
   tipo: 'PEDIDO' | 'PAGO' | 'CHAT' | 'SISTEMA';
@@ -173,6 +186,7 @@ export class SellerService {
   private readonly chatService = inject(ChatService);
   private readonly baseUrl = environment.apiUrl;
   private storeId: number | null = null;
+  readonly backendLoaded = signal(false);
 
   constructor() {
     this.chatService.messageReceived$.subscribe(payload => {
@@ -184,18 +198,20 @@ export class SellerService {
 
   // 1. Tienda Profile
   readonly storeProfile = signal<StoreProfile>({
-    nombre: 'Ferretería Cleo',
-    descripcion: 'Líderes en distribución de herramientas manuales, eléctricas, materiales de construcción, cerrajería, iluminación y acabados para el hogar. Más de 15 años brindando soluciones confiables a maestros de obra, talleres industriales, artesanos y familias de Lima Norte.',
-    region: 'Lima',
-    direccion: 'Av. Alfredo Mendiola 3540, Los Olivos, Lima',
-    logo: '/img/frutosSecos.jpg',
-    banner: '/img/frutos-secos-bg.jpeg',
-    correo: 'contacto@ferreteriacleo.pe',
-    telefono: '+51 999 888 777',
+    nombre: '',
+    descripcion: '',
+    region: '',
+    direccion: '',
+    logo: '',
+    banner: '',
+    correo: this.authService.currentUserEmail() ?? '',
+    telefono: '',
+    calificacionPromedio: 0,
     redesSociales: {
-      facebook: 'https://facebook.com/ferreteriacleooficial',
-      instagram: 'https://instagram.com/ferreteriacleo',
-      website: 'https://www.ferreteriacleo.pe'
+      facebook: '',
+      instagram: '',
+      twitter: '',
+      website: ''
     }
   });
 
@@ -206,193 +222,38 @@ export class SellerService {
   readonly inventoryMovements = signal<InventoryMovement[]>([]);
 
   // 4. Pedidos
-  readonly orders = signal<SellerOrder[]>([
-    {
-      id: 2001,
-      numeroPedido: 'PED-7768',
-      fecha: '2026-05-31T20:15:00-05:00',
-      clienteNombre: 'Carlos Mendoza',
-      clienteCorreo: 'carlos.mendoza@gmail.com',
-      items: [
-        { id: 3001, productoId: 101, productoNombre: 'Taladro Percutor DeWalt 20V Max', sku: 'FER-TAL-DEW-20V', precio: 489.00, cantidad: 1, imagen: '/img/aceite-coco.jpeg' },
-        { id: 3002, productoId: 102, productoNombre: 'Juego de Herramientas Stanley (110 piezas)', sku: 'FER-JUE-STA-110P', precio: 299.90, cantidad: 1, imagen: '/img/aceite-oliva.jpeg' }
-      ],
-      subtotal: 788.90,
-      envio: 15.00,
-      total: 803.90,
-      estado: 'PENDIENTE',
-      metodoPago: 'YAPE',
-      direccionEntrega: 'Av. Larco 452, Dpto 502, Miraflores, Lima'
-    },
-    {
-      id: 2002,
-      numeroPedido: 'PED-7765',
-      fecha: '2026-05-31T15:30:00-05:00',
-      clienteNombre: 'Andrea Rojas',
-      clienteCorreo: 'andrea.rojas@outlook.com',
-      items: [
-        { id: 3003, productoId: 108, productoNombre: 'Candado de Acero Blindado Forte 60mm', sku: 'FER-CAN-FOR-60', precio: 59.90, cantidad: 4, imagen: '/img/miel.jpg' }
-      ],
-      subtotal: 239.60,
-      envio: 10.00,
-      total: 249.60,
-      estado: 'PROCESANDO',
-      metodoPago: 'VISA',
-      direccionEntrega: 'Calle Los Pinos 142, San Isidro, Lima'
-    },
-    {
-      id: 2003,
-      numeroPedido: 'PED-7762',
-      fecha: '2026-05-30T11:00:00-05:00',
-      clienteNombre: 'Juan Carlos Guerrero',
-      clienteCorreo: 'jc.guerrero@hotmail.com',
-      items: [
-        { id: 3004, productoId: 105, productoNombre: 'Cerradura Digital Inteligente Yale YDF40', sku: 'FER-CER-YAL-DIG', precio: 389.00, cantidad: 1, imagen: '/img/propoleo.jpg' }
-      ],
-      subtotal: 389.00,
-      envio: 25.00,
-      total: 414.00,
-      estado: 'ENVIADO',
-      metodoPago: 'PLIN',
-      direccionEntrega: 'Av. El Sol 821, Wanchaq, Cusco'
-    },
-    {
-      id: 2004,
-      numeroPedido: 'PED-7750',
-      fecha: '2026-05-28T09:45:00-05:00',
-      clienteNombre: 'Maria Alejandra Torres',
-      clienteCorreo: 'm.torres@gmail.com',
-      items: [
-        { id: 3005, productoId: 107, productoNombre: 'Pintura Látex CPP Pato Premium - Blanco (4 Galones)', sku: 'FER-PIN-PAT-BL4', precio: 189.00, cantidad: 2, imagen: '/img/super-alimentos-bg.jpeg' },
-        { id: 3006, productoId: 111, productoNombre: 'Wincha Métrica Stanley Powerlock 8m/26ft', sku: 'FER-WIN-STA-8M', precio: 42.00, cantidad: 1, imagen: '/img/frutosSecos.jpg' }
-      ],
-      subtotal: 420.00,
-      envio: 15.00,
-      total: 435.00,
-      estado: 'ENTREGADO',
-      metodoPago: 'MASTERCARD',
-      direccionEntrega: 'Urb. Santa Victoria G-15, Chiclayo, Lambayeque'
-    },
-    {
-      id: 2005,
-      numeroPedido: 'PED-7744',
-      fecha: '2026-05-27T14:20:00-05:00',
-      clienteNombre: 'Pedro Alvarez',
-      clienteCorreo: 'palvarez@cibertec.edu.pe',
-      items: [
-        { id: 3007, productoId: 101, productoNombre: 'Taladro Percutor DeWalt 20V Max', sku: 'FER-TAL-DEW-20V', precio: 489.00, cantidad: 1, imagen: '/img/aceite-coco.jpeg' }
-      ],
-      subtotal: 489.00,
-      envio: 15.00,
-      total: 504.00,
-      estado: 'CANCELADO',
-      metodoPago: 'TRANSFERENCIA',
-      direccionEntrega: 'Jr. Huallaga 321, Tarapoto, San Martín'
-    }
-  ]);
+  readonly orders = signal<SellerOrder[]>([]);
 
   // 5. Clientes
-  readonly customers = signal<SellerCustomer[]>([
-    { id: 801, nombre: 'Carlos Mendoza', correo: 'carlos.mendoza@gmail.com', telefono: '+51 912 345 678', comprasTotales: 3, ultimaCompraFecha: '2026-05-31', montoAcumulado: 412.50, ciudad: 'Lima' },
-    { id: 802, nombre: 'Andrea Rojas', correo: 'andrea.rojas@outlook.com', telefono: '+51 922 456 789', comprasTotales: 5, ultimaCompraFecha: '2026-05-31', montoAcumulado: 380.00, ciudad: 'Lima' },
-    { id: 803, nombre: 'Juan Carlos Guerrero', correo: 'jc.guerrero@hotmail.com', telefono: '+51 933 567 890', comprasTotales: 2, ultimaCompraFecha: '2026-05-30', montoAcumulado: 219.00, ciudad: 'Cusco' },
-    { id: 804, nombre: 'Maria Alejandra Torres', correo: 'm.torres@gmail.com', telefono: '+51 944 678 901', comprasTotales: 4, ultimaCompraFecha: '2026-05-28', montoAcumulado: 580.90, ciudad: 'Chiclayo' },
-    { id: 805, nombre: 'Pedro Alvarez', correo: 'palvarez@cibertec.edu.pe', telefono: '+51 955 789 012', comprasTotales: 1, ultimaCompraFecha: '2026-05-27', montoAcumulado: 74.90, ciudad: 'Tarapoto' },
-    { id: 806, nombre: 'Sofia Castro', correo: 'sofia.castro@gmail.com', telefono: '+51 966 890 123', comprasTotales: 8, ultimaCompraFecha: '2026-05-20', montoAcumulado: 1250.00, ciudad: 'Arequipa' }
-  ]);
+  readonly customers = signal<SellerCustomer[]>([]);
 
   // 6. Chat & Mensajes
-  readonly conversations = signal<SellerConversation[]>([
-    {
-      id: 401,
-      compradorNombre: 'Carlos Mendoza',
-      compradorCorreo: 'carlos.mendoza@gmail.com',
-      compradorAvatar: '/img/AdultoMayor.jpg',
-      ultimoMensaje: 'Hola, acabo de realizar mi pedido. ¿Cuándo se despacha?',
-      fechaUltimoMensaje: '2026-05-31T20:45:00-05:00',
-      noLeidos: 1,
-      mensajes: [
-        { id: 1, remitente: 'COMPRADOR', contenido: 'Buenas tardes. Quisiera consultar sobre el Café Blend Premium en grano.', fecha: '2026-05-31T14:10:00-05:00', leido: true },
-        { id: 2, remitente: 'VENDEDOR', contenido: '¡Hola Carlos! Un gusto saludarte. El Café Blend Premium está tostado hace solo 3 días, tiene un perfil excelente. ¿Deseas molido o en grano entero?', fecha: '2026-05-31T14:15:00-05:00', leido: true },
-        { id: 3, remitente: 'COMPRADOR', contenido: 'Excelente. Lo prefiero en grano. Haré la compra ahora mismo.', fecha: '2026-05-31T14:20:00-05:00', leido: true },
-        { id: 4, remitente: 'COMPRADOR', contenido: 'Hola, acabo de realizar mi pedido. ¿Cuándo se despacha?', fecha: '2026-05-31T20:45:00-05:00', leido: false }
-      ]
-    },
-    {
-      id: 402,
-      compradorNombre: 'Andrea Rojas',
-      compradorCorreo: 'andrea.rojas@outlook.com',
-      compradorAvatar: '/img/AdultoMayor.jpg',
-      ultimoMensaje: 'Muchas gracias por la atención brindada.',
-      fechaUltimoMensaje: '2026-05-31T16:15:00-05:00',
-      noLeidos: 0,
-      mensajes: [
-        { id: 5, remitente: 'COMPRADOR', contenido: 'Hola, ¿tienen stock del chocolate para taza tradicional?', fecha: '2026-05-31T15:10:00-05:00', leido: true },
-        { id: 6, remitente: 'VENDEDOR', contenido: 'Hola Andrea. Sí tenemos stock disponible, en tabletas puras de cacao chuncho de Cusco. Puedes ordenar con total tranquilidad.', fecha: '2026-05-31T15:12:00-05:00', leido: true },
-        { id: 7, remitente: 'COMPRADOR', contenido: 'Perfecto, acabo de hacer el pago por Visa de 4 tabletas.', fecha: '2026-05-31T15:32:00-05:00', leido: true },
-        { id: 8, remitente: 'VENDEDOR', contenido: 'Confirmado. Tu pedido PED-7765 está en preparación y saldrá mañana temprano en el primer turno de reparto.', fecha: '2026-05-31T16:00:00-05:00', leido: true },
-        { id: 9, remitente: 'COMPRADOR', contenido: 'Muchas gracias por la atención brindada.', fecha: '2026-05-31T16:15:00-05:00', leido: true }
-      ]
-    },
-    {
-      id: 403,
-      compradorNombre: 'Juan Carlos Guerrero',
-      compradorCorreo: 'jc.guerrero@hotmail.com',
-      compradorAvatar: '/img/AdultoMayor.jpg',
-      ultimoMensaje: 'El café llegó perfecto. Un sabor increíble.',
-      fechaUltimoMensaje: '2026-05-30T18:30:00-05:00',
-      noLeidos: 0,
-      mensajes: [
-        { id: 10, remitente: 'COMPRADOR', contenido: 'Hola, hacen envíos a Cusco ciudad?', fecha: '2026-05-29T10:00:00-05:00', leido: true },
-        { id: 11, remitente: 'VENDEDOR', contenido: 'Sí Juan Carlos, enviamos a nivel nacional vía Olva Courier. A Cusco toma aproximadamente de 24 a 48 horas.', fecha: '2026-05-29T10:05:00-05:00', leido: true },
-        { id: 12, remitente: 'COMPRADOR', contenido: 'Comprado. Pedido PED-7762.', fecha: '2026-05-30T11:05:00-05:00', leido: true },
-        { id: 13, remitente: 'VENDEDOR', contenido: 'Perfecto. Ya se encuentra en tránsito con el número de seguimiento OLV-8832941.', fecha: '2026-05-30T12:00:00-05:00', leido: true },
-        { id: 14, remitente: 'COMPRADOR', contenido: 'El café llegó perfecto. Un sabor increíble.', fecha: '2026-05-30T18:30:00-05:00', leido: true }
-      ]
-    }
-  ]);
+  readonly conversations = signal<SellerConversation[]>([]);
 
   // 7. Importaciones XML
-  readonly xmlImports = signal<XmlImportLog[]>([
-    { id: 701, fecha: '2026-05-31T11:00:00-05:00', archivoNombre: 'catalogo_cafe_mayo2026.xml', registrosProcesados: 12, registrosCreados: 8, registrosActualizados: 4, registrosFallidos: 0, estado: 'EXITOSO' },
-    { id: 702, fecha: '2026-05-28T16:30:00-05:00', archivoNombre: 'catalogo_chocolates_err.xml', registrosProcesados: 5, registrosCreados: 2, registrosActualizados: 1, registrosFallidos: 2, estado: 'PARCIAL', detallesErrores: ['Línea 24: SKU CHO-TAZ-TRA-200G duplicado en sistema.', 'Línea 38: Categoría "Confitería" no existe en la tienda.'] },
-    { id: 703, fecha: '2026-05-20T09:15:00-05:00', archivoNombre: 'artesanias_malformado.xml', registrosProcesados: 0, registrosCreados: 0, registrosActualizados: 0, registrosFallidos: 0, estado: 'FALLIDO', detallesErrores: ['Error XML Parsing: Etiqueta de cierre </producto> ausente o inválida en la línea 12.'] }
-  ]);
+  readonly xmlImports = signal<XmlImportLog[]>([]);
 
   // 8. Exportaciones
-  readonly exports = signal<ExportLog[]>([
-    { id: 601, fecha: '2026-05-31T22:00:00-05:00', tipo: 'JSON', archivoNombre: 'export_catalogo_cafe_altomayo_20260531.json', registrosExportados: 6, urlDescarga: '/exports/export_catalogo_cafe_altomayo_20260531.json' },
-    { id: 602, fecha: '2026-05-25T14:00:00-05:00', tipo: 'XML', archivoNombre: 'export_catalogo_cafe_altomayo_20260525.xml', registrosExportados: 6, urlDescarga: '/exports/export_catalogo_cafe_altomayo_20260525.xml' }
-  ]);
+  readonly exports = signal<ExportLog[]>([]);
 
   // 9. Pagos & Liquidaciones
-  readonly payouts = signal<SellerPayout[]>([
-    { id: 901, codigoOperacion: 'LIQ-0029412', fecha: '2026-05-28', monto: 2450.00, metodo: 'Transferencia BCP', estado: 'LIQUIDADO', cuentaDestino: 'CTA-BCP-***4829' },
-    { id: 902, codigoOperacion: 'LIQ-0028391', fecha: '2026-05-15', monto: 3820.50, metodo: 'Transferencia BCP', estado: 'LIQUIDADO', cuentaDestino: 'CTA-BCP-***4829' },
-    { id: 903, codigoOperacion: 'LIQ-0027129', fecha: '2026-04-30', monto: 1980.00, metodo: 'Transferencia Interbank', estado: 'LIQUIDADO', cuentaDestino: 'CTA-INT-***9921' },
-    { id: 904, codigoOperacion: 'LIQ-0030101', fecha: '2026-05-31', monto: 1250.00, metodo: 'Transferencia BCP', estado: 'PROCESANDO', cuentaDestino: 'CTA-BCP-***4829' }
-  ]);
+  readonly payouts = signal<SellerPayout[]>([]);
+  readonly payments = signal<SellerPaymentRecord[]>([]);
 
   // 10. Notificaciones
-  readonly notifications = signal<SellerNotification[]>([
-    { id: 1, tipo: 'PEDIDO', titulo: 'Nuevo Pedido Recibido', contenido: 'El comprador Carlos Mendoza ha realizado el pedido PED-7768 por un monto de S/ 169.30.', fecha: '2026-05-31T20:15:00-05:00', leido: false },
-    { id: 2, tipo: 'CHAT', titulo: 'Mensaje sin leer', contenido: 'Carlos Mendoza envió un mensaje: "Hola, acabo de realizar mi pedido. ¿Cuándo se despacha?"', fecha: '2026-05-31T20:45:00-05:00', leido: false },
-    { id: 3, tipo: 'PAGO', titulo: 'Liquidación en Proceso', contenido: 'Se ha iniciado la liquidación quincenal LIQ-0030101 por S/ 1,250.00 a tu cuenta registrada.', fecha: '2026-05-31T00:05:00-05:00', leido: true },
-    { id: 4, tipo: 'SISTEMA', titulo: 'Stock Crítico de Producto', contenido: 'Alerta: El stock de "Café Espresso Roast - Grano 500g" ha bajado a 8 unidades (Mínimo recomendado: 10).', fecha: '2026-05-30T18:00:00-05:00', leido: false },
-    { id: 5, tipo: 'PEDIDO', titulo: 'Pedido Entregado con Éxito', contenido: 'El pedido PED-7750 a nombre de Maria Alejandra Torres ha sido entregado en Chiclayo.', fecha: '2026-05-28T16:45:00-05:00', leido: true }
-  ]);
+  readonly notifications = signal<SellerNotification[]>([]);
 
   // 11. Configuraciones
   readonly settings = signal<SellerSettings>({
     cuenta: {
-      nombrePersonal: 'Alessander Guerrero',
-      correo: 'vendedor@cafealtomayo.pe',
-      telefono: '+51 988 777 666',
-      cargo: 'Gerente General y Propietario'
+      nombrePersonal: this.buildDisplayNameFromSession(),
+      correo: this.authService.currentUserEmail() ?? '',
+      telefono: '',
+      cargo: this.authService.currentUserRoles().includes('VENDEDOR') ? 'Propietario Tienda' : 'Usuario'
     },
     seguridad: {
       dobleFactor: false,
-      ultimaSesion: '2026-05-31T18:30:24-05:00 (Tarapoto, Perú)'
+      ultimaSesion: new Date().toISOString()
     },
     preferencias: {
       idioma: 'es',
@@ -420,12 +281,29 @@ export class SellerService {
     return this.orders().filter(o => o.estado === 'PENDIENTE').length;
   });
 
-  readonly salesToday = computed(() => 2540);
-  readonly salesMonth = computed(() => 32500);
+  readonly salesToday = computed(() => this.sumOrdersForDate(new Date()));
+  readonly salesMonth = computed(() => this.sumOrdersForMonth(new Date()));
   readonly activeProductsCount = computed(() => this.products().filter(p => p.estado === 'ACTIVO').length);
-  readonly newCustomersCount = computed(() => 25);
-  readonly storeRating = computed(() => 4.8);
+  readonly deliveredOrdersCount = computed(() => this.orders().filter(o => o.estado === 'ENTREGADO').length);
+  readonly newCustomersCount = computed(() => this.countUniqueCustomersForMonth(new Date()));
+  readonly storeRating = computed(() => Number(this.storeProfile().calificacionPromedio ?? 0));
   readonly categories = signal<{ id: number; nombre: string }[]>([]);
+  readonly salesTodayTrend = computed(() => this.buildTrendLabel(this.sumOrdersForDate(new Date()), this.sumOrdersForDate(this.addDays(new Date(), -1)), 'vs ayer'));
+  readonly salesMonthTrend = computed(() => this.buildTrendLabel(this.sumOrdersForMonth(new Date()), this.sumOrdersForMonth(this.addMonths(new Date(), -1)), 'vs mes ant.'));
+  readonly deliveredOrdersTrend = computed(() => {
+    const total = this.orders().length;
+    const delivered = this.deliveredOrdersCount();
+    const rate = total > 0 ? Math.round((delivered * 1000) / total) / 10 : 0;
+    return `${rate.toFixed(1)}% efectividad`;
+  });
+  readonly newCustomersTrend = computed(() => {
+    const count = this.newCustomersCount();
+    return count > 0 ? `+${count} este mes` : 'Sin altas este mes';
+  });
+  readonly storeRatingTrend = computed(() => {
+    const rating = this.storeRating();
+    return rating > 0 ? `${this.orders().length} pedidos analizados` : 'Sin calificaciones aún';
+  });
 
   private normalizeStoreProfile(store: any): StoreProfile {
     this.storeId = store?.id ?? this.storeId;
@@ -438,6 +316,7 @@ export class SellerService {
       banner: store?.banner ?? this.storeProfile().banner,
       correo: store?.correo ?? this.storeProfile().correo,
       telefono: store?.telefono ?? this.storeProfile().telefono,
+      calificacionPromedio: Number(store?.calificacionPromedio ?? this.storeProfile().calificacionPromedio ?? 0),
       redesSociales: this.storeProfile().redesSociales
     };
   }
@@ -496,6 +375,7 @@ export class SellerService {
         imagen: item?.imagen ?? item?.imagenes?.[0] ?? '/img/aceite-oliva.jpeg'
       })),
       subtotal: Number(order?.subtotal ?? 0),
+      impuesto: Number(order?.impuesto ?? 0),
       envio: Number(order?.costoEnvio ?? order?.envio ?? 0),
       total: Number(order?.total ?? 0),
       estado: (order?.estado ?? 'PENDIENTE') as SellerOrder['estado'],
@@ -513,6 +393,36 @@ export class SellerService {
       fecha: notif?.fecha ?? notif?.fechaCreacion ?? new Date().toISOString(),
       leido: Boolean(notif?.leido)
     };
+  }
+
+  private refreshNotificationsFromBackend(): void {
+    this.http.get<any[]>(`${this.baseUrl}/notificaciones`).pipe(
+      catchError(() => of([]))
+    ).subscribe({
+      next: notifications => {
+        this.notifications.set(notifications.map(notif => this.normalizeNotification(notif)));
+      }
+    });
+  }
+
+  private refreshConversationsFromBackend(): void {
+    this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones`).pipe(
+      catchError(() => of([]))
+    ).subscribe({
+      next: conversations => {
+        const existing = new Map(this.conversations().map(conv => [conv.id, conv]));
+        this.conversations.set(conversations.map(conv => {
+          const normalized = this.normalizeConversation(conv);
+          const previous = existing.get(normalized.id);
+          return previous ? { ...normalized, mensajes: previous.mensajes } : normalized;
+        }));
+      }
+    });
+  }
+
+  refreshRealtimeInbox(): void {
+    this.refreshConversationsFromBackend();
+    this.refreshNotificationsFromBackend();
   }
 
   private normalizeConversation(conv: any): SellerConversation {
@@ -562,14 +472,28 @@ export class SellerService {
       request$.pipe(catchError(() => of(fallback)));
 
     return forkJoin({
+      profile: safeGet(this.http.get<any>(`${this.baseUrl}/auth/profile`), null),
       store: safeGet(this.http.get<any>(`${this.baseUrl}/vendedores/mi-tienda`), null),
       categories: safeGet(this.http.get<any[]>(`${this.baseUrl}/categorias`), []),
       products: safeGet(this.http.get<any[]>(`${this.baseUrl}/vendedores/mi-tienda/productos`), []),
       orders: safeGet(this.http.get<any[]>(`${this.baseUrl}/pedidos/tienda`), []),
       notifications: safeGet(this.http.get<any[]>(`${this.baseUrl}/notificaciones`), []),
-      conversations: safeGet(this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones`), [])
+      conversations: safeGet(this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones`), []),
+      imports: safeGet(this.http.get<any[]>(`${this.baseUrl}/importar`), []),
+      exports: safeGet(this.http.get<any[]>(`${this.baseUrl}/exportar`), [])
+      ,payments: safeGet(this.http.get<any[]>(`${this.baseUrl}/pagos/mi-historial`), [])
     }).pipe(
-      tap(({ store, categories, products, orders, notifications, conversations }) => {
+      tap(({ profile, store, categories, products, orders, notifications, conversations, imports, exports, payments }) => {
+        this.settings.update(current => ({
+          ...current,
+          cuenta: {
+            nombrePersonal: this.buildDisplayNameFromProfile(profile),
+            correo: profile?.correo ?? current.cuenta.correo ?? this.authService.currentUserEmail() ?? '',
+            telefono: profile?.telefono ?? current.cuenta.telefono ?? '',
+            cargo: this.authService.currentUserRoles().includes('VENDEDOR') ? 'Propietario Tienda' : current.cuenta.cargo
+          }
+        }));
+
         if (store) {
           this.storeProfile.set(this.normalizeStoreProfile(store));
         }
@@ -585,6 +509,20 @@ export class SellerService {
         this.orders.set(orders.map(o => this.normalizeOrder(o)));
         this.notifications.set(notifications.map(n => this.normalizeNotification(n)));
         this.conversations.set(conversations.map(c => this.normalizeConversation(c)));
+        this.xmlImports.set(imports.map(i => this.normalizeImport(i)));
+        this.exports.set(exports.map(e => this.normalizeExport(e)));
+        this.payments.set((payments ?? []).map(p => ({
+          id: Number(p?.id ?? 0),
+          monto: Number(p?.monto ?? 0),
+          metodoPago: p?.metodoPago ?? '',
+          estadoPago: p?.estadoPago ?? '',
+          fechaPago: p?.fechaPago ?? new Date().toISOString(),
+          codigoOperacion: p?.codigoOperacion ?? '',
+          pedidoId: Number(p?.pedidoId ?? 0),
+          numeroPedido: p?.numeroPedido ?? ''
+        })));
+        this.rebuildCustomersFromOrders();
+        this.backendLoaded.set(true);
       }),
       map(() => void 0)
     );
@@ -797,14 +735,6 @@ export class SellerService {
           }
 
           // Trigger a notification for new customer messages
-          if (!isSeller) {
-            this.addNotification(
-              'CHAT',
-              `Nuevo mensaje de ${c.compradorNombre}`,
-              msg.contenido
-            );
-          }
-
           return {
             ...c,
             ultimoMensaje: msg.contenido,
@@ -872,6 +802,7 @@ export class SellerService {
     this.http.put<void>(`${this.baseUrl}/notificaciones/${id}/leer`, null).subscribe({
       next: () => {
         this.notifications.update(list => list.map(n => n.id === id ? { ...n, leido: true } : n));
+        this.refreshNotificationsFromBackend();
       }
     });
   }
@@ -943,8 +874,151 @@ export class SellerService {
 
   // Guardar Configuraciones
   saveSettings(updated: SellerSettings): Observable<SellerSettings> {
-    return of(updated).pipe(
+    return this.http.put<any>(`${this.baseUrl}/auth/profile`, {
+      nombrePersonal: updated.cuenta.nombrePersonal,
+      telefono: updated.cuenta.telefono,
+      direccion: this.storeProfile().direccion,
+      fotoPerfil: this.storeProfile().logo
+    }).pipe(
+      map(profile => ({
+        ...updated,
+        cuenta: {
+          nombrePersonal: profile?.nombres && profile?.apellidos
+            ? `${profile.nombres} ${profile.apellidos}`.trim()
+            : updated.cuenta.nombrePersonal,
+          correo: profile?.correo ?? updated.cuenta.correo,
+          telefono: profile?.telefono ?? updated.cuenta.telefono,
+          cargo: updated.cuenta.cargo
+        }
+      })),
       tap(settings => this.settings.set(settings))
     );
+  }
+
+  private buildDisplayNameFromSession(): string {
+    const email = this.authService.currentUserEmail() ?? '';
+    return this.emailToDisplayName(email);
+  }
+
+  private buildDisplayNameFromProfile(profile: any): string {
+    const nombres = String(profile?.nombres ?? '').trim();
+    const apellidos = String(profile?.apellidos ?? '').trim();
+    const fullName = [nombres, apellidos].filter(Boolean).join(' ').trim();
+    if (fullName) {
+      return fullName;
+    }
+    return this.emailToDisplayName(profile?.correo ?? this.authService.currentUserEmail() ?? '');
+  }
+
+  private emailToDisplayName(email: string): string {
+    if (!email) {
+      return 'Vendedor';
+    }
+    const localPart = email.split('@')[0] ?? '';
+    return localPart
+      .replace(/[._-]+/g, ' ')
+      .split(' ')
+      .filter(Boolean)
+      .map(token => token.charAt(0).toUpperCase() + token.slice(1))
+      .join(' ');
+  }
+
+  private sumOrdersForDate(date: Date): number {
+    const target = date.toDateString();
+    return this.orders()
+      .filter(order => {
+        const orderDate = new Date(order.fecha);
+        return orderDate.toDateString() === target;
+      })
+      .reduce((acc, order) => acc + Number(order.total ?? 0), 0);
+  }
+
+  private sumOrdersForMonth(date: Date): number {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    return this.orders()
+      .filter(order => {
+        const orderDate = new Date(order.fecha);
+        return orderDate.getFullYear() === year && orderDate.getMonth() === month;
+      })
+      .reduce((acc, order) => acc + Number(order.total ?? 0), 0);
+  }
+
+  private countUniqueCustomersForMonth(date: Date): number {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const customers = new Set(
+      this.orders()
+        .filter(order => {
+          const orderDate = new Date(order.fecha);
+          return orderDate.getFullYear() === year && orderDate.getMonth() === month;
+        })
+        .map(order => order.clienteCorreo)
+        .filter(Boolean)
+    );
+    return customers.size;
+  }
+
+  private addDays(date: Date, days: number): Date {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
+  }
+
+  private addMonths(date: Date, months: number): Date {
+    const next = new Date(date);
+    next.setMonth(next.getMonth() + months);
+    return next;
+  }
+
+  private buildTrendLabel(current: number, previous: number, suffix: string): string {
+    if (previous <= 0) {
+      return current > 0 ? `Nuevo ${suffix}` : `Sin referencia ${suffix}`;
+    }
+    const percent = ((current - previous) / previous) * 100;
+    const sign = percent >= 0 ? '+' : '';
+    return `${sign}${percent.toFixed(1)}% ${suffix}`;
+  }
+
+  private rebuildCustomersFromOrders(): void {
+    const map = new Map<string, SellerCustomer>();
+
+    for (const order of this.orders()) {
+      const email = order.clienteCorreo?.trim();
+      if (!email) continue;
+
+      const current = map.get(email) ?? {
+        id: Math.abs(this.hashCode(email)),
+        nombre: order.clienteNombre || email.split('@')[0] || 'Cliente',
+        correo: email,
+        telefono: '',
+        comprasTotales: 0,
+        ultimaCompraFecha: order.fecha,
+        montoAcumulado: 0,
+        ciudad: 'No registrada'
+      };
+
+      current.comprasTotales += 1;
+      current.montoAcumulado += Number(order.total ?? 0);
+
+      const currentDate = new Date(current.ultimaCompraFecha);
+      const nextDate = new Date(order.fecha);
+      if (Number.isNaN(currentDate.getTime()) || nextDate > currentDate) {
+        current.ultimaCompraFecha = order.fecha;
+      }
+
+      map.set(email, current);
+    }
+
+    this.customers.set(Array.from(map.values()).sort((a, b) => a.nombre.localeCompare(b.nombre)));
+  }
+
+  private hashCode(value: string): number {
+    let hash = 0;
+    for (let i = 0; i < value.length; i++) {
+      hash = ((hash << 5) - hash) + value.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
   }
 }

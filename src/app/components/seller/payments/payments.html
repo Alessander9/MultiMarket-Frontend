@@ -13,7 +13,7 @@
       <h3>Historial de Liquidaciones quincenales</h3>
       
       <div class="table-responsive">
-        <table class="payouts-table">
+        <table class="payouts-table" *ngIf="sellerService.payouts().length > 0">
           <thead>
             <tr>
               <th>Cód. Operación</th>
@@ -24,22 +24,38 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let p of sellerService.payouts()" (click)="openDetail(p)" class="clickable-row" [class.active]="selectedPayout()?.id === p.id">
+            <tr *ngFor="let p of sellerService.payments() | paginate: currentPage(): pageSize" (click)="openDetail(p)" class="clickable-row" [class.active]="selectedPayout()?.id === p.id">
               <td>
                 <span class="op-code">{{ p.codigoOperacion }}</span>
               </td>
-              <td>{{ p.fecha | date:'mediumDate' }}</td>
+              <td>{{ p.fechaPago | date:'mediumDate' }}</td>
               <td class="text-right font-semibold text-emerald">S/ {{ p.monto | number:'1.2-2' }}</td>
-              <td>{{ p.metodo }}</td>
+              <td>{{ p.metodoPago }}</td>
               <td>
-                <span class="payout-badge" [ngClass]="p.estado.toLowerCase()">
-                  {{ p.estado }}
+                <span class="payout-badge" [ngClass]="p.estadoPago.toLowerCase()">
+                  {{ p.estadoPago }}
                 </span>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <div class="empty-state" *ngIf="sellerService.payments().length === 0">
+        <span class="material-symbols-outlined">account_balance_wallet</span>
+        <h4>Sin pagos registrados</h4>
+        <p>Cuando el backend exponga pagos reales para esta tienda, aparecerán aquí con su operación, fecha y estado.</p>
+      </div>
+
+      <app-pagination-controls
+        *ngIf="sellerService.payments().length > 0"
+        [totalItems]="sellerService.payments().length"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize"
+        itemLabel="pago"
+        itemLabelPlural="pagos"
+        (pageChange)="currentPage.set($event)"
+      ></app-pagination-controls>
     </div>
 
     <!-- Detail Panel -->
@@ -64,23 +80,23 @@
         <div class="payout-specs-list">
           <div class="payout-spec-row">
             <span class="spec-label">Fecha Proceso</span>
-            <span class="spec-val">{{ selectedPayout()?.fecha | date:'mediumDate' }}</span>
+            <span class="spec-val">{{ selectedPayout()?.fechaPago | date:'mediumDate' }}</span>
           </div>
 
           <div class="payout-spec-row">
             <span class="spec-label">Método y Canal</span>
-            <span class="spec-val">{{ selectedPayout()?.metodo }}</span>
+            <span class="spec-val">{{ selectedPayout()?.metodoPago }}</span>
           </div>
 
           <div class="payout-spec-row">
-            <span class="spec-label">Cuenta de Destino</span>
-            <span class="spec-val font-mono">{{ selectedPayout()?.cuentaDestino }}</span>
+            <span class="spec-label">Pedido Asociado</span>
+            <span class="spec-val font-mono">{{ selectedPayout()?.numeroPedido }}</span>
           </div>
 
           <div class="payout-spec-row">
             <span class="spec-label">Estado de Transacción</span>
-            <span class="payout-badge" [ngClass]="selectedPayout()?.estado?.toLowerCase() ?? ''">
-              {{ selectedPayout()?.estado }}
+            <span class="payout-badge" [ngClass]="selectedPayout()?.estadoPago?.toLowerCase() ?? ''">
+              {{ selectedPayout()?.estadoPago }}
             </span>
           </div>
         </div>

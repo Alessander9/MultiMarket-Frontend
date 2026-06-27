@@ -17,14 +17,15 @@
       <input 
         type="text" 
         placeholder="Buscar por nombre de tienda, descripción o región..." 
-        [(ngModel)]="searchQuery"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value); resetPage()"
         class="stores-search-input"
       />
     </div>
 
     <div class="region-filter-box">
       <label for="regionSelect">Región:</label>
-      <select id="regionSelect" [(ngModel)]="selectedRegion" class="region-select">
+      <select id="regionSelect" [value]="selectedRegion()" (change)="selectedRegion.set($any($event.target).value); resetPage()" class="region-select">
         <option value="ALL">Todas las regiones</option>
         <option *ngFor="let reg of regionsList()" [value]="reg">{{ reg }}</option>
       </select>
@@ -38,7 +39,7 @@
 
   <!-- STORES CARD GRID -->
   <div class="stores-grid animate-fade-in" *ngIf="!isLoading() && filteredStores().length > 0">
-    <div class="store-dir-card card" *ngFor="let vendor of filteredStores()">
+    <div class="store-dir-card card" *ngFor="let vendor of filteredStores() | paginate: currentPage(): pageSize">
       
       <!-- Store Banner Header -->
       <div class="store-dir-banner" [style.background-image]="'url(' + vendor.banner + ')'">
@@ -95,7 +96,17 @@
     <span class="material-symbols-outlined empty-icon">storefront</span>
     <h3>No se encontraron tiendas oficiales</h3>
     <p>Prueba modificando los criterios de búsqueda o seleccionando otra región.</p>
-    <button (click)="searchQuery.set(''); selectedRegion.set('ALL')" class="btn-reset-empty highlight-btn">Ver todas las tiendas</button>
+    <button (click)="searchQuery.set(''); selectedRegion.set('ALL'); resetPage()" class="btn-reset-empty highlight-btn">Ver todas las tiendas</button>
   </div>
+
+  <app-pagination-controls
+    *ngIf="!isLoading() && filteredStores().length > 0"
+    [totalItems]="filteredStores().length"
+    [currentPage]="currentPage()"
+    [pageSize]="pageSize"
+    itemLabel="tienda"
+    itemLabelPlural="tiendas"
+    (pageChange)="currentPage.set($event)"
+  ></app-pagination-controls>
 
 </div>

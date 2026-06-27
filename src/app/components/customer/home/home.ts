@@ -147,6 +147,9 @@ export class CustomerHome implements OnInit, OnDestroy {
     return cards.filter((card): card is MarketplaceBentoCard => Boolean(card));
   });
 
+  // Compatibility alias for cached/older templates.
+  readonly marketplaceBentoCards = this.productBentoCards;
+
   readonly storeBentoCards = computed<MarketplaceBentoCard[]>(() => {
     const vendors = this.storeShowcaseVendors();
 
@@ -287,7 +290,7 @@ export class CustomerHome implements OnInit, OnDestroy {
 
   private promoTimer?: ReturnType<typeof setInterval>;
 
-  // Promo Banners Mock (Local and Authentic)
+  // Promo banners curated locally
   readonly promos = [
     {
       title: 'Cafés de origen con identidad local',

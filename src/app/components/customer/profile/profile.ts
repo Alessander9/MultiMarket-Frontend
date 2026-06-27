@@ -4,6 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { CustomerService, Address, BuyerProfile } from '../../../services/customer.service';
 import { AuthService } from '../../../services/auth.service';
 
+interface ActiveSession {
+  device: string;
+  location: string;
+  isCurrent: boolean;
+  lastActive: string;
+}
+
 @Component({
   selector: 'app-customer-profile',
   standalone: true,
@@ -36,11 +43,8 @@ export class CustomerProfile {
   // Preferences Form state
   prefForm = { idioma: 'es', zonaHoraria: 'America/Lima (UTC-5)', notificacionesEmail: true, notificacionesPush: true, tema: 'dark' };
 
-  // Mock Active Sessions
-  activeSessions = [
-    { device: 'Windows PC • Google Chrome', location: 'Lima, Perú', isCurrent: true, lastActive: 'Ahora mismo' },
-    { device: 'iPhone 15 • Safari App', location: 'Cusco, Perú', isCurrent: false, lastActive: 'Hace 3 horas' }
-  ];
+  // Active sessions
+  activeSessions: ActiveSession[] = [];
 
   ngOnInit(): void {
     // Sync local form states with reactive signal states

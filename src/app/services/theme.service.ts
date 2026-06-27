@@ -9,23 +9,22 @@ export class ThemeService {
   readonly theme = signal<AppTheme>('dark');
 
   constructor() {
-    const savedTheme = this.readSavedTheme();
-    const prefersLight = typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: light)').matches;
-    this.setTheme(savedTheme ?? (prefersLight ? 'light' : 'dark'));
+    this.setTheme('dark');
   }
 
   toggleTheme(): void {
-    this.setTheme(this.theme() === 'dark' ? 'light' : 'dark');
+    this.setTheme('dark');
   }
 
   setTheme(theme: AppTheme): void {
+    const resolvedTheme: AppTheme = 'dark';
     this.theme.set(theme);
     if (typeof document !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', theme);
-      document.body.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('data-theme', resolvedTheme);
+      document.body.setAttribute('data-theme', resolvedTheme);
     }
     if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('multimarket-theme', theme);
+      localStorage.setItem('multimarket-theme', resolvedTheme);
     }
   }
 

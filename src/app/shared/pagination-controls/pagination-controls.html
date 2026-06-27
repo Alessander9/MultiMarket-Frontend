@@ -1,0 +1,15 @@
+<div class="pagination-footer" *ngIf="totalItems > 0">
+  <div class="pagination-info">
+    Mostrando <strong>{{ startItem }}</strong> a <strong>{{ endItem }}</strong> de <strong>{{ totalItems }}</strong> {{ totalItems === 1 ? itemLabel : itemLabelPlural }}
+  </div>
+
+  <div class="pagination-actions">
+    <button type="button" class="pagination-btn" [disabled]="currentPage === 1" (click)="previous()">
+      <span class="material-symbols-outlined">chevron_left</span>
+    </button>
+    <span class="pagination-page">Pág {{ currentPage }} de {{ totalPages }}</span>
+    <button type="button" class="pagination-btn" [disabled]="currentPage === totalPages" (click)="next()">
+      <span class="material-symbols-outlined">chevron_right</span>
+    </button>
+  </div>
+</div>

@@ -59,7 +59,7 @@
             type="text" 
             placeholder="Buscar por producto o SKU..." 
             [value]="searchProduct()" 
-            (input)="searchProduct.set($any($event.target).value)"
+            (input)="searchProduct.set($any($event.target).value); resetStockPage()"
             class="filter-input"
           />
         </div>
@@ -82,7 +82,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let prod of filteredStock()">
+            <tr *ngFor="let prod of filteredStock() | paginate: currentStockPage(): pageSize">
               <td>
                 <div class="prod-cell">
                   <img [src]="prod.imagenes[0]" alt="Producto" class="prod-thumb" />
@@ -114,8 +114,10 @@
                     (click)="adjustmentForm.patchValue({ productoId: prod.id }); activeSubTab.set('adjust')"
                     title="Realizar ajuste de stock"
                   >
-                    <span class="material-symbols-outlined">tune</span>
-                    Ajustar
+                    <span class="btn-action-content">
+                      <span class="material-symbols-outlined">tune</span>
+                      <span>Ajustar</span>
+                    </span>
                   </button>
                 </div>
               </td>
@@ -123,6 +125,16 @@
           </tbody>
         </table>
       </div>
+
+      <app-pagination-controls
+        *ngIf="filteredStock().length > 0"
+        [totalItems]="filteredStock().length"
+        [currentPage]="currentStockPage()"
+        [pageSize]="pageSize"
+        itemLabel="producto"
+        itemLabelPlural="productos"
+        (pageChange)="currentStockPage.set($event)"
+      ></app-pagination-controls>
     </div>
   </div>
 
@@ -135,7 +147,7 @@
           <label class="filter-label">Filtrar Tipo</label>
           <select 
             [value]="filterMvtType()" 
-            (change)="filterMvtType.set($any($event.target).value)"
+            (change)="filterMvtType.set($any($event.target).value); resetMovementPage()"
             class="filter-input"
           >
             <option value="ALL">Todos los Movimientos</option>
@@ -162,7 +174,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let mvt of filteredMovements()">
+            <tr *ngFor="let mvt of filteredMovements() | paginate: currentMovementPage(): pageSize">
               <td>
                 <div class="date-col">
                   <span>{{ mvt.fecha | date:'shortDate' }}</span>
@@ -192,6 +204,16 @@
           </tbody>
         </table>
       </div>
+
+      <app-pagination-controls
+        *ngIf="filteredMovements().length > 0"
+        [totalItems]="filteredMovements().length"
+        [currentPage]="currentMovementPage()"
+        [pageSize]="pageSize"
+        itemLabel="movimiento"
+        itemLabelPlural="movimientos"
+        (pageChange)="currentMovementPage.set($event)"
+      ></app-pagination-controls>
     </div>
   </div>
 
@@ -246,9 +268,17 @@
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="activeSubTab.set('stock'); initForm()">Cancelar</button>
+        <button type="button" class="btn-cancel" (click)="activeSubTab.set('stock'); initForm()">
+          <span class="btn-action-content">
+            <span class="material-symbols-outlined">close</span>
+            <span>Cancelar</span>
+          </span>
+        </button>
         <button type="submit" class="btn-save" [disabled]="adjustmentForm.invalid || isLoading()">
-          {{ isLoading() ? 'Guardando Ajuste...' : 'Aplicar Ajuste Stock' }}
+          <span class="btn-action-content">
+            <span class="material-symbols-outlined">{{ isLoading() ? 'progress_activity' : 'inventory_2' }}</span>
+            <span>{{ isLoading() ? 'Guardando Ajuste...' : 'Aplicar Ajuste Stock' }}</span>
+          </span>
         </button>
       </div>
 

@@ -32,7 +32,7 @@
               type="text" 
               placeholder="Buscar por Nº Pedido, cliente, correo..." 
               [value]="searchFilter()" 
-              (input)="searchFilter.set($any($event.target).value)"
+              (input)="searchFilter.set($any($event.target).value); resetPage()"
               class="filter-input"
             />
           </div>
@@ -73,7 +73,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let order of filteredOrders()" (click)="openDetail(order)" class="clickable-row">
+            <tr *ngFor="let order of filteredOrders() | paginate: currentPage(): pageSize" (click)="openDetail(order)" class="clickable-row">
               <td>
                 <span class="order-number-text">{{ order.numeroPedido }}</span>
               </td>
@@ -128,6 +128,16 @@
         <h3>No se encontraron pedidos</h3>
         <p>No hay órdenes de compra registradas con los filtros seleccionados.</p>
       </div>
+
+      <app-pagination-controls
+        *ngIf="filteredOrders().length > 0"
+        [totalItems]="filteredOrders().length"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize"
+        itemLabel="pedido"
+        itemLabelPlural="pedidos"
+        (pageChange)="currentPage.set($event)"
+      ></app-pagination-controls>
     </div>
   </div>
 
@@ -142,14 +152,50 @@
           <div>
             <h2>Pedido {{ selectedOrder()?.numeroPedido }}</h2>
             <p>Registrado el {{ selectedOrder()?.fecha | date:'medium' }}</p>
+            <div class="order-meta-strip">
+              <span class="meta-pill meta-pill--primary">{{ selectedOrder()?.estado }}</span>
+              <span class="meta-pill">{{ selectedOrder()?.items?.length || 0 }} productos</span>
+              <span class="meta-pill">Total S/ {{ selectedOrder()?.total | number:'1.2-2' }}</span>
+            </div>
           </div>
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn-print" (click)="printInvoiceMock()">
-          <span class="material-symbols-outlined">print</span>
-          Imprimir Guía de Despacho
+        <button class="btn-print" (click)="printInvoice()">
+          <span class="btn-action-content">
+            <span class="material-symbols-outlined">print</span>
+            <span>Imprimir pedido</span>
+          </span>
         </button>
+      </div>
+    </div>
+
+    <div class="order-overview card">
+      <div class="overview-copy">
+        <span class="section-eyebrow">Resumen comercial</span>
+        <h3>Pedido {{ selectedOrder()?.numeroPedido }}</h3>
+        <p>Registrado el {{ selectedOrder()?.fecha | date:'medium' }}. Esta ficha centraliza los artículos, el cobro y el seguimiento operativo.</p>
+      </div>
+
+      <div class="overview-metrics">
+        <div class="overview-metric">
+          <span>Estado</span>
+          <strong class="status-pill-badge large" [ngClass]="selectedOrder()?.estado?.toLowerCase() ?? ''">
+            {{ selectedOrder()?.estado }}
+          </strong>
+        </div>
+        <div class="overview-metric">
+          <span>Productos</span>
+          <strong>{{ selectedOrder()?.items?.length || 0 }}</strong>
+        </div>
+        <div class="overview-metric">
+          <span>Subtotal</span>
+          <strong>S/ {{ selectedOrder()?.subtotal | number:'1.2-2' }}</strong>
+        </div>
+        <div class="overview-metric overview-metric--accent">
+          <span>Total</span>
+          <strong>S/ {{ selectedOrder()?.total | number:'1.2-2' }}</strong>
+        </div>
       </div>
     </div>
 
@@ -158,7 +204,10 @@
       <div class="detail-left">
         <!-- Products list card -->
         <div class="card purchased-items-card">
-          <h3>Artículos del Pedido</h3>
+          <div class="card-header-accent">
+            <h3>Artículos del Pedido</h3>
+            <span class="section-hint">Detalle por producto</span>
+          </div>
           
           <div class="items-list">
             <div class="purchase-item-row" *ngFor="let item of selectedOrder()?.items">
@@ -178,12 +227,19 @@
 
         <!-- Costs Reconcile Card -->
         <div class="card cost-summary-card">
-          <h3>Resumen de Facturación</h3>
+          <div class="card-header-accent">
+            <h3>Resumen de Facturación</h3>
+            <span class="section-hint">Montos calculados automáticamente</span>
+          </div>
           
           <div class="cost-rows-list">
             <div class="cost-row">
               <span>Subtotal</span>
               <span>S/ {{ selectedOrder()?.subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="cost-row">
+              <span>Impuesto (IGV 18%)</span>
+              <span>S/ {{ selectedOrder()?.impuesto | number:'1.2-2' }}</span>
             </div>
             <div class="cost-row">
               <span>Costo de Envío</span>
@@ -203,7 +259,10 @@
         
         <!-- Action state card -->
         <div class="card state-action-card">
-          <h3>Control de Estado</h3>
+          <div class="card-header-accent">
+            <h3>Control de Estado</h3>
+            <span class="section-hint">Flujo de despacho</span>
+          </div>
           
           <div class="state-action-content">
             <div class="current-state-pill">
@@ -233,14 +292,20 @@
               class="btn-cancel-order" 
               (click)="cancelOrder(selectedOrder()!.id)"
             >
-              Cancelar Pedido por Falta Stock
+              <span class="btn-action-content">
+                <span class="material-symbols-outlined">cancel</span>
+                <span>Cancelar Pedido por Falta Stock</span>
+              </span>
             </button>
           </div>
         </div>
 
         <!-- Buyer details card -->
         <div class="card client-detail-card">
-          <h3>Datos del Comprador</h3>
+          <div class="card-header-accent">
+            <h3>Datos del Comprador</h3>
+            <span class="section-hint">Identidad y contacto</span>
+          </div>
           <div class="client-info-list">
             <div class="info-item">
               <span class="material-symbols-outlined">person</span>
@@ -262,7 +327,10 @@
 
         <!-- Dispatch card -->
         <div class="card dispatch-detail-card">
-          <h3>Dirección e Instrucciones de Entrega</h3>
+          <div class="card-header-accent">
+            <h3>Dirección e Instrucciones de Entrega</h3>
+            <span class="section-hint">Destino final del envío</span>
+          </div>
           <div class="info-item borderless">
             <span class="material-symbols-outlined">location_on</span>
             <div>
@@ -274,12 +342,15 @@
 
         <!-- Payment details card -->
         <div class="card payment-detail-card">
-          <h3>Información de Pago</h3>
+          <div class="card-header-accent">
+            <h3>Información de Pago</h3>
+            <span class="section-hint">Boleta y pasarela</span>
+          </div>
           <div class="info-item borderless">
             <span class="material-symbols-outlined">credit_card</span>
             <div>
               <span class="info-label">Método y Canal</span>
-              <span class="info-value font-semibold">{{ selectedOrder()?.metodoPago }} - Pasarela SOAP</span>
+              <span class="info-value font-semibold">{{ selectedOrder()?.metodoPago || 'Sin dato' }}</span>
             </div>
           </div>
         </div>
@@ -296,8 +367,18 @@
     <h3>Cancelar Pedido</h3>
     <p>{{ deleteConfirm()?.message }}</p>
     <div class="modal-btn-group">
-      <button class="btn-cancel-modal" (click)="deleteConfirm.set(null)">Regresar</button>
-      <button class="btn-confirm-modal" (click)="confirmCancel()">Confirmar Cancelación</button>
+      <button class="btn-cancel-modal" (click)="deleteConfirm.set(null)">
+        <span class="btn-action-content">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Regresar</span>
+        </span>
+      </button>
+      <button class="btn-confirm-modal" (click)="confirmCancel()">
+        <span class="btn-action-content">
+          <span class="material-symbols-outlined">warning</span>
+          <span>Confirmar Cancelación</span>
+        </span>
+      </button>
     </div>
   </div>
 
