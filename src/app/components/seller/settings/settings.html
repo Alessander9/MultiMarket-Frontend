@@ -3,7 +3,7 @@
   <div class="settings-page-header">
     <div class="page-title-area">
       <h2>Configuración del Sistema</h2>
-      <p>Administra tus credenciales de seguridad, datos del propietario y preferencias de la tienda</p>
+      <p>Administra tus credenciales de seguridad, datos del propietario y preferencias de la tienda. Los cambios de cuenta se guardan en tu sesión hasta que exista un endpoint persistente de perfil.</p>
     </div>
     
     <!-- Tab Controls -->
@@ -82,7 +82,7 @@
 
       <div class="form-actions">
         <button type="submit" class="btn-save" [disabled]="accountForm.invalid || isSaving()">
-          {{ isSaving() ? 'Guardando...' : 'Actualizar Datos Cuenta' }}
+          {{ isSaving() ? 'Guardando...' : 'Actualizar Datos de Sesión' }}
         </button>
       </div>
     </form>

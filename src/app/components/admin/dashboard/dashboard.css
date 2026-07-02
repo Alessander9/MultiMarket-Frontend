@@ -490,6 +490,35 @@
   color: var(--on-surface);
 }
 
+.dropdown-item--accent {
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(167, 139, 250, 0.05);
+  font-weight: 600;
+  color: var(--highlight-color);
+}
+
+.dropdown-item--accent .material-symbols-outlined {
+  color: var(--highlight-color);
+}
+
+:host-context([data-theme='light']) .dropdown-item--accent {
+  background: rgba(109, 40, 217, 0.08);
+  color: #6d28d9;
+}
+
+:host-context([data-theme='light']) .dropdown-item--accent .material-symbols-outlined {
+  color: #6d28d9;
+}
+
+:host-context([data-theme='dark']) .dropdown-item--accent {
+  background: rgba(167, 139, 250, 0.08);
+  color: var(--primary);
+}
+
+:host-context([data-theme='dark']) .dropdown-item--accent .material-symbols-outlined {
+  color: var(--primary);
+}
+
 .dropdown-item span {
   font-size: 18px;
 }
@@ -1247,6 +1276,87 @@
   background-color: rgba(167, 139, 250, 0.05);
   border-color: var(--primary);
   color: var(--primary-fixed-dim);
+}
+
+/* Vendor autocomplete inside modal */
+.vendor-autocomplete {
+  position: relative;
+}
+
+.vendor-autocomplete-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--on-surface-variant);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.vendor-autocomplete-clear:hover {
+  color: var(--on-surface);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.vendor-autocomplete-clear .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.vendor-autocomplete-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 80;
+  max-height: 240px;
+  overflow-y: auto;
+  background: color-mix(in srgb, var(--surface-container) 92%, black 8%);
+  border: 1px solid var(--outline-variant);
+  border-radius: 16px;
+  box-shadow: 0 18px 35px rgba(0, 0, 0, 0.45);
+  padding: 8px;
+}
+
+.vendor-autocomplete-option {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--on-surface);
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.vendor-autocomplete-option:hover {
+  background: rgba(167, 139, 250, 0.12);
+}
+
+.vendor-autocomplete-option__email {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.vendor-autocomplete-option__meta,
+.vendor-autocomplete-empty {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+}
+
+.vendor-autocomplete-panel--empty {
+  padding: 14px;
 }
 
 /* =================================================== */
@@ -2104,13 +2214,6 @@
   padding: 2px 6px;
   border-radius: 4px;
 }
-.status-indicator-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-}
 .permission-tag {
   background-color: var(--surface-container-high);
   border: 1px solid var(--outline-variant);
@@ -2847,6 +2950,32 @@
   gap: 6px;
 }
 
+:host-context([data-theme='light']) .hero-status-card,
+:host-context([data-theme='light']) .hero-snapshot-card {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: var(--outline-variant);
+  box-shadow: var(--shadow-soft);
+}
+
+:host-context([data-theme='light']) .hero-status-label,
+:host-context([data-theme='light']) .hero-snapshot-title {
+  color: var(--on-surface-variant);
+}
+
+:host-context([data-theme='light']) .hero-status-value,
+:host-context([data-theme='light']) .hero-snapshot-value {
+  color: var(--on-surface);
+}
+
+:host-context([data-theme='light']) .hero-status-card p,
+:host-context([data-theme='light']) .hero-snapshot-sub {
+  color: var(--secondary);
+}
+
+:host-context([data-theme='light']) .hero-snapshot-icon {
+  background: rgba(109, 74, 255, 0.08);
+}
+
 .hero-status-label {
   font-size: 10px;
   font-weight: 700;
@@ -3142,6 +3271,23 @@
 .portal-select-filter:focus {
   border-color: rgba(185, 163, 255, 0.45);
   box-shadow: 0 0 0 3px rgba(109, 74, 255, 0.14);
+}
+
+.portal-input.input-valid {
+  border-color: rgba(16, 185, 129, 0.7);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.portal-input.input-invalid {
+  border-color: rgba(248, 113, 113, 0.75);
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.12);
+}
+
+.form-help--error {
+  color: #f87171;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
 }
 
 .skeleton-banner,

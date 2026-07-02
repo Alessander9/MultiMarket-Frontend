@@ -32,11 +32,11 @@
       <button
         type="button"
         class="theme-nav-toggle"
-        (click)="themeService.toggleTheme()"
-        [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+        (click)="themeService.setTheme('dark')"
+        aria-label="Modo oscuro fijo"
       >
-        <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
-        <span class="theme-nav-toggle__text">{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+        <span class="material-symbols-outlined">dark_mode</span>
+        <span class="theme-nav-toggle__text">Dark</span>
       </button>
     </div>
 
@@ -196,7 +196,7 @@
           <span class="material-symbols-outlined search-icon">search</span>
           <input type="text" placeholder="Buscar en esta sección..." 
                  [value]="searchQuery()" 
-                 (input)="searchQuery.set($any($event.target).value)" 
+                 (input)="searchQuery.set($any($event.target).value); currentPage.set(1)" 
                  class="global-search-input"/>
         </div>
 
@@ -227,8 +227,8 @@
               <span class="dropdown-role">ADMINISTRADOR GENERAL</span>
             </div>
             <ul class="dropdown-list">
-              <li class="dropdown-item" routerLink="/" (click)="showProfileMenu.set(false)" style="border-bottom: 1px solid var(--border-color); background: rgba(167, 139, 250, 0.05); font-weight: 600; color: var(--highlight-color);">
-                <span class="material-symbols-outlined" style="color: var(--highlight-color);">store</span>
+              <li class="dropdown-item dropdown-item--accent" routerLink="/" (click)="showProfileMenu.set(false)">
+                <span class="material-symbols-outlined">store</span>
                 <span>Ir a la Tienda</span>
               </li>
               <li class="dropdown-item" (click)="selectSection('configuracion'); showProfileMenu.set(false)">
@@ -618,7 +618,7 @@
                   <tr *ngIf="filteredUsers().length === 0">
                     <td colspan="7" class="empty-state-cell">Sin usuarios que coincidan con la búsqueda.</td>
                   </tr>
-                  <tr *ngFor="let user of filteredUsers()">
+                  <tr *ngFor="let user of filteredUsers() | paginate: currentPage(): pageSize">
                     <td>{{ user.id }}</td>
                     <td class="table-bold-value">{{ user.correo }}</td>
                     <td>
@@ -661,6 +661,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredUsers().length > 0"
+              [totalItems]="filteredUsers().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="usuario"
+              itemLabelPlural="usuarios"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <!-- Right Side Form (Create/Edit) -->
@@ -782,7 +791,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let role of filteredRoles()">
+                  <tr *ngFor="let role of filteredRoles() | paginate: currentPage(): pageSize">
                     <td>{{ role.id }}</td>
                     <td class="table-bold-value"><span class="module-tag">{{ role.nombre }}</span></td>
                     <td>{{ role.descripcion }}</td>
@@ -793,6 +802,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredRoles().length > 0"
+              [totalItems]="filteredRoles().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="rol"
+              itemLabelPlural="roles"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <div *ngIf="isCreatingRole()" class="dashboard-block-card form-panel animate-slide-in">
@@ -904,7 +922,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let vendor of filteredVendors()">
+                  <tr *ngFor="let vendor of filteredVendors() | paginate: currentPage(): pageSize">
                     <td class="vendor-name-cell">
                       <img [src]="vendor.logo" class="vendor-mini-logo" alt="logo"/>
                       <span class="table-bold-value">{{ vendor.nombreTienda }}</span>
@@ -936,6 +954,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredVendors().length > 0"
+              [totalItems]="filteredVendors().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="tienda"
+              itemLabelPlural="tiendas"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <!-- Form Panel -->
@@ -953,9 +980,59 @@
             <form [formGroup]="vendorForm" (ngSubmit)="saveVendor()" class="portal-form">
               <div class="form-group" *ngIf="isCreatingVendor()">
                 <label>Correo del Usuario Vendedor *</label>
-                <input type="email" formControlName="correoUsuario" placeholder="vendedor@correo.com" class="portal-input"/>
+                <div class="vendor-autocomplete">
+                  <input
+                    type="search"
+                    formControlName="correoUsuario"
+                    (input)="onVendorUserInput($any($event.target).value)"
+                    (focus)="onVendorUserFocus()"
+                    (blur)="onVendorUserBlur()"
+                    placeholder="Buscar correo registrado..."
+                    class="portal-input"
+                    spellcheck="false"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    [class.input-valid]="selectedVendorUser()"
+                    [class.input-invalid]="vendorUserSearch().trim() && !selectedVendorUser()"
+                    autocomplete="off"
+                  />
+                  <button
+                    type="button"
+                    class="vendor-autocomplete-clear"
+                    *ngIf="vendorForm.get('correoUsuario')?.value"
+                    (click)="selectVendorUser(''); vendorForm.get('correoUsuario')?.setValue(''); vendorUserSearch.set(''); showVendorSuggestions.set(false)"
+                    aria-label="Limpiar correo"
+                  >
+                    <span class="material-symbols-outlined">close</span>
+                  </button>
+                  <div
+                    class="vendor-autocomplete-panel"
+                    *ngIf="showVendorSuggestions() && vendorUserSearch().trim() && visibleVendorUsers().length > 0"
+                  >
+                    <button
+                      type="button"
+                      class="vendor-autocomplete-option"
+                      *ngFor="let user of visibleVendorUsers()"
+                      (mousedown)="selectVendorUser(user.correo)"
+                    >
+                      <span class="vendor-autocomplete-option__email">{{ user.correo }}</span>
+                      <span class="vendor-autocomplete-option__meta">Rol VENDEDOR</span>
+                    </button>
+                  </div>
+                  <div
+                    class="vendor-autocomplete-panel vendor-autocomplete-panel--empty"
+                    *ngIf="showVendorSuggestions() && vendorUserSearch().trim() && visibleVendorUsers().length === 0"
+                  >
+                    <div class="vendor-autocomplete-empty">
+                      No hay usuarios disponibles con ese filtro.
+                    </div>
+                  </div>
+                </div>
                 <small class="form-help" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px; display: block;">
-                  El usuario correspondiente debe estar previamente registrado con el rol VENDEDOR y no tener tienda aún.
+                  Solo se muestran usuarios ya registrados con rol VENDEDOR y sin tienda. Debes escoger un correo exacto.
+                </small>
+                <small class="form-help form-help--error" *ngIf="vendorUserSearch().trim() && !selectedVendorUser()">
+                  El correo no coincide con ningún vendedor disponible. Revisa el dominio y selecciona uno de la lista.
                 </small>
               </div>
 
@@ -1070,7 +1147,7 @@
 
         <!-- Stores Card Grid (Grid view for Vendors) -->
         <div class="stores-premium-grid" *ngIf="vendorViewMode() === 'cards'">
-          <div class="store-premium-card animate-fade-in" *ngFor="let vendor of filteredVendors(); let i = index">
+          <div class="store-premium-card animate-fade-in" *ngFor="let vendor of filteredVendors() | paginate: currentPage(): pageSize; let i = index">
             <!-- Store Banner -->
             <div class="store-banner-cover" [style.background-image]="'url(' + vendor.banner + ')'">
               <span class="rating-badge">⭐ {{ vendor.calificacionPromedio | number:'1.1-1' }}</span>
@@ -1164,7 +1241,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let cat of filteredCategories()">
+                  <tr *ngFor="let cat of filteredCategories() | paginate: currentPage(): pageSize">
                     <td>{{ cat.id }}</td>
                     <td class="table-bold-value">{{ cat.nombre }}</td>
                     <td>{{ cat.descripcion }}</td>
@@ -1188,6 +1265,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredCategories().length > 0"
+              [totalItems]="filteredCategories().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="categoría"
+              itemLabelPlural="categorías"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <!-- Form -->
@@ -1314,7 +1400,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let p of filteredProducts()">
+                  <tr *ngFor="let p of filteredProducts() | paginate: currentPage(): pageSize">
                     <td><img [src]="p.imagenes[0]" class="prod-mini-img" alt="prod"/></td>
                     <td class="table-bold-value">{{ p.nombre }}</td>
                     <td><code>{{ p.sku }}</code></td>
@@ -1355,6 +1441,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredProducts().length > 0"
+              [totalItems]="filteredProducts().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="producto"
+              itemLabelPlural="productos"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <!-- Product Form -->
@@ -1600,7 +1695,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let mov of filteredInventoryMovements()">
+                <tr *ngFor="let mov of filteredInventoryMovements() | paginate: currentPage(): pageSize">
                   <td>{{ mov.fechaMovimiento }}</td>
                   <td>{{ mov.productoId }}</td>
                   <td class="table-bold-value" style="font-family: inherit;">{{ mov.productoNombre }}</td>
@@ -1617,6 +1712,15 @@
               </tbody>
             </table>
           </div>
+          <app-pagination-controls
+            *ngIf="filteredInventoryMovements().length > 0"
+            [totalItems]="filteredInventoryMovements().length"
+            [currentPage]="currentPage()"
+            [pageSize]="pageSize"
+            itemLabel="movimiento"
+            itemLabelPlural="movimientos"
+            (pageChange)="currentPage.set($event)"
+          ></app-pagination-controls>
         </div>
       </div>
 
@@ -1673,7 +1777,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let order of filteredOrders()">
+                  <tr *ngFor="let order of filteredOrders() | paginate: currentPage(): pageSize">
                     <td><code>{{ order.numeroPedido }}</code></td>
                     <td>{{ order.fechaPedido }}</td>
                     <td>
@@ -1704,6 +1808,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredOrders().length > 0"
+              [totalItems]="filteredOrders().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="pedido"
+              itemLabelPlural="pedidos"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <!-- Order Details Drawer -->
@@ -1816,7 +1929,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let p of filteredPayments()">
+                  <tr *ngFor="let p of filteredPayments() | paginate: currentPage(): pageSize">
                     <td><code>{{ p.pedidoNumero }}</code></td>
                     <td class="table-bold-value text-cyan">S/ {{ p.monto | number:'1.2-2' }}</td>
                     <td>{{ p.metodoPago }}</td>
@@ -1843,6 +1956,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredPayments().length > 0"
+              [totalItems]="filteredPayments().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="pago"
+              itemLabelPlural="pagos"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <!-- SOAP LOGS VISUAL DETAILS DRAWERS -->
@@ -1907,7 +2029,7 @@
           <div class="dashboard-block-card chat-sidebar-card">
             <h4 class="block-title">Conversaciones Activas</h4>
             <div class="chat-sidebar-list">
-              <div *ngFor="let chat of filteredChats()" class="chat-sidebar-item" 
+              <div *ngFor="let chat of filteredChats() | paginate: currentPage(): pageSize" class="chat-sidebar-item" 
                    [class.active-item]="selectedChatId() === chat.id"
                    (click)="selectedChatId.set(chat.id)">
                 <div class="chat-item-avatar">🏪</div>
@@ -1917,6 +2039,16 @@
                   <p class="chat-item-last">{{ chat.ultimoMensaje }}</p>
                 </div>
               </div>
+
+              <app-pagination-controls
+                *ngIf="filteredChats().length > 0"
+                [totalItems]="filteredChats().length"
+                [currentPage]="currentPage()"
+                [pageSize]="pageSize"
+                itemLabel="chat"
+                itemLabelPlural="chats"
+                (pageChange)="currentPage.set($event)"
+              ></app-pagination-controls>
             </div>
           </div>
 
@@ -1997,7 +2129,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let not of filteredNotifications()">
+                  <tr *ngFor="let not of filteredNotifications() | paginate: currentPage(): pageSize">
                     <td>{{ not.fechaCreacion }}</td>
                     <td class="table-bold-value">{{ not.titulo }}</td>
                     <td>{{ not.mensaje }}</td>
@@ -2007,6 +2139,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredNotifications().length > 0"
+              [totalItems]="filteredNotifications().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="notificación"
+              itemLabelPlural="notificaciones"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <!-- Notification Form -->
@@ -2094,7 +2235,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let imp of filteredXmlImports()">
+                  <tr *ngFor="let imp of filteredXmlImports() | paginate: currentPage(): pageSize">
                     <td class="table-bold-value" style="font-family: inherit;">📁 {{ imp.nombreArchivo }}</td>
                     <td>{{ imp.fechaImportacion }}</td>
                     <td>{{ imp.totalRegistros }}</td>
@@ -2109,6 +2250,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredXmlImports().length > 0"
+              [totalItems]="filteredXmlImports().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="importación"
+              itemLabelPlural="importaciones"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <!-- XML Simulation Form -->
@@ -2181,7 +2331,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let exp of filteredExports()">
+                  <tr *ngFor="let exp of filteredExports() | paginate: currentPage(): pageSize">
                     <td><span class="module-tag">{{ exp.formato }}</span></td>
                     <td>{{ exp.fechaExportacion }}</td>
                     <td><code>{{ exp.rutaArchivo }}</code></td>
@@ -2190,6 +2340,15 @@
                 </tbody>
               </table>
             </div>
+            <app-pagination-controls
+              *ngIf="filteredExports().length > 0"
+              [totalItems]="filteredExports().length"
+              [currentPage]="currentPage()"
+              [pageSize]="pageSize"
+              itemLabel="exportación"
+              itemLabelPlural="exportaciones"
+              (pageChange)="currentPage.set($event)"
+            ></app-pagination-controls>
           </div>
 
           <div *ngIf="isCreatingExport()" class="dashboard-block-card form-panel animate-slide-in">
@@ -2312,12 +2471,12 @@
         <div class="search-filter-bar flex-row-filter">
           <div class="search-input-box search-filter-width">
             <span class="material-symbols-outlined">search</span>
-            <input type="text" placeholder="Filtrar por acción o usuario administrativo..." [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value)"/>
+            <input type="text" placeholder="Filtrar por acción o usuario administrativo..." [value]="searchQuery()" (input)="searchQuery.set($any($event.target).value); currentPage.set(1)"/>
           </div>
           
           <div class="select-filter-box">
             <label>Nivel:</label>
-            <select [value]="logFilterLevel()" (change)="logFilterLevel.set($any($event.target).value)" class="portal-select-filter">
+            <select [value]="logFilterLevel()" (change)="logFilterLevel.set($any($event.target).value); currentPage.set(1)" class="portal-select-filter">
               <option value="ALL">TODOS</option>
               <option value="OK">INFO / OK</option>
               <option value="WARN">WARN</option>
@@ -2327,7 +2486,7 @@
 
           <div class="select-filter-box">
             <label>Módulo:</label>
-            <select [value]="logFilterModule()" (change)="logFilterModule.set($any($event.target).value)" class="portal-select-filter">
+            <select [value]="logFilterModule()" (change)="logFilterModule.set($any($event.target).value); currentPage.set(1)" class="portal-select-filter">
               <option value="ALL">TODOS</option>
               <option value="AUTH">AUTH (Usuarios)</option>
               <option value="PRODUCTO">PRODUCTO</option>
@@ -2345,7 +2504,7 @@
           <p class="block-subtitle">Monitoreo relacional forense</p>
           <div class="table-scroll-wrapper console-body-dark text-log-viewer">
             <div *ngIf="filteredLogs().length === 0" class="empty-state-cell">No se encontraron líneas de logs para los filtros aplicados.</div>
-            <div *ngFor="let log of filteredLogs()" class="console-line-log"
+            <div *ngFor="let log of filteredLogs() | paginate: currentPage(): pageSize" class="console-line-log"
                  [class.ok-log]="log.resultado === 'OK'"
                  [class.warn-log]="log.resultado === 'WARN'"
                  [class.err-log]="log.resultado === 'ERROR'">
@@ -2356,6 +2515,15 @@
               <span class="region-badge font-mono" style="margin-left: 10px;">mod: {{ log.modulo }}</span>
             </div>
           </div>
+          <app-pagination-controls
+            *ngIf="filteredLogs().length > 0"
+            [totalItems]="filteredLogs().length"
+            [currentPage]="currentPage()"
+            [pageSize]="pageSize"
+            itemLabel="log"
+            itemLabelPlural="logs"
+            (pageChange)="currentPage.set($event)"
+          ></app-pagination-controls>
         </div>
       </div>
 

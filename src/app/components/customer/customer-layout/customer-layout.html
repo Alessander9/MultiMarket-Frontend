@@ -153,11 +153,11 @@
         <button
           type="button"
           class="theme-nav-toggle"
-          (click)="themeService.toggleTheme()"
-          [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+          (click)="themeService.setTheme('dark')"
+          aria-label="Modo oscuro fijo"
         >
-          <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
-          <span class="theme-nav-toggle__text">{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+          <span class="material-symbols-outlined">dark_mode</span>
+          <span class="theme-nav-toggle__text">Dark</span>
         </button>
 
         <!-- Notifications Bell dropdown -->
@@ -230,15 +230,15 @@
                 </a>
               </li>
               <li *ngIf="authService.currentUserRoles().includes('ADMIN')">
-                <a routerLink="/admin/dashboard" class="drop-link-item" style="border: 1px solid rgba(167, 139, 250, 0.25); background: rgba(167, 139, 250, 0.08); font-weight: 600; color: var(--primary);">
-                  <span class="material-symbols-outlined" style="color: var(--primary);">shield_person</span>
-                  Panel Administrador
+                <a routerLink="/admin/dashboard" class="drop-link-item drop-link-item--accent drop-link-item--admin">
+                  <span class="material-symbols-outlined">shield_person</span>
+                  <span class="drop-link-label">Panel Administrador</span>
                 </a>
               </li>
               <li *ngIf="authService.currentUserRoles().includes('VENDEDOR')">
-                <a routerLink="/seller/dashboard" class="drop-link-item" style="border: 1px solid rgba(52, 211, 153, 0.25); background: rgba(52, 211, 153, 0.08); font-weight: 600; color: var(--tertiary);">
-                  <span class="material-symbols-outlined" style="color: var(--tertiary);">storefront</span>
-                  Panel Vendedor
+                <a routerLink="/seller/dashboard" class="drop-link-item drop-link-item--accent drop-link-item--seller">
+                  <span class="material-symbols-outlined">storefront</span>
+                  <span class="drop-link-label">Panel Vendedor</span>
                 </a>
               </li>
 

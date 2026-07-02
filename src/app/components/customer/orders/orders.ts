@@ -1,12 +1,14 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { CustomerService, BuyerOrder } from '../../../services/customer.service';
+import { CustomerService, BuyerPurchase } from '../../../services/customer.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-customer-orders',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './orders.html',
   styleUrl: './orders.css'
 })
@@ -15,36 +17,53 @@ export class CustomerOrders {
 
   // Active tab: 'active' | 'history'
   activeTab = signal<'active' | 'history'>('active');
-  selectedOrderId = signal<number | null>(null);
+  selectedPurchaseId = signal<number | null>(null);
+  readonly currentPage = signal(1);
+  readonly pageSize = 5;
+  readonly purchases = computed(() => this.customerService.purchases());
 
   ngOnInit(): void {
-    // If there are orders, pre-select the first one by default
-    const activeOrders = this.getActiveOrders();
-    if (activeOrders.length > 0) {
-      this.selectedOrderId.set(activeOrders[0].id);
-    } else if (this.customerService.orders().length > 0) {
-      this.selectedOrderId.set(this.customerService.orders()[0].id);
+    const activePurchases = this.getActivePurchases();
+    if (activePurchases.length > 0) {
+      this.selectedPurchaseId.set(activePurchases[0].id);
+    } else if (this.purchases().length > 0) {
+      this.selectedPurchaseId.set(this.purchases()[0].id);
     }
   }
 
-  getActiveOrders(): BuyerOrder[] {
-    return this.customerService.orders().filter(o => 
-      o.estado !== 'ENTREGADO' && o.estado !== 'CANCELADO'
+  getActivePurchases(): BuyerPurchase[] {
+    return this.purchases().filter(p =>
+      p.estadoGeneral !== 'ENTREGADO' && p.estadoGeneral !== 'CANCELADO'
     );
   }
 
-  getHistoricOrders(): BuyerOrder[] {
-    return this.customerService.orders().filter(o => 
-      o.estado === 'ENTREGADO' || o.estado === 'CANCELADO'
+  getHistoricPurchases(): BuyerPurchase[] {
+    return this.purchases().filter(p =>
+      p.estadoGeneral === 'ENTREGADO' || p.estadoGeneral === 'CANCELADO'
     );
   }
 
-  selectOrder(id: number): void {
-    this.selectedOrderId.set(id);
+  selectPurchase(id: number): void {
+    this.selectedPurchaseId.set(id);
   }
 
-  getSelectedOrder(): BuyerOrder | undefined {
-    return this.customerService.orders().find(o => o.id === this.selectedOrderId());
+  changeTab(tab: 'active' | 'history'): void {
+    this.activeTab.set(tab);
+    const nextList = tab === 'active' ? this.getActivePurchases() : this.getHistoricPurchases();
+    this.selectedPurchaseId.set(nextList[0]?.id || null);
+    this.currentPage.set(1);
+  }
+
+  getSelectedPurchase(): BuyerPurchase | undefined {
+    const purchases = this.purchases();
+    if (purchases.length === 0) return undefined;
+
+    const selectedId = this.selectedPurchaseId();
+    const selected = purchases.find(p => p.id === selectedId);
+    if (selected) return selected;
+
+    const activePurchases = this.getActivePurchases();
+    return activePurchases[0] ?? purchases[0];
   }
 
   getStatusClass(status: string): string {
@@ -69,5 +88,24 @@ export class CustomerOrders {
       case 'CANCELADO': return 'Cancelado';
       default: return status;
     }
+  }
+
+  exportReceipt(purchaseId: number): void {
+    this.customerService.exportPurchasePdf(purchaseId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        try {
+          const anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.download = `boleta-compra-${purchaseId}.pdf`;
+          anchor.click();
+        } finally {
+          window.URL.revokeObjectURL(url);
+        }
+      },
+      error: () => {
+        console.error(`No se pudo descargar la boleta PDF de la compra ${purchaseId}.`);
+      }
+    });
   }
 }

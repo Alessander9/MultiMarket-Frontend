@@ -1,7 +1,8 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { SellerService, SellerProduct, SellerOrder } from '../../../services/seller.service';
+import { of } from 'rxjs';
+import { SellerService } from '../../../services/seller.service';
 
 @Component({
   selector: 'app-seller-dashboard',
@@ -31,11 +32,21 @@ export class SellerDashboard implements OnInit {
   loadDashboardData(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
-    
-    // Simulate API fetch delay
-    setTimeout(() => {
-      this.isLoading.set(false);
-    }, 400);
+
+    const dataLoad$ = this.sellerService.backendLoaded()
+      ? of(void 0)
+      : this.sellerService.loadBackendData();
+
+    dataLoad$.subscribe({
+      next: () => undefined,
+      complete: () => {
+        setTimeout(() => this.isLoading.set(false), 180);
+      },
+      error: () => {
+        this.errorMessage.set('No se pudieron cargar los datos reales del vendedor.');
+        this.isLoading.set(false);
+      }
+    });
   }
 
   // Quick Action: Ship order
@@ -64,13 +75,74 @@ export class SellerDashboard implements OnInit {
 
   // Get alerts list
   get filteredAlerts() {
+    const lowStockCount = this.sellerService.lowStockProductsCount();
     const alerts = [
-      { id: 1, type: 'STOCK', title: 'Stock Crítico', message: 'El producto "Café Espresso Roast" tiene menos de 10 unidades.', severity: 'critical', actionRoute: '/seller/inventory', actionText: 'Ajustar Stock' },
-      { id: 2, type: 'ORDERS', title: 'Pedidos Pendientes', message: `Tienes ${this.sellerService.pendingOrdersCount()} pedidos esperando ser procesados.`, severity: 'warning', actionRoute: '/seller/orders', actionText: 'Ver Pedidos' },
-      { id: 3, type: 'CHAT', title: 'Mensajes Sin Leer', message: `Hay ${this.sellerService.unreadChatsCount()} consultas de clientes sin responder.`, severity: 'info', actionRoute: '/seller/chat', actionText: 'Responder' }
-    ];
+      lowStockCount > 0
+        ? {
+            id: 1,
+            type: 'STOCK',
+            title: 'Stock Bajo',
+            message: `Tienes ${lowStockCount} productos con stock igual o menor al mínimo recomendado.`,
+            severity: 'critical',
+            actionRoute: '/seller/inventory',
+            actionText: 'Ajustar Stock'
+          }
+        : null,
+      this.sellerService.pendingOrdersCount() > 0
+        ? {
+            id: 2,
+            type: 'ORDERS',
+            title: 'Pedidos Pendientes',
+            message: `Tienes ${this.sellerService.pendingOrdersCount()} pedidos esperando ser procesados.`,
+            severity: 'warning',
+            actionRoute: '/seller/orders',
+            actionText: 'Ver Pedidos'
+          }
+        : null,
+      this.sellerService.unreadChatsCount() > 0
+        ? {
+            id: 3,
+            type: 'CHAT',
+            title: 'Mensajes Sin Leer',
+            message: `Hay ${this.sellerService.unreadChatsCount()} consultas de clientes sin responder.`,
+            severity: 'info',
+            actionRoute: '/seller/chat',
+            actionText: 'Responder'
+          }
+        : null
+    ].filter(Boolean) as Array<{
+      id: number;
+      type: 'STOCK' | 'ORDERS' | 'CHAT';
+      title: string;
+      message: string;
+      severity: 'critical' | 'warning' | 'info';
+      actionRoute: string;
+      actionText: string;
+    }>;
 
     if (this.selectedAlertFilter() === 'ALL') return alerts;
     return alerts.filter(a => a.type === this.selectedAlertFilter());
+  }
+
+  getTopProductsSummary() {
+    const counts = new Map<number, { sold: number; revenue: number }>();
+    for (const order of this.sellerService.orders()) {
+      for (const item of order.items) {
+        const current = counts.get(item.productoId) ?? { sold: 0, revenue: 0 };
+        current.sold += item.cantidad;
+        current.revenue += item.cantidad * item.precio;
+        counts.set(item.productoId, current);
+      }
+    }
+
+    return this.sellerService.products()
+      .map(product => ({
+        ...product,
+        sold: counts.get(product.id)?.sold ?? 0,
+        revenue: counts.get(product.id)?.revenue ?? 0
+      }))
+      .filter(product => product.sold > 0)
+      .sort((a, b) => b.sold - a.sold)
+      .slice(0, 4);
   }
 }

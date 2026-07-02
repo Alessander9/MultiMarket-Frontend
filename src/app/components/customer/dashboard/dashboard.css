@@ -31,6 +31,13 @@
     rgba(10, 12, 18, 0.96);
 }
 
+:host-context([data-theme='light']) .hero {
+  background:
+    radial-gradient(circle at top left, rgba(124, 92, 255, 0.08), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(15, 159, 110, 0.06), transparent 24%),
+    rgba(255, 255, 255, 0.96);
+}
+
 .eyebrow {
   color: var(--tertiary);
   text-transform: uppercase;
@@ -78,6 +85,11 @@
   font-weight: 700;
 }
 
+:host-context([data-theme='light']) .action-pill {
+  background: var(--surface-container-low);
+  border-color: var(--outline-variant);
+}
+
 .action-pill.primary {
   background: linear-gradient(135deg, var(--primary), #8b5cf6);
   color: var(--on-primary-container);
@@ -97,6 +109,33 @@
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--outline-variant);
+}
+
+:host-context([data-theme='light']) .hero-aside,
+:host-context([data-theme='light']) .status-grid > div,
+:host-context([data-theme='light']) .status-list > div {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+:host-context([data-theme='light']) .hero-copy p,
+:host-context([data-theme='light']) .profile-card span,
+:host-context([data-theme='light']) .status-grid span,
+:host-context([data-theme='light']) .status-list span,
+:host-context([data-theme='light']) .metric p,
+:host-context([data-theme='light']) .panel p,
+:host-context([data-theme='light']) .empty-box p,
+:host-context([data-theme='light']) .empty-small p {
+  color: var(--on-surface-variant);
+}
+
+:host-context([data-theme='light']) .hero-copy h1,
+:host-context([data-theme='light']) .panel h2,
+:host-context([data-theme='light']) .profile-card strong,
+:host-context([data-theme='light']) .status-grid strong,
+:host-context([data-theme='light']) .status-list strong,
+:host-context([data-theme='light']) .metric strong,
+:host-context([data-theme='light']) .empty-box h3 {
+  color: var(--on-surface);
 }
 
 .profile-card {

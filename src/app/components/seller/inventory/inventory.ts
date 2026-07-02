@@ -2,11 +2,13 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SellerService, SellerProduct, InventoryMovement } from '../../../services/seller.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-seller-inventory',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './inventory.html',
   styleUrl: './inventory.css'
 })
@@ -25,6 +27,9 @@ export class SellerInventory implements OnInit {
   // Search filter
   readonly searchProduct = signal('');
   readonly filterMvtType = signal('ALL');
+  readonly currentStockPage = signal(1);
+  readonly currentMovementPage = signal(1);
+  readonly pageSize = 8;
 
   // Form Group
   adjustmentForm!: FormGroup;
@@ -87,6 +92,8 @@ export class SellerInventory implements OnInit {
         this.successMessage.set(`Inventario ajustado con éxito. Nuevo stock de ${updatedProd.nombre}: ${updatedProd.stock} unidades.`);
         this.adjustmentForm.reset({ productoId: '', cantidad: 1, tipo: 'ENTRADA', observacion: '' });
         this.activeSubTab.set('stock');
+        this.currentMovementPage.set(1);
+        this.currentStockPage.set(1);
 
         setTimeout(() => {
           this.successMessage.set(null);
@@ -104,5 +111,13 @@ export class SellerInventory implements OnInit {
         }, 6000);
       }
     });
+  }
+
+  resetStockPage(): void {
+    this.currentStockPage.set(1);
+  }
+
+  resetMovementPage(): void {
+    this.currentMovementPage.set(1);
   }
 }

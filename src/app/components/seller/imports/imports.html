@@ -74,7 +74,7 @@
     <h3>Historial de Procesamiento Masivo</h3>
     
     <div class="table-responsive">
-      <table class="history-logs-table">
+      <table class="history-logs-table" *ngIf="sellerService.xmlImports().length > 0">
         <thead>
           <tr>
             <th>Fecha y Hora</th>
@@ -88,7 +88,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of sellerService.xmlImports()">
+          <tr *ngFor="let log of sellerService.xmlImports() | paginate: currentPage(): pageSize">
             <td>
               <div class="date-col">
                 <span>{{ log.fecha | date:'mediumDate' }}</span>
@@ -119,6 +119,22 @@
         </tbody>
       </table>
     </div>
+
+    <div class="empty-state" *ngIf="sellerService.xmlImports().length === 0">
+      <span class="material-symbols-outlined">upload_file</span>
+      <h4>Sin importaciones aún</h4>
+      <p>El historial aparecerá aquí cuando el backend registre cargas XML reales para esta tienda.</p>
+    </div>
+
+    <app-pagination-controls
+      *ngIf="sellerService.xmlImports().length > 0"
+      [totalItems]="sellerService.xmlImports().length"
+      [currentPage]="currentPage()"
+      [pageSize]="pageSize"
+      itemLabel="importación"
+      itemLabelPlural="importaciones"
+      (pageChange)="currentPage.set($event)"
+    ></app-pagination-controls>
   </div>
 
 </div>

@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CustomerService } from '../../../services/customer.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-customer-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './chat.html',
   styleUrl: './chat.css'
 })
@@ -23,6 +25,8 @@ export class CustomerChat {
   readonly selectedConvId = signal<number | null>(null);
   readonly typedMessage = signal<string>('');
   readonly isOpeningConversation = signal(false);
+  readonly currentPage = signal(1);
+  readonly pageSize = 6;
   readonly quickPrompts = [
     'Hola, quisiera saber si hay stock disponible.',
     '¿Cuánto demora el envío a mi distrito?',
@@ -123,6 +127,10 @@ export class CustomerChat {
     this.typedMessage.set(prompt);
   }
 
+  resetPage(): void {
+    this.currentPage.set(1);
+  }
+
   getMessageRoleLabel(role: 'COMPRADOR' | 'VENDEDOR'): string {
     return role === 'COMPRADOR' ? 'Comprador' : 'Vendedor';
   }
@@ -180,13 +188,13 @@ export class CustomerChat {
     });
   }
 
-  // Simulate attaching an image (e.g. coffee quality checks or receipt uploads)
+  // Attach a photo or receipt reference to the chat
   attachImage(): void {
     const conv = this.activeConversation();
     if (!conv) return;
 
-    const mockImgUrl = '/img/aceite-coco.jpeg';
-    this.customerService.sendChatMessage(conv.vendedorId, `📷 Foto adjunta del lote: ${mockImgUrl}`).subscribe({
+    const attachmentUrl = '/img/aceite-coco.jpeg';
+    this.customerService.sendChatMessage(conv.vendedorId, `📷 Foto adjunta del lote: ${attachmentUrl}`).subscribe({
       next: () => {
         this.scrollToBottom();
       }

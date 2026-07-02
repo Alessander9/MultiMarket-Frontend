@@ -1,11 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SellerService, ExportLog } from '../../../services/seller.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-seller-exports',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './exports.html',
   styleUrl: './exports.css'
 })
@@ -14,6 +16,8 @@ export class SellerExports {
 
   readonly isGenerating = signal(false);
   readonly selectedFormat = signal<'JSON' | 'XML'>('JSON');
+  readonly currentPage = signal(1);
+  readonly pageSize = 8;
 
   triggerExport(): void {
     const format = this.selectedFormat();
@@ -34,5 +38,9 @@ export class SellerExports {
   downloadFile(fileName: string): void {
     alert(`Descargando el archivo: ${fileName}`);
     // Future integration: trigger browser download of static files
+  }
+
+  resetPage(): void {
+    this.currentPage.set(1);
   }
 }

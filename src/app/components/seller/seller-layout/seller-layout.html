@@ -19,7 +19,7 @@
 
     <!-- Active Store Quick view -->
     <div class="store-mini-profile" *ngIf="!sidebarCollapsed()">
-      <img [src]="sellerService.storeProfile().logo" alt="Logo Tienda" class="store-mini-logo" />
+      <img [src]="sellerService.storeProfile().logo || '/img/frutosSecos.jpg'" alt="Logo Tienda" class="store-mini-logo" />
       <div class="store-mini-details">
         <h4 class="store-mini-title">{{ sellerService.storeProfile().nombre }}</h4>
         <span class="store-mini-region">
@@ -187,8 +187,7 @@
               <div 
                 *ngFor="let c of sellerService.conversations()" 
                 class="dropdown-item message-item"
-                [routerLink]="['/seller/chat']"
-                (click)="closeAllDropdowns()"
+                (click)="openChatConversation(c.id)"
               >
                 <img [src]="c.compradorAvatar" alt="Avatar" class="chat-item-avatar" />
                 <div class="chat-item-body">
@@ -216,11 +215,11 @@
         <button
           type="button"
           class="theme-nav-toggle"
-          (click)="themeService.toggleTheme()"
-          [attr.aria-label]="themeService.theme() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+          (click)="themeService.setTheme('dark')"
+          aria-label="Modo oscuro fijo"
         >
-          <span class="material-symbols-outlined">{{ themeService.theme() === 'dark' ? 'light_mode' : 'dark_mode' }}</span>
-          <span class="theme-nav-toggle__text">{{ themeService.theme() === 'dark' ? 'Light' : 'Dark' }}</span>
+          <span class="material-symbols-outlined">dark_mode</span>
+          <span class="theme-nav-toggle__text">Dark</span>
         </button>
 
         <div class="header-divider-v"></div>

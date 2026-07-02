@@ -1,74 +1,50 @@
 <div class="home-shell">
   <div class="home-loader" *ngIf="isLoading()">
-    <div class="loader-hero">
-      <div class="loader-copy animate-pulse"></div>
-      <div class="loader-visual animate-pulse"></div>
-    </div>
-    <div class="loader-strip animate-pulse"></div>
+    <div class="loader-hero animate-pulse"></div>
     <div class="loader-grid">
       <div class="loader-card animate-pulse" *ngFor="let i of [1,2,3,4,5,6]"></div>
     </div>
   </div>
 
   <div class="home-page animate-fade-in" *ngIf="!isLoading()">
-    <section class="hero">
-      <div class="hero-copy">
-        <span class="hero-kicker">
-          <span class="hero-kicker-dot"></span>
-          Marketplace moderno y premium
+    <section class="index-hero" [style.background-image]="'url(' + currentPromo().img + ')'">
+      <div class="index-hero__shade"></div>
+
+      <div class="index-hero__content">
+        <span class="index-kicker">
+          <span class="material-symbols-outlined">verified</span>
+          Tiendas locales verificadas
         </span>
 
-        <h1>Compra local con una experiencia clara, bonita y confiable.</h1>
-        <p class="hero-text">
-          Descubre categorías, compara productos, conversa con vendedores y sigue un proceso de compra simple hasta la entrega de tu pedido.
+        <h1>MultiMarket para comprar local sin perder tiempo.</h1>
+        <p>
+          Encuentra productos, compara tiendas, conversa con vendedores y compra con una experiencia ordenada de inicio a entrega.
         </p>
 
         <div class="hero-actions">
-          <a routerLink="/products" class="button button-primary">
+          <a routerLink="/products" class="index-button index-button--primary">
+            <span class="material-symbols-outlined">inventory_2</span>
             Explorar productos
-            <span class="material-symbols-outlined">arrow_forward</span>
           </a>
-          <a routerLink="/stores" class="button button-secondary">
-            Ver tiendas
+          <a routerLink="/stores" class="index-button index-button--ghost">
             <span class="material-symbols-outlined">storefront</span>
+            Ver tiendas
           </a>
-        </div>
-
-        <div class="hero-metrics">
-          <article class="metric-card home-card home-card--metric" *ngFor="let stat of trustStats">
-            <strong>{{ stat.value }}</strong>
-            <span>{{ stat.label }}</span>
-          </article>
         </div>
       </div>
 
-      <div class="hero-visual">
-        <div class="hero-stage">
-          <div class="hero-image-frame">
-            <img [src]="currentPromo().img" [alt]="currentPromo().title" class="hero-image" />
-            <div class="hero-overlay"></div>
-            <div class="hero-chip hero-chip--top">
-              <span class="material-symbols-outlined">verified</span>
-              Tiendas verificadas
-            </div>
-          </div>
-
-          <div class="hero-stage__content">
-            <div class="hero-card home-card hero-card--main">
-              <span class="hero-card-label">Destacado ahora</span>
-              <strong>{{ currentPromo().title }}</strong>
-              <p>{{ currentPromo().subtitle }}</p>
-            </div>
-
-            <div class="hero-card home-card hero-card--side">
-              <span class="material-symbols-outlined">chat_bubble</span>
-              <div>
-                <strong>Chat comprador-vendedor</strong>
-                <p>Resuelve stock, envíos y detalles antes de pagar.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <aside class="hero-panel">
+        <span>Destacado</span>
+        <strong>{{ currentPromo().title }}</strong>
+        <p>{{ currentPromo().subtitle }}</p>
+        <button
+          type="button"
+          class="hero-panel__button"
+          (click)="selectPromoCat(currentPromo().cat)"
+        >
+          {{ currentPromo().buttonText }}
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
 
         <div class="promo-dots">
           <button
@@ -80,25 +56,27 @@
             [attr.aria-label]="'Ver promoción ' + (idx + 1)"
           ></button>
         </div>
-      </div>
+      </aside>
     </section>
 
-    <section class="highlights">
-      <article class="highlight-card home-card" *ngFor="let item of marketplaceHighlights">
-        <span class="material-symbols-outlined">{{ item.icon }}</span>
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.desc }}</p>
+    <section class="index-strip">
+      <article *ngFor="let stat of trustStats">
+        <strong>{{ stat.value }}</strong>
+        <span>{{ stat.label }}</span>
+      </article>
+      <article>
+        <strong>Chat</strong>
+        <span>Contacto directo antes de pagar</span>
       </article>
     </section>
 
-    <section class="section-block">
+    <section class="index-section">
       <div class="section-head">
         <div>
           <span class="section-kicker">Categorías</span>
-          <h2 class="section-title">Explora las categorías más importantes</h2>
-          <p class="section-subtitle">Organizamos el catálogo para que encuentres rápido lo que buscas.</p>
+          <h2>Compra por intención, no por ruido.</h2>
         </div>
-        <a routerLink="/products" class="section-link">Ir al catálogo</a>
+        <a routerLink="/products" class="section-link">Catálogo completo</a>
       </div>
 
       <div class="category-grid">
@@ -106,154 +84,109 @@
           *ngFor="let category of catalogCategories()"
           [routerLink]="['/products']"
           [queryParams]="{ category: category.cat }"
-          class="category-card home-card"
+          class="category-card"
           [attr.data-tone]="category.tone"
         >
-          <span class="material-symbols-outlined category-icon">{{ category.icon }}</span>
-          <div class="category-copy">
-            <strong>{{ category.name }}</strong>
-            <span>{{ category.count || 'Varios' }} productos</span>
-            <p>{{ category.description }}</p>
-          </div>
-          <span class="material-symbols-outlined category-arrow">arrow_forward</span>
+          <span class="material-symbols-outlined category-card__icon">{{ category.icon }}</span>
+          <strong>{{ category.name }}</strong>
+          <span>{{ category.count || 'Varios' }} productos</span>
+          <p>{{ category.description }}</p>
         </a>
       </div>
     </section>
 
-    <section class="section-block">
+    <section class="index-section">
       <div class="section-head">
         <div>
           <span class="section-kicker">Productos</span>
-          <h2 class="section-title">Productos destacados en una Bento Grid comercial</h2>
-          <p class="section-subtitle">Una composición editorial para explorar productos con una jerarquía visual clara y enfocada solo en el catálogo.</p>
+          <h2>Selección activa del marketplace.</h2>
         </div>
-        <a routerLink="/products" class="section-link">Ver catálogo</a>
+        <a routerLink="/products" class="section-link">Ver productos</a>
       </div>
 
-      <div class="marketplace-bento-grid">
+      <div class="bento-grid">
         <article
           *ngFor="let card of productBentoCards()"
-          class="marketplace-bento-card home-card"
-          [ngClass]="['marketplace-bento-card--' + card.kind, 'marketplace-bento-card--' + card.size, card.slotClass]"
+          class="bento-card"
+          [ngClass]="['bento-card--' + card.kind, 'bento-card--' + card.size, card.slotClass]"
         >
-          <div class="marketplace-bento-card__media">
-            <img [src]="card.image" [alt]="card.title" class="marketplace-bento-card__image" />
-            <div class="marketplace-bento-card__overlay"></div>
-
-            <div class="marketplace-bento-card__topline">
-              <span class="marketplace-bento-rating" *ngIf="card.rating !== undefined && card.size !== 'small'">
-                <span class="material-symbols-outlined">star</span>
-                {{ card.rating | number:'1.1-1' }}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              class="marketplace-bento-card__cta"
-              (click)="openMarketplaceCard(card, $event)"
-              [attr.aria-label]="card.cta"
-              [attr.title]="card.cta"
-            >
-              <span class="material-symbols-outlined">arrow_forward</span>
-            </button>
-          </div>
-
-          <div class="marketplace-bento-card__body">
+          <img [src]="card.image" [alt]="card.title" />
+          <div class="bento-card__shade"></div>
+          <button
+            type="button"
+            class="bento-card__action"
+            (click)="openMarketplaceCard(card, $event)"
+            [attr.aria-label]="card.cta"
+            [attr.title]="card.cta"
+          >
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+          <div class="bento-card__copy">
+            <span>{{ card.badge }}</span>
             <h3>{{ card.title }}</h3>
-            <div class="marketplace-bento-price">{{ card.footerPrimary }}</div>
+            <strong>{{ card.footerPrimary }}</strong>
           </div>
         </article>
       </div>
     </section>
 
-    <section class="section-block">
+    <section class="index-section">
       <div class="section-head">
         <div>
           <span class="section-kicker">Tiendas</span>
-          <h2 class="section-title">Tiendas destacadas para explorar solo vendedores</h2>
-          <p class="section-subtitle">El mismo lenguaje visual, pero enfocado únicamente en tiendas para comparar, abrir catálogos y contactar rápido.</p>
+          <h2>Vendedores con catálogo listo.</h2>
         </div>
-        <a routerLink="/stores" class="section-link">Ver todas las tiendas</a>
+        <a routerLink="/stores" class="section-link">Ver tiendas</a>
       </div>
 
-      <div class="marketplace-bento-grid marketplace-bento-grid--stores">
+      <div class="store-row">
         <article
-          *ngFor="let card of storeBentoCards()"
-          class="marketplace-bento-card home-card"
-          [ngClass]="['marketplace-bento-card--' + card.kind, 'marketplace-bento-card--' + card.size, card.slotClass]"
+          *ngFor="let card of storeBentoCards().slice(0, 4)"
+          class="store-card"
         >
-          <div class="marketplace-bento-card__media">
-            <img [src]="card.image" [alt]="card.title" class="marketplace-bento-card__image" />
-            <div class="marketplace-bento-card__overlay"></div>
-
-            <div class="marketplace-bento-card__topline">
-              <span class="marketplace-bento-badge">{{ card.badge }}</span>
-              <span class="marketplace-bento-rating" *ngIf="card.rating !== undefined">
-                <span class="material-symbols-outlined">star</span>
-                {{ card.rating | number:'1.1-1' }}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              class="marketplace-bento-card__cta"
-              (click)="openMarketplaceCard(card, $event)"
-              [attr.aria-label]="card.cta"
-              [attr.title]="card.cta"
-            >
+          <img [src]="card.image" [alt]="card.title" />
+          <div class="store-card__body">
+            <span>{{ card.badge }}</span>
+            <h3>{{ card.title }}</h3>
+            <p>{{ card.footerPrimary }}</p>
+            <button type="button" (click)="openMarketplaceCard(card, $event)">
+              Abrir tienda
               <span class="material-symbols-outlined">arrow_forward</span>
             </button>
-          </div>
-
-          <div class="marketplace-bento-card__body">
-            <h3>{{ card.title }}</h3>
-            <p>{{ card.subtitle }}</p>
-
-            <div class="marketplace-bento-card__footer">
-              <strong>{{ card.footerPrimary }}</strong>
-              <span>{{ card.footerSecondary }}</span>
-            </div>
           </div>
         </article>
       </div>
     </section>
 
-    <section class="section-block process-block">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">Proceso</span>
-          <h2 class="section-title">Nuestro proceso hasta entregarte el producto</h2>
-          <p class="section-subtitle">Una ruta simple para que la compra se entienda desde el inicio hasta la entrega.</p>
-        </div>
+    <section class="flow-section">
+      <div>
+        <span class="section-kicker">Flujo</span>
+        <h2>De la búsqueda al pedido, sin vueltas.</h2>
       </div>
 
-      <div class="process-grid">
-        <article class="process-card home-card" *ngFor="let step of howItWorks">
-          <span class="process-step">{{ step.step }}</span>
-          <span class="material-symbols-outlined process-icon">{{ step.icon }}</span>
+      <div class="flow-grid">
+        <article *ngFor="let step of howItWorks">
+          <span class="flow-step">{{ step.step }}</span>
+          <span class="material-symbols-outlined">{{ step.icon }}</span>
           <h3>{{ step.title }}</h3>
           <p>{{ step.desc }}</p>
         </article>
       </div>
     </section>
 
-    <section class="cta-block">
+    <section class="index-cta">
       <div>
         <span class="section-kicker">Siguiente paso</span>
-        <h2>Haz tu primera compra con una experiencia más clara y ordenada.</h2>
-        <p>
-          Si ya viste una tienda o un producto, el siguiente paso es conversar, confirmar detalles y avanzar al pedido.
-        </p>
+        <h2>Abre una conversación o arma tu carrito.</h2>
       </div>
-
       <div class="cta-actions">
-        <a routerLink="/chat" class="button button-primary">
-          Abrir chat
+        <a routerLink="/chat" class="index-button index-button--primary">
           <span class="material-symbols-outlined">chat</span>
+          Abrir chat
         </a>
-        <a routerLink="/checkout" class="button button-secondary">
-          Ir al checkout
+        <a routerLink="/checkout" class="index-button index-button--ghost">
           <span class="material-symbols-outlined">shopping_bag</span>
+          Checkout
         </a>
       </div>
     </section>

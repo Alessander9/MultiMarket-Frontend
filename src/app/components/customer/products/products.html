@@ -24,7 +24,7 @@
             type="text" 
             placeholder="Escriba para filtrar..." 
             [value]="searchQuery()" 
-            (input)="searchQuery.set($any($event.target).value)"
+            (input)="searchQuery.set($any($event.target).value); currentPage.set(1)"
             style="width: 100%; padding: 8px 12px 8px 32px; border-radius: var(--radius-sm); border: 1px solid var(--outline-variant); background-color: var(--surface-container-low); color: var(--on-surface); outline: none; font-size: 13px; font-family: inherit;"
           />
         </div>
@@ -39,11 +39,11 @@
         <h4>Categoría</h4>
         <div class="radio-group">
           <label class="radio-label">
-            <input type="radio" name="catalog-cat" [checked]="selectedCategory() === 'ALL'" (click)="selectedCategory.set('ALL')" />
+            <input type="radio" name="catalog-cat" [checked]="selectedCategory() === 'ALL'" (click)="selectedCategory.set('ALL'); currentPage.set(1)" />
             <span>Todas</span>
           </label>
           <label class="radio-label" *ngFor="let cat of categoriesList()">
-            <input type="radio" name="catalog-cat" [checked]="selectedCategory() === cat" (click)="selectedCategory.set(cat)" />
+            <input type="radio" name="catalog-cat" [checked]="selectedCategory() === cat" (click)="selectedCategory.set(cat); currentPage.set(1)" />
             <span>{{ cat }}</span>
           </label>
         </div>
@@ -57,7 +57,7 @@
             type="number" 
             placeholder="Mín" 
             [value]="priceMin() || ''" 
-            (input)="priceMin.set($any($event.target).value ? +$any($event.target).value : null)"
+            (input)="priceMin.set($any($event.target).value ? +$any($event.target).value : null); currentPage.set(1)"
             class="price-limit-input"
           />
           <span>-</span>
@@ -65,7 +65,7 @@
             type="number" 
             placeholder="Máx" 
             [value]="priceMax() || ''" 
-            (input)="priceMax.set($any($event.target).value ? +$any($event.target).value : null)"
+            (input)="priceMax.set($any($event.target).value ? +$any($event.target).value : null); currentPage.set(1)"
             class="price-limit-input"
           />
         </div>
@@ -76,15 +76,15 @@
         <h4>Disponibilidad</h4>
         <div class="radio-group">
           <label class="radio-label">
-            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'ALL'" (click)="selectedAvailability.set('ALL')" />
+            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'ALL'" (click)="selectedAvailability.set('ALL'); currentPage.set(1)" />
             <span>Todos</span>
           </label>
           <label class="radio-label">
-            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'IN_STOCK'" (click)="selectedAvailability.set('IN_STOCK')" />
+            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'IN_STOCK'" (click)="selectedAvailability.set('IN_STOCK'); currentPage.set(1)" />
             <span>Solo en Stock</span>
           </label>
           <label class="radio-label">
-            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'OUT_STOCK'" (click)="selectedAvailability.set('OUT_STOCK')" />
+            <input type="radio" name="catalog-avail" [checked]="selectedAvailability() === 'OUT_STOCK'" (click)="selectedAvailability.set('OUT_STOCK'); currentPage.set(1)" />
             <span>Agotados</span>
           </label>
         </div>
@@ -142,7 +142,7 @@
 
         <div class="sorting-controls">
           <label class="sort-label" for="sortSelect">Ordenar por:</label>
-          <select id="sortSelect" [value]="sortBy()" (change)="sortBy.set($any($event.target).value)" class="sort-input">
+          <select id="sortSelect" [value]="sortBy()" (change)="sortBy.set($any($event.target).value); currentPage.set(1)" class="sort-input">
             <option value="sales">Más destacados</option>
             <option value="priceAsc">Menor precio</option>
             <option value="priceDesc">Mayor precio</option>
@@ -154,7 +154,7 @@
       <!-- Grid Cards Products -->
       <div class="catalog-grid" *ngIf="filteredCatalogProducts().length > 0">
         <div 
-          *ngFor="let prod of filteredCatalogProducts()" 
+          *ngFor="let prod of filteredCatalogProducts() | paginate: currentPage(): pageSize" 
           class="product-card card animate-fade-in"
           [routerLink]="['/products', prod.id]"
         >
@@ -230,6 +230,15 @@
         <p>Pruebe limpiando los filtros seleccionados o modificando la consulta de búsqueda.</p>
         <button class="btn-clear-empty" (click)="clearFilters()">Limpiar todos los filtros</button>
       </div>
+
+      <app-pagination-controls
+        [totalItems]="filteredCatalogProducts().length"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize"
+        itemLabel="producto"
+        itemLabelPlural="productos"
+        (pageChange)="currentPage.set($event)"
+      ></app-pagination-controls>
     </main>
 
   </div>

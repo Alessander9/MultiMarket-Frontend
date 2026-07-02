@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CustomerService, Address, BuyerOrder } from '../../../services/customer.service';
+import { CustomerService, Address, BuyerOrder, CheckoutVendorGroup, GroupedCheckoutResult } from '../../../services/customer.service';
 
 @Component({
   selector: 'app-customer-checkout',
@@ -17,10 +17,13 @@ export class CustomerCheckout {
 
   // Wizard Steps: 1 = Address, 2 = Review, 3 = Payment, 4 = Success
   currentStep = signal<number>(1);
-  selectedAddressId = signal<number>(1);
+  selectedAddressId = signal<number | null>(null);
   selectedPaymentMethod = signal<string>('STRIPE'); // Default to Stripe
   isSubmitting = signal<boolean>(false);
-  createdOrder = signal<BuyerOrder | null>(null);
+  createdOrders = signal<BuyerOrder[]>([]);
+  createdPurchase = signal<GroupedCheckoutResult | null>(null);
+  checkoutSummary = signal<{ subtotal: number; impuesto: number; costoEnvioTotal: number; total: number } | null>(null);
+  isDownloadingReceipt = signal<boolean>(false);
 
   // Stripe Simulation States
   stripeError = signal<string | null>(null);
@@ -82,6 +85,8 @@ export class CustomerCheckout {
       this.selectedAddressId.set(defaultAddress.id);
     } else if (this.customerService.addresses().length > 0) {
       this.selectedAddressId.set(this.customerService.addresses()[0].id);
+    } else {
+      this.showNewAddressForm.set(true);
     }
   }
 
@@ -101,6 +106,11 @@ export class CustomerCheckout {
       next: (addr) => {
         this.selectedAddressId.set(addr.id);
         this.showNewAddressForm.set(false);
+        this.customerService.persistPrimaryAddress(addr).subscribe({
+          error: () => {
+            // Keep the local address flow even if backend persistence fails.
+          }
+        });
         // Reset address form
         this.newAddress = {
           nombreReferencia: '',
@@ -131,7 +141,13 @@ export class CustomerCheckout {
   }
 
   getSelectedAddress(): Address | undefined {
-    return this.customerService.addresses().find(a => a.id === this.selectedAddressId());
+    const selectedId = this.selectedAddressId();
+    if (selectedId == null) return undefined;
+    return this.customerService.addresses().find(a => a.id === selectedId);
+  }
+
+  cartGroups(): CheckoutVendorGroup[] {
+    return this.customerService.cartGroups();
   }
 
   confirmPayment(): void {
@@ -176,13 +192,20 @@ export class CustomerCheckout {
           this.stripeSuccessState.set(true);
           
           setTimeout(() => {
-            this.customerService.submitOrder('STRIPE', address, {
+            this.customerService.submitGroupedOrder('STRIPE', address, {
               cardNumber: this.paymentDetails.cardNumber,
               cardCvv: this.paymentDetails.cardCvv,
               cardExpiry: this.paymentDetails.cardExpiry
             }).subscribe({
-              next: (order) => {
-                this.createdOrder.set(order);
+              next: (result) => {
+                this.createdPurchase.set(result);
+                this.createdOrders.set(result.pedidos);
+                this.checkoutSummary.set({
+                  subtotal: result.subtotal,
+                  impuesto: result.impuesto,
+                  costoEnvioTotal: result.costoEnvioTotal,
+                  total: result.total
+                });
                 this.currentStep.set(4);
                 this.isSubmitting.set(false);
                 this.stripeSuccessState.set(false);
@@ -201,13 +224,20 @@ export class CustomerCheckout {
       }, 2000);
     } else {
       // Standard Payment Methods
-      this.customerService.submitOrder(this.selectedPaymentMethod(), address, {
+      this.customerService.submitGroupedOrder(this.selectedPaymentMethod(), address, {
         cardNumber: this.paymentDetails.cardNumber,
         cardCvv: this.paymentDetails.cardCvv,
         cardExpiry: this.paymentDetails.cardExpiry
       }).subscribe({
-        next: (order) => {
-          this.createdOrder.set(order);
+        next: (result) => {
+          this.createdPurchase.set(result);
+          this.createdOrders.set(result.pedidos);
+          this.checkoutSummary.set({
+            subtotal: result.subtotal,
+            impuesto: result.impuesto,
+            costoEnvioTotal: result.costoEnvioTotal,
+            total: result.total
+          });
           this.currentStep.set(4);
           this.isSubmitting.set(false);
         },
@@ -220,6 +250,34 @@ export class CustomerCheckout {
         }
       });
     }
+  }
+
+  downloadReceipt(): void {
+    const purchaseId = this.createdPurchase()?.id;
+    if (!purchaseId) {
+      alert('Todavía no existe un comprobante disponible para descargar.');
+      return;
+    }
+
+    this.isDownloadingReceipt.set(true);
+    this.customerService.exportPurchasePdf(purchaseId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        try {
+          const anchor = document.createElement('a');
+          anchor.href = url;
+          anchor.download = `boleta-compra-${purchaseId}.pdf`;
+          anchor.click();
+        } finally {
+          window.URL.revokeObjectURL(url);
+          this.isDownloadingReceipt.set(false);
+        }
+      },
+      error: () => {
+        alert('No se pudo descargar la boleta en este momento.');
+        this.isDownloadingReceipt.set(false);
+      }
+    });
   }
 
   private getBackendErrorMessage(err: any, fallback: string): string {

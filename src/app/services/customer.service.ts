@@ -40,6 +40,32 @@ export interface BuyerOrder {
   }[];
 }
 
+export interface CheckoutVendorGroup {
+  vendedorId: number;
+  vendedorNombre: string;
+  costoEnvio: number;
+  items: CartItem[];
+  subtotal: number;
+  impuesto: number;
+  total: number;
+}
+
+export interface GroupedCheckoutResult {
+  id: number;
+  numeroCompra: string;
+  fechaCompra: string;
+  metodoPago: string;
+  estadoGeneral: string;
+  pedidos: BuyerOrder[];
+  items: CartItem[];
+  subtotal: number;
+  impuesto: number;
+  costoEnvioTotal: number;
+  total: number;
+}
+
+export interface BuyerPurchase extends GroupedCheckoutResult {}
+
 export interface Address {
   id: number;
   nombreReferencia: string;
@@ -96,6 +122,19 @@ export interface VendorMini {
   logo: string;
 }
 
+export interface FavoriteProduct {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  sku: string;
+  precio: number;
+  stock: number;
+  categoriaNombre: string;
+  vendedorId: number;
+  vendedorNombreTienda: string;
+  imagenes: { id?: number; url: string; principal?: boolean; ordenVisualizacion?: number }[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -119,20 +158,18 @@ export class CustomerService {
   readonly cart = signal<CartItem[]>([]);
 
   // 2. Favoritos
-  readonly favorites = signal<number[]>([101, 104]); // IDs de productos favoritos por defecto
+  readonly favorites = signal<number[]>([]);
+  readonly favoriteProducts = signal<FavoriteProduct[]>([]);
 
   // 3. Direcciones
-  readonly addresses = signal<Address[]>([
-    { id: 1, nombreReferencia: 'Mi Casa', departamento: 'Lima', provincia: 'Lima', distrito: 'Miraflores', direccion: 'Av. Larco 452, Dpto 502', codigoPostal: '15074', referencia: 'Frente al Parque Kennedy', predeterminada: true },
-    { id: 2, nombreReferencia: 'Oficina Trabajo', departamento: 'Lima', provincia: 'Lima', distrito: 'San Isidro', direccion: 'Calle Los Pinos 142, Piso 8', codigoPostal: '15046', referencia: 'A espaldas del Centro Financiero', predeterminada: false }
-  ]);
+  readonly addresses = signal<Address[]>([]);
 
   // 4. Perfil Comprador
   readonly profile = signal<BuyerProfile>({
-    nombres: 'Maria Alejandra',
-    apellidos: 'Torres Perez',
-    correo: 'comprador@gmail.com',
-    telefono: '+51 944 678 901',
+    nombres: '',
+    apellidos: '',
+    correo: this.authService.currentUserEmail() ?? '',
+    telefono: '',
     foto: '/img/AdultoMayor.jpg'
   });
 
@@ -146,95 +183,25 @@ export class CustomerService {
   });
 
   // 6. Pedidos Realizados
-  readonly orders = signal<BuyerOrder[]>([
-    {
-      id: 7001,
-      numeroPedido: 'PED-7750',
-      fecha: '2026-05-28T09:45:00-05:00',
-      vendedorId: 1,
-      vendedorNombreTienda: 'Café Altomayo Gourmet',
-      items: [
-        { productoId: 101, nombre: 'Café Blend Premium - Grano 1kg', sku: 'CAF-BLE-PRE-1KG', precio: 59.90, cantidad: 2, imagen: '/img/aceite-coco.jpeg', vendedorId: 1, vendedorNombre: 'Café Altomayo Gourmet' }
-      ],
-      subtotal: 119.80,
-      envio: 15.00,
-      impuesto: 21.56,
-      total: 156.36,
-      estado: 'ENTREGADO',
-      metodoPago: 'MASTERCARD',
-      direccionEntrega: { departamento: 'Lima', distrito: 'Miraflores', direccion: 'Av. Larco 452, Dpto 502' },
-      seguimiento: [
-        { fecha: '2026-05-28T09:45:00-05:00', descripcion: 'Pedido registrado y pagado con éxito.', completado: true },
-        { fecha: '2026-05-28T14:20:00-05:00', descripcion: 'Preparado y empacado en almacén del vendedor.', completado: true },
-        { fecha: '2026-05-29T10:00:00-05:00', descripcion: 'En tránsito con courier local.', completado: true },
-        { fecha: '2026-05-30T15:30:00-05:00', descripcion: 'Pedido entregado en dirección de destino.', completado: true }
-      ]
-    },
-    {
-      id: 7002,
-      numeroPedido: 'PED-7762',
-      fecha: '2026-05-30T11:00:00-05:00',
-      vendedorId: 1,
-      vendedorNombreTienda: 'Café Altomayo Gourmet',
-      items: [
-        { productoId: 103, nombre: 'Café Espresso Roast - Grano 500g', sku: 'CAF-ESP-ROA-500G', precio: 38.00, cantidad: 1, imagen: '/img/aceite-oliva.jpeg', vendedorId: 1, vendedorNombre: 'Café Altomayo Gourmet' }
-      ],
-      subtotal: 38.00,
-      envio: 12.00,
-      impuesto: 6.84,
-      total: 56.84,
-      estado: 'ENVIADO',
-      metodoPago: 'YAPE',
-      direccionEntrega: { departamento: 'Lima', distrito: 'Miraflores', direccion: 'Av. Larco 452, Dpto 502' },
-      seguimiento: [
-        { fecha: '2026-05-30T11:00:00-05:00', descripcion: 'Pedido registrado y pagado con éxito.', completado: true },
-        { fecha: '2026-05-30T16:00:00-05:00', descripcion: 'Preparado en almacén de origen.', completado: true },
-        { fecha: '2026-05-31T09:30:00-05:00', descripcion: 'Despachado en ruta de reparto a destino.', completado: true },
-        { fecha: '', descripcion: 'Confirmación de recepción por parte del courier.', completado: false }
-      ]
-    }
-  ]);
+  readonly orders = signal<BuyerOrder[]>([]);
+
+  readonly purchases = signal<BuyerPurchase[]>([]);
 
   // 7. Chats y Conversaciones
-  readonly conversations = signal<BuyerConversation[]>([
-    {
-      id: 401,
-      vendedorId: 1,
-      vendedorNombreTienda: 'Café Altomayo Gourmet',
-      vendedorLogo: '/img/frutosSecos.jpg',
-      ultimoMensaje: 'Hola, acabo de realizar mi pedido. ¿Cuándo se despacha?',
-      fechaUltimoMensaje: '2026-05-31T20:45:00-05:00',
-      noLeidos: 0,
-      mensajes: [
-        { id: 1, remitente: 'COMPRADOR', contenido: 'Buenas tardes. Quisiera consultar sobre el Café Blend Premium en grano.', fecha: '2026-05-31T14:10:00-05:00', leido: true },
-        { id: 2, remitente: 'VENDEDOR', contenido: '¡Hola Maria! Un gusto saludarte. El Café Blend Premium está tostado hace solo 3 días, tiene un perfil excelente. ¿Deseas molido o en grano entero?', fecha: '2026-05-31T14:15:00-05:00', leido: true },
-        { id: 3, remitente: 'COMPRADOR', contenido: 'Excelente. Lo prefiero en grano. Haré la compra ahora mismo.', fecha: '2026-05-31T14:20:00-05:00', leido: true },
-        { id: 4, remitente: 'COMPRADOR', contenido: 'Hola, acabo de realizar mi pedido. ¿Cuándo se despacha?', fecha: '2026-05-31T20:45:00-05:00', leido: true }
-      ]
-    }
-  ]);
+  readonly conversations = signal<BuyerConversation[]>([]);
 
   // 8. Notificaciones
-  readonly notifications = signal<BuyerNotification[]>([
-    { id: 1, tipo: 'PEDIDO', titulo: '¡Pedido #PED-7762 Despachado!', contenido: 'Tu pedido conteniendo "Café Espresso Roast" ya se encuentra en camino con el transportista.', fecha: '2026-05-31T09:30:00-05:00', leido: false },
-    { id: 2, tipo: 'PAGO', titulo: 'Pago Verificado con Éxito', contenido: 'El pago por YAPE de S/ 56.84 por tu orden PED-7762 ha sido verificado satisfactoriamente.', fecha: '2026-05-30T11:05:00-05:00', leido: true },
-    { id: 3, tipo: 'PROMOCION', titulo: '20% Descuento en Chocolates de Cusco', contenido: 'Solo por este fin de semana, aprovecha 20% de descuento en tabletas de chocolate artesanal.', fecha: '2026-05-29T08:00:00-05:00', leido: false },
-    { id: 4, tipo: 'CHAT', titulo: 'Nuevo mensaje de vendedor', contenido: 'Café Altomayo Gourmet respondió a tu consulta en el chat.', fecha: '2026-05-31T14:15:00-05:00', leido: true }
-  ]);
+  readonly notifications = signal<BuyerNotification[]>([]);
 
   // 9. Vendedores recomendados
-  readonly topVendors = signal<VendorMini[]>([
-    { id: 1, nombre: 'Café Altomayo Gourmet', region: 'San Martín', rating: 4.8, logo: '/img/frutosSecos.jpg' },
-    { id: 2, nombre: 'Chocolates El Ceibo', region: 'Amazonas', rating: 4.7, logo: '/img/miel.jpg' },
-    { id: 3, nombre: 'Artesanías Andinas', region: 'Cusco', rating: 4.9, logo: '/img/moringa.jpg' }
-  ]);
+  readonly topVendors = signal<VendorMini[]>([]);
 
-  private normalizeOrder(order: any): BuyerOrder {
+  private normalizeOrder(order: any, context?: { metodoPago?: string; direccionEntrega?: any }): BuyerOrder {
     return {
       id: Number(order?.id ?? 0),
       numeroPedido: order?.numeroPedido ?? '',
       fecha: order?.fechaPedido ?? order?.fecha ?? new Date().toISOString(),
-      vendedorId: Number(order?.vendedorId ?? this.cart()[0]?.vendedorId ?? 1),
+      vendedorId: Number(order?.vendedorId ?? 0),
       vendedorNombreTienda: order?.vendedorNombreTienda ?? order?.vendedorTienda ?? order?.vendedorNombre ?? 'Tienda',
       items: (order?.detalles ?? order?.items ?? []).map((item: any, idx: number) => ({
         productoId: Number(item?.productoId ?? 0),
@@ -243,7 +210,7 @@ export class CustomerService {
         precio: Number(item?.precioUnitario ?? item?.precio ?? 0),
         cantidad: Number(item?.cantidad ?? 0),
         imagen: item?.imagen ?? item?.imagenes?.[0] ?? '/img/aceite-oliva.jpeg',
-        vendedorId: Number(order?.vendedorId ?? 1),
+        vendedorId: Number(order?.vendedorId ?? 0),
         vendedorNombre: order?.vendedorNombreTienda ?? order?.vendedorTienda ?? order?.vendedorNombre ?? 'Tienda'
       })),
       subtotal: Number(order?.subtotal ?? 0),
@@ -251,13 +218,38 @@ export class CustomerService {
       impuesto: Number(order?.impuesto ?? 0),
       total: Number(order?.total ?? 0),
       estado: (order?.estado ?? 'PENDIENTE') as BuyerOrder['estado'],
-      metodoPago: order?.metodoPago ?? '',
-      direccionEntrega: order?.direccionEntrega ?? {},
+      metodoPago: order?.metodoPago ?? context?.metodoPago ?? '',
+      direccionEntrega: order?.direccionEntrega ?? context?.direccionEntrega ?? {},
       seguimiento: (order?.seguimiento ?? []).map((s: any) => ({
         fecha: s?.fecha ?? new Date().toISOString(),
         descripcion: s?.descripcion ?? '',
         completado: Boolean(s?.completado)
       }))
+    };
+  }
+
+  private normalizePurchase(purchase: any, context?: { metodoPago?: string; direccionEntrega?: any }): BuyerPurchase {
+    const pedidos = (purchase?.pedidos ?? []).map((order: any) => this.normalizeOrder(order, context));
+    const items = pedidos.flatMap((order: BuyerOrder) =>
+      order.items.map((item: CartItem) => ({
+        ...item,
+        vendedorId: order.vendedorId,
+        vendedorNombre: order.vendedorNombreTienda
+      }))
+    );
+
+    return {
+      id: Number(purchase?.id ?? 0),
+      numeroCompra: purchase?.numeroCompra ?? '',
+      fechaCompra: purchase?.fechaCompra ?? new Date().toISOString(),
+      metodoPago: purchase?.metodoPago ?? context?.metodoPago ?? '',
+      estadoGeneral: purchase?.estadoGeneral ?? 'PAGADO',
+      pedidos,
+      items,
+      subtotal: Number(purchase?.subtotal ?? 0),
+      impuesto: Number(purchase?.impuesto ?? 0),
+      costoEnvioTotal: Number(purchase?.costoEnvioTotal ?? 0),
+      total: Number(purchase?.total ?? 0)
     };
   }
 
@@ -301,11 +293,12 @@ export class CustomerService {
     return forkJoin({
       profile: this.http.get<any>(`${this.baseUrl}/auth/profile`),
       orders: this.http.get<any[]>(`${this.baseUrl}/pedidos/mis-pedidos`),
+      purchases: this.http.get<any[]>(`${this.baseUrl}/compras/mis-compras`),
       notifications: this.http.get<any[]>(`${this.baseUrl}/notificaciones`),
       conversations: this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones`),
       favorites: this.http.get<any[]>(`${this.baseUrl}/productos/favoritos`)
     }).pipe(
-      tap(({ profile, orders, notifications, conversations, favorites }) => {
+      tap(({ profile, orders, purchases, notifications, conversations, favorites }) => {
         this.profile.set({
           nombres: profile?.nombres ?? this.profile().nombres,
           apellidos: profile?.apellidos ?? this.profile().apellidos,
@@ -313,10 +306,35 @@ export class CustomerService {
           telefono: profile?.telefono ?? this.profile().telefono,
           foto: profile?.fotoPerfil ?? profile?.foto ?? this.profile().foto
         });
+        const backendAddress = this.buildAddressFromProfile(profile);
+        if (backendAddress) {
+          this.addresses.set([backendAddress]);
+        }
         this.orders.set(orders.map(order => this.normalizeOrder(order)));
+        this.purchases.set((purchases ?? []).map((purchase: any) => this.normalizePurchase(purchase)));
         this.notifications.set(notifications.map(notif => this.normalizeNotification(notif)));
         this.conversations.set(conversations.map(conv => this.normalizeConversation(conv)));
-        this.favorites.set((favorites ?? []).map((fav: any) => Number(fav?.id ?? fav?.productoId ?? fav)));
+        const normalizedFavorites = (favorites ?? []).map((fav: any) => ({
+          id: Number(fav?.id ?? 0),
+          nombre: fav?.nombre ?? '',
+          descripcion: fav?.descripcion ?? '',
+          sku: fav?.sku ?? '',
+          precio: Number(fav?.precio ?? 0),
+          stock: Number(fav?.stock ?? 0),
+          categoriaNombre: fav?.categoriaNombre ?? fav?.categoria ?? 'Sin categoría',
+          vendedorId: Number(fav?.vendedorId ?? 0),
+          vendedorNombreTienda: fav?.vendedorNombreTienda ?? fav?.vendedorTienda ?? fav?.vendedorNombre ?? 'Tienda',
+          imagenes: Array.isArray(fav?.imagenes)
+            ? fav.imagenes.map((img: any) => ({
+                id: Number(img?.id ?? 0) || undefined,
+                url: typeof img === 'string' ? img : (img?.url ?? ''),
+                principal: Boolean(img?.principal),
+                ordenVisualizacion: Number(img?.ordenVisualizacion ?? 0)
+              })).filter((img: any) => Boolean(img.url))
+            : []
+        }));
+        this.favoriteProducts.set(normalizedFavorites);
+        this.favorites.set(normalizedFavorites.map(fav => fav.id));
       }),
       map(() => void 0)
     );
@@ -333,8 +351,10 @@ export class CustomerService {
   });
 
   readonly cartShipping = computed(() => {
-    // Tarifa plana con envío gratis desde S/ 150 de subtotal
-    return this.cart().length > 0 && this.cartSubtotal() < 150 ? 15.00 : 0.00;
+    return this.cartGroups().reduce((acc, group) => {
+      const shipping = group.subtotal < 150 ? 15.00 : 0.00;
+      return acc + shipping;
+    }, 0);
   });
 
   readonly cartTax = computed(() => {
@@ -344,6 +364,33 @@ export class CustomerService {
 
   readonly cartTotal = computed(() => {
     return this.cartSubtotal() + this.cartShipping() + this.cartTax();
+  });
+
+  readonly cartGroups = computed<CheckoutVendorGroup[]>(() => {
+    const groups = new Map<number, CheckoutVendorGroup>();
+
+    for (const item of this.cart()) {
+      const key = item.vendedorId;
+      const current = groups.get(key) ?? {
+        vendedorId: item.vendedorId,
+        vendedorNombre: item.vendedorNombre,
+        costoEnvio: 15,
+        items: [],
+        subtotal: 0,
+        impuesto: 0,
+        total: 0
+      };
+      current.items.push(item);
+      groups.set(key, current);
+    }
+
+    return Array.from(groups.values()).map(group => {
+      const subtotal = group.items.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+      const costoEnvio = subtotal < 150 ? 15 : 0;
+      const impuesto = subtotal * 0.18;
+      const total = subtotal + impuesto + costoEnvio;
+      return { ...group, subtotal, impuesto, costoEnvio, total };
+    });
   });
 
   readonly unreadNotificationsCount = computed(() => {
@@ -435,11 +482,43 @@ export class CustomerService {
     const list = this.favorites();
     if (list.includes(productId)) {
       this.http.delete<void>(`${this.baseUrl}/productos/favoritos/${productId}`).subscribe({
-        next: () => this.favorites.set(list.filter(id => id !== productId))
+        next: () => {
+          this.favorites.set(list.filter(id => id !== productId));
+          this.favoriteProducts.update(products => products.filter(p => p.id !== productId));
+        }
       });
     } else {
       this.http.post<void>(`${this.baseUrl}/productos/favoritos/${productId}`, null).subscribe({
-        next: () => this.favorites.set([...list, productId])
+        next: () => {
+          this.favorites.set([...list, productId]);
+          this.http.get<any>(`${this.baseUrl}/productos/${productId}`).subscribe({
+            next: (prod) => {
+              const normalized: FavoriteProduct = {
+                id: Number(prod?.id ?? productId),
+                nombre: prod?.nombre ?? '',
+                descripcion: prod?.descripcion ?? '',
+                sku: prod?.sku ?? '',
+                precio: Number(prod?.precio ?? 0),
+                stock: Number(prod?.stock ?? 0),
+                categoriaNombre: prod?.categoriaNombre ?? prod?.categoria ?? 'Sin categoría',
+                vendedorId: Number(prod?.vendedorId ?? 0),
+                vendedorNombreTienda: prod?.vendedorNombreTienda ?? prod?.vendedorTienda ?? prod?.vendedorNombre ?? 'Tienda',
+                imagenes: Array.isArray(prod?.imagenes)
+                  ? prod.imagenes.map((img: any) => ({
+                      id: Number(img?.id ?? 0) || undefined,
+                      url: typeof img === 'string' ? img : (img?.url ?? ''),
+                      principal: Boolean(img?.principal),
+                      ordenVisualizacion: Number(img?.ordenVisualizacion ?? 0)
+                    })).filter((img: any) => Boolean(img.url))
+                  : []
+              };
+              this.favoriteProducts.update(products => {
+                if (products.some(p => p.id === normalized.id)) return products;
+                return [normalized, ...products];
+              });
+            }
+          });
+        }
       });
     }
   }
@@ -449,6 +528,25 @@ export class CustomerService {
   }
 
   // --- ADDRESS OPERATIONS ---
+
+  private buildAddressFromProfile(profile: any): Address | null {
+    const direccion = String(profile?.direccion ?? '').trim();
+    if (!direccion) {
+      return null;
+    }
+
+    return {
+      id: 1,
+      nombreReferencia: 'Dirección principal',
+      departamento: 'Lima',
+      provincia: 'Lima',
+      distrito: '',
+      direccion,
+      codigoPostal: '',
+      referencia: '',
+      predeterminada: true
+    };
+  }
 
   addAddress(newAddr: Omit<Address, 'id'>): Observable<Address> {
     const addr: Address = {
@@ -496,6 +594,30 @@ export class CustomerService {
 
   // --- PROFILE & SETTINGS ---
 
+  persistPrimaryAddress(address: Address): Observable<any> {
+    const formattedAddress = [
+      address.nombreReferencia,
+      address.direccion,
+      address.distrito,
+      address.provincia,
+      address.departamento,
+      address.codigoPostal,
+      address.referencia
+    ]
+      .map(value => String(value ?? '').trim())
+      .filter(Boolean)
+      .join(' | ');
+
+    return this.authService.updateProfile({ direccion: formattedAddress }).pipe(
+      tap(profile => {
+        this.profile.set({
+          ...this.profile(),
+          correo: profile?.correo ?? this.profile().correo
+        });
+      })
+    );
+  }
+
   updateProfile(profileData: BuyerProfile): Observable<BuyerProfile> {
     return of(profileData).pipe(
       delay(600),
@@ -513,50 +635,62 @@ export class CustomerService {
   // --- CHECKOUT & ORDER CREATION ---
 
   submitOrder(paymentMethod: string, address: Address, paymentDetails?: { cardNumber?: string; cardCvv?: string; cardExpiry?: string }): Observable<BuyerOrder> {
+    return this.submitGroupedOrder(paymentMethod, address, paymentDetails).pipe(
+      map(result => result.pedidos[0])
+    );
+  }
+
+  submitGroupedOrder(paymentMethod: string, address: Address, paymentDetails?: { cardNumber?: string; cardCvv?: string; cardExpiry?: string }): Observable<GroupedCheckoutResult> {
+    const groups = this.cartGroups();
     const request = {
-      vendedorId: this.cart()[0]?.vendedorId || 1,
-      costoEnvio: this.cartShipping(),
-      detalles: this.cart().map(item => ({
-        productoId: item.productoId,
-        cantidad: item.cantidad
+      grupos: groups.map(group => ({
+        vendedorId: group.vendedorId,
+        costoEnvio: group.costoEnvio,
+        detalles: group.items.map(item => ({
+          productoId: item.productoId,
+          cantidad: item.cantidad
+        }))
       }))
     };
 
     let backendPaymentMethod = paymentMethod;
     if (paymentMethod === 'STRIPE') {
       const cleanCard = (paymentDetails?.cardNumber || '').replace(/\s+/g, '');
-      if (cleanCard.startsWith('5')) {
-        backendPaymentMethod = 'MASTERCARD';
-      } else {
-        backendPaymentMethod = 'VISA';
-      }
+      backendPaymentMethod = cleanCard.startsWith('5') ? 'MASTERCARD' : 'VISA';
     }
 
-    return this.http.post<any>(`${this.baseUrl}/pedidos`, request).pipe(
-      switchMap(order => this.http.post<any>(`${this.baseUrl}/pagos`, {
-        pedidoId: order.id,
+    return this.http.post<any>(`${this.baseUrl}/pagos/compra-agrupada`, {
+      ...request,
+      metodoPago: backendPaymentMethod,
+      numeroTarjeta: paymentDetails?.cardNumber,
+      cvv: paymentDetails?.cardCvv,
+      fechaExpiracion: paymentDetails?.cardExpiry
+    }).pipe(
+      map(result => this.normalizePurchase(result, {
         metodoPago: backendPaymentMethod,
-        numeroTarjeta: paymentDetails?.cardNumber,
-        cvv: paymentDetails?.cardCvv,
-        fechaExpiracion: paymentDetails?.cardExpiry
-      }).pipe(
-        switchMap(() => this.http.get<any>(`${this.baseUrl}/pedidos/${order.id}`))
-      )),
-      map(order => this.normalizeOrder(order)),
-      tap(order => {
-        this.orders.update(list => [order, ...list]);
+        direccionEntrega: address
+      })),
+      tap(result => {
+        this.orders.update(list => [...result.pedidos, ...list]);
+        this.purchases.update(list => [result, ...list]);
         this.clearCart();
         const newNotif: BuyerNotification = {
           id: Math.floor(Math.random() * 100000),
           tipo: 'PEDIDO',
-          titulo: `¡Compra exitosa ${order.numeroPedido}!`,
-          contenido: `Tu pago de S/ ${order.total.toFixed(2)} ha sido procesado. El vendedor ya prepara tu despacho.`,
+          titulo: `¡Compra exitosa!`,
+          contenido: `Tu compra fue procesada en ${result.pedidos.length} pedido(s) separados por tienda.`,
           fecha: new Date().toISOString(),
           leido: false
         };
         this.notifications.update(notifs => [newNotif, ...notifs]);
       })
     );
+  }
+
+  exportPurchasePdf(purchaseId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/compras/${purchaseId}/pdf`, {
+      responseType: 'blob'
+    });
   }
 
   // --- CHAT WITH VENDOR ---
@@ -689,7 +823,20 @@ export class CustomerService {
     }));
   }
 
+  markNotificationRead(id: number): void {
+    const current = this.notifications().find(n => n.id === id);
+    if (!current || current.leido) return;
+
+    this.http.put<void>(`${this.baseUrl}/notificaciones/${id}/leer`, null).subscribe({
+      next: () => this.notifications.update(list => list.map(item => item.id === id ? { ...item, leido: true } : item))
+    });
+  }
+
   deleteNotification(id: number): void {
-    this.notifications.update(list => list.filter(n => n.id !== id));
+    this.http.delete<void>(`${this.baseUrl}/notificaciones/${id}`).subscribe({
+      next: () => {
+        this.notifications.update(list => list.filter(n => n.id !== id));
+      }
+    });
   }
 }

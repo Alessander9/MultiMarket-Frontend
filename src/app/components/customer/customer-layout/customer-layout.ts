@@ -72,7 +72,7 @@ export class CustomerLayout implements OnInit {
   private lastCartCount = 0;
   private cartBadgeTimer?: ReturnType<typeof setTimeout>;
 
-  // Mega Menu Categories Mock
+  // Mega menu categories
   readonly megaCategories = [
     { nombre: 'Café', icon: 'coffee', desc: 'Granos de altura, molidos e instantáneos de cooperativas locales.' },
     { nombre: 'Chocolate', icon: 'bakery_dining', desc: 'Tabletas para taza, bombones y barras de cacao chuncho 100% puro.' },
@@ -144,6 +144,15 @@ export class CustomerLayout implements OnInit {
     });
 
     this.route.queryParamMap.subscribe(params => {
+      const conversationIdParam = params.get('conversationId') ?? params.get('chatConversationId');
+      if (conversationIdParam) {
+        const conversationId = Number(conversationIdParam);
+        if (Number.isFinite(conversationId)) {
+          this.openConversationById(conversationId);
+          return;
+        }
+      }
+
       const vendorIdParam = params.get('chatVendorId');
       if (!vendorIdParam) return;
 
@@ -202,6 +211,29 @@ export class CustomerLayout implements OnInit {
       next: conv => {
         this.selectedChatConversationId.set(conv.id);
         this.loadConversationHistory(conv.id);
+        this.scrollChatToBottom();
+      }
+    });
+  }
+
+  openConversationById(conversationId: number): void {
+    this.chatDockOpen.set(true);
+    this.chatDockExpanded.set(true);
+
+    const existing = this.customerService.conversations().find(conv => conv.id === conversationId);
+    if (existing) {
+      this.selectedChatConversationId.set(existing.id);
+      this.loadConversationHistory(existing.id);
+      this.scrollChatToBottom();
+      return;
+    }
+
+    this.customerService.loadMessageHistory(conversationId).subscribe({
+      next: () => {
+        const refreshed = this.customerService.conversations().find(conv => conv.id === conversationId);
+        if (refreshed) {
+          this.selectedChatConversationId.set(refreshed.id);
+        }
         this.scrollChatToBottom();
       }
     });

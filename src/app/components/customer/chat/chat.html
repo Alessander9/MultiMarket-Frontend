@@ -18,7 +18,7 @@
         <button
           type="button"
           class="thread-card"
-          *ngFor="let conv of sortedConversations()"
+          *ngFor="let conv of sortedConversations() | paginate: currentPage(): pageSize"
           [class.active]="selectedConvId() === conv.id"
           (click)="selectConversation(conv.id)"
         >
@@ -54,6 +54,16 @@
             </button>
           </div>
         </div>
+
+        <app-pagination-controls
+          *ngIf="sortedConversations().length > 0"
+          [totalItems]="sortedConversations().length"
+          [currentPage]="currentPage()"
+          [pageSize]="pageSize"
+          itemLabel="chat"
+          itemLabelPlural="chats"
+          (pageChange)="currentPage.set($event)"
+        ></app-pagination-controls>
       </div>
     </aside>
 

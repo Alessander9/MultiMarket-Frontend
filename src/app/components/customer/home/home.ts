@@ -287,7 +287,7 @@ export class CustomerHome implements OnInit, OnDestroy {
 
   private promoTimer?: ReturnType<typeof setInterval>;
 
-  // Promo Banners Mock (Local and Authentic)
+  // Promo banners curated locally
   readonly promos = [
     {
       title: 'Cafés de origen con identidad local',

@@ -1,7 +1,11 @@
-import { Component, inject, signal, computed, effect, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SellerService, SellerConversation, SellerMessage } from '../../../services/seller.service';
+import { ChatService } from '../../../services/chat.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-seller-chat',
@@ -10,13 +14,20 @@ import { SellerService, SellerConversation, SellerMessage } from '../../../servi
   templateUrl: './chat.html',
   styleUrl: './chat.css'
 })
-export class SellerChat implements OnInit, AfterViewChecked {
+export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   protected readonly sellerService = inject(SellerService);
+  private readonly chatService = inject(ChatService);
+  private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('chatScrollContainer') private chatScrollContainer!: ElementRef;
 
   // Selected thread conversation ID
   readonly activeConvId = signal<number | null>(null);
+
+  // Pending conversation selected from route before the backend list finishes loading.
+  private pendingConversationId: number | null = null;
 
   // New message input
   readonly messageText = signal('');
@@ -27,14 +38,55 @@ export class SellerChat implements OnInit, AfterViewChecked {
   constructor() {
     effect(() => {
       const convs = this.sellerService.conversations();
-      if (convs.length > 0 && this.activeConvId() === null) {
-        setTimeout(() => this.selectConversation(convs[0].id));
+      const backendLoaded = this.sellerService.backendLoaded();
+      const pendingConversationId = this.pendingConversationId;
+
+      if (pendingConversationId !== null) {
+        const pendingConversation = convs.find(conv => conv.id === pendingConversationId);
+        if (pendingConversation) {
+          this.pendingConversationId = null;
+          if (this.activeConvId() !== pendingConversation.id) {
+            this.selectConversation(pendingConversation.id);
+          }
+          return;
+        }
+      }
+
+      if (backendLoaded && convs.length > 0 && this.activeConvId() === null) {
+        this.selectConversation(convs[0].id);
       }
     });
   }
 
   ngOnInit(): void {
-    // Auto-selection is handled by the constructor effect once conversations are loaded
+    this.sellerService.loadBackendData().subscribe();
+
+    const email = this.authService.currentUserEmail();
+    if (email) {
+      this.chatService.connect(email);
+    }
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        const rawConversationId = params.get('conversationId') ?? params.get('chatConversationId');
+        if (!rawConversationId) return;
+
+        const conversationId = Number(rawConversationId);
+        if (!Number.isFinite(conversationId)) return;
+
+        this.pendingConversationId = conversationId;
+
+        const existing = this.sellerService.conversations().find(c => c.id === conversationId);
+        if (existing) {
+          this.pendingConversationId = null;
+          this.selectConversation(conversationId);
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.chatService.disconnect();
   }
 
   ngAfterViewChecked(): void {

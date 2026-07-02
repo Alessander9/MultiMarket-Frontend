@@ -4,11 +4,13 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { CustomerService } from '../../../services/customer.service';
 import { SellerService, SellerProduct } from '../../../services/seller.service';
 import { AdminPortalService } from '../../../services/admin-portal.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-customer-products-catalog',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './products.html',
   styleUrl: './products.css'
 })
@@ -34,6 +36,8 @@ export class CustomerProducts implements OnInit {
   // Sorting
   readonly sortBy = signal<string>('sales'); // sales, priceAsc, priceDesc, newest
   readonly lastAddedProductId = signal<number | null>(null);
+  readonly currentPage = signal(1);
+  readonly pageSize = 12;
 
   ngOnInit(): void {
     // Bind query params
@@ -43,6 +47,7 @@ export class CustomerProducts implements OnInit {
       } else {
         this.searchQuery.set('');
       }
+      this.currentPage.set(1);
 
       if (params['category']) {
         this.selectedCategory.set(params['category']);
@@ -171,8 +176,9 @@ export class CustomerProducts implements OnInit {
     this.priceMin.set(null);
     this.priceMax.set(null);
     this.selectedRating.set('ALL');
-    this.selectedAvailability.set('ALL');
-    this.sortBy.set('sales');
+      this.selectedAvailability.set('ALL');
+      this.sortBy.set('sales');
+      this.currentPage.set(1);
   }
 
   cartQuantityForProduct(productId: number): number {

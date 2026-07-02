@@ -7,11 +7,13 @@ import { AuthService } from '../../../services/auth.service';
 import { AdminDashboardService } from '../../../services/admin-dashboard.service';
 import { AdminPortalService, AdminUser, AdminRole, AdminVendor, AdminCategory, AdminProduct, InventoryMovement, AdminOrder, AdminPayment, SOAPLog, AdminChat, AdminNotification, XmlImportLog, JsonXmlExportLog } from '../../../services/admin-portal.service';
 import { ThemeService } from '../../../services/theme.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -36,6 +38,8 @@ export class Dashboard implements OnInit, OnDestroy {
 
   // Global Search, Filtering, Pagination & Sorting
   readonly searchQuery = signal('');
+  readonly vendorUserSearch = signal('');
+  readonly showVendorSuggestions = signal(false);
   readonly toastMessage = signal<string | null>(null);
   readonly toastType = signal<'success' | 'info' | 'error'>('success');
   readonly currentPage = signal(1);
@@ -150,6 +154,37 @@ export class Dashboard implements OnInit, OnDestroy {
 
   // Temporary message input for chat details
   readonly chatMessageText = signal('');
+
+  private normalizeEmail(value: unknown): string {
+    return value?.toString().trim().toLowerCase() ?? '';
+  }
+
+  private isEligibleVendorUser(user: AdminUser): boolean {
+    return Array.isArray(user.roles) && user.roles.includes('VENDEDOR');
+  }
+
+  readonly availableVendorUsers = computed(() => {
+    const vendorEmails = new Set(
+      this.portalService.vendors().map(vendor => Number((vendor as any).usuarioId ?? 0))
+    );
+
+    const query = this.normalizeEmail(this.vendorUserSearch());
+
+    return this.portalService.users()
+      .filter(user => this.isEligibleVendorUser(user))
+      .filter(user => !vendorEmails.has(user.id))
+      .filter(user => !query || this.normalizeEmail(user.correo).includes(query))
+      .sort((a, b) => a.correo.localeCompare(b.correo));
+  });
+
+  readonly visibleVendorUsers = computed(() => this.availableVendorUsers().slice(0, 8));
+  readonly selectedVendorUser = computed(() => {
+    const email = this.normalizeEmail(this.vendorUserSearch());
+    if (!email) return null;
+    return this.portalService.users()
+      .find(user => this.normalizeEmail(user.correo) === email && this.isEligibleVendorUser(user) && !this.portalService.vendors().some(vendor => Number((vendor as any).usuarioId ?? 0) === user.id))
+      ?? null;
+  });
 
   private routerSubscription!: Subscription;
   private queryParamsSubscription!: Subscription;
@@ -368,6 +403,7 @@ export class Dashboard implements OnInit, OnDestroy {
     this.isCreatingNotification.set(false);
     this.isCreatingImport.set(false);
     this.isCreatingExport.set(false);
+    this.showVendorSuggestions.set(false);
   }
 
   // Sidebar navigation mapping to actual angular paths
@@ -391,6 +427,7 @@ export class Dashboard implements OnInit, OnDestroy {
     else if (sectionId === 'servicios') routePath = 'services';
     else if (sectionId === 'configuracion') routePath = 'settings';
 
+    this.currentPage.set(1);
     this.router.navigate(['/admin/' + routePath]);
   }
 
@@ -738,8 +775,25 @@ export class Dashboard implements OnInit, OnDestroy {
         this.showToast('Formulario inválido. Verifique los campos.', 'error');
         return;
       }
-      this.portalService.addUser(this.userForm.value);
-      this.showToast('Usuario administrativo guardado con éxito.', 'success');
+      const roles = this.userForm.get('roles')?.value || [];
+      const payload = {
+        correo: this.userForm.get('correo')?.value,
+        password: this.userForm.get('password')?.value,
+        roles,
+        estado: this.userForm.get('estado')?.value
+      };
+
+      this.portalService.addUser(payload).subscribe({
+        next: (createdUser) => {
+          const message = this.getUserCreationMessage(createdUser.roles);
+          this.showToast(message, 'success');
+          this.resetAllFormToggles();
+        },
+        error: (err) => {
+          const message = err?.error?.message || err?.error?.error || err?.message || 'No se pudo registrar el usuario.';
+          this.showToast(message, 'error');
+        }
+      });
     } else if (this.isEditingUser()) {
       const updateData: any = {
         correo: this.userForm.get('correo')?.value,
@@ -754,8 +808,19 @@ export class Dashboard implements OnInit, OnDestroy {
 
       this.portalService.updateUser(this.selectedUserId()!, updateData);
       this.showToast('Usuario actualizado con éxito en la base de datos.', 'success');
+      this.resetAllFormToggles();
     }
-    this.resetAllFormToggles();
+  }
+
+  private getUserCreationMessage(roles: string[]): string {
+    const normalizedRoles = [...new Set((roles || []).map(role => String(role).toUpperCase()))];
+    if (normalizedRoles.length === 1) {
+      const role = normalizedRoles[0];
+      if (role === 'ADMIN') return 'Usuario administrativo guardado con éxito.';
+      if (role === 'VENDEDOR') return 'Usuario vendedor guardado con éxito.';
+      if (role === 'COMPRADOR') return 'Usuario comprador guardado con éxito.';
+    }
+    return `Usuario con roles ${normalizedRoles.join(', ')} guardado con éxito.`;
   }
 
   deleteUser(id: number): void {
@@ -808,6 +873,8 @@ export class Dashboard implements OnInit, OnDestroy {
     this.resetAllFormToggles();
     this.vendorViewMode.set('list');
     this.vendorForm.reset({ region: 'Cusco', activo: true });
+    this.vendorUserSearch.set('');
+    this.showVendorSuggestions.set(false);
     this.isCreatingVendor.set(true);
   }
 
@@ -840,6 +907,11 @@ export class Dashboard implements OnInit, OnDestroy {
         return;
       }
 
+      if (!this.selectedVendorUser()) {
+        this.showToast('Selecciona un correo exacto de la lista. Debe coincidir con un usuario VENDEDOR sin tienda.', 'error');
+        return;
+      }
+
       this.portalService.addVendor(this.vendorForm.value).subscribe({
         next: () => {
           this.showToast('Vendedor regional registrado con éxito.', 'success');
@@ -864,6 +936,26 @@ export class Dashboard implements OnInit, OnDestroy {
         }
       });
     }
+  }
+
+  onVendorUserInput(value: string): void {
+    this.vendorUserSearch.set(value);
+    this.vendorForm.get('correoUsuario')?.setValue(value);
+    this.showVendorSuggestions.set(true);
+  }
+
+  onVendorUserFocus(): void {
+    this.showVendorSuggestions.set(true);
+  }
+
+  onVendorUserBlur(): void {
+    setTimeout(() => this.showVendorSuggestions.set(false), 150);
+  }
+
+  selectVendorUser(email: string): void {
+    this.vendorForm.get('correoUsuario')?.setValue(email);
+    this.vendorUserSearch.set(email);
+    this.showVendorSuggestions.set(false);
   }
 
   deleteVendor(id: number): void {

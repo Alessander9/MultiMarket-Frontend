@@ -1,17 +1,21 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CustomerService, BuyerNotification } from '../../../services/customer.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-customer-notifications',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './notifications.html',
   styleUrl: './notifications.css'
 })
 export class CustomerNotifications {
   protected readonly customerService = inject(CustomerService);
+  readonly currentPage = signal(1);
+  readonly pageSize = 8;
 
   markAllAsRead(): void {
     this.customerService.markNotificationsRead();
@@ -23,12 +27,7 @@ export class CustomerNotifications {
   }
 
   toggleNotificationRead(notif: BuyerNotification): void {
-    this.customerService.notifications.update(list => list.map(n => {
-      if (n.id === notif.id) {
-        return { ...n, leido: !n.leido };
-      }
-      return n;
-    }));
+    this.customerService.markNotificationRead(notif.id);
   }
 
   getIcon(tipo: string): string {
@@ -51,5 +50,9 @@ export class CustomerNotifications {
       case 'PROMOCION': return 'icon-promocion';
       default: return '';
     }
+  }
+
+  resetPage(): void {
+    this.currentPage.set(1);
   }
 }

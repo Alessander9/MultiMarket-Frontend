@@ -28,6 +28,14 @@ export class SellerStore implements OnInit {
     this.initForm();
   }
 
+  get averageOrderTotal(): number {
+    const orders = this.sellerService.orders();
+    if (!orders.length) {
+      return 0;
+    }
+    return orders.reduce((acc, order) => acc + Number(order.total ?? 0), 0) / orders.length;
+  }
+
   private initForm(): void {
     const profile = this.sellerService.storeProfile();
     this.storeForm = this.fb.group({

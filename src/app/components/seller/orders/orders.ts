@@ -1,11 +1,13 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SellerService, SellerOrder } from '../../../services/seller.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-seller-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './orders.html',
   styleUrl: './orders.css'
 })
@@ -24,6 +26,8 @@ export class SellerOrders implements OnInit {
   // Filters
   readonly searchFilter = signal('');
   readonly statusFilter = signal('ALL');
+  readonly currentPage = signal(1);
+  readonly pageSize = 8;
 
   ngOnInit(): void {
     this.loadOrders();
@@ -59,6 +63,10 @@ export class SellerOrders implements OnInit {
 
     return list;
   });
+
+  resetPage(): void {
+    this.currentPage.set(1);
+  }
 
   // --- ACTIONS ---
 
@@ -116,7 +124,7 @@ export class SellerOrders implements OnInit {
     });
   }
 
-  printInvoiceMock(): void {
+  printInvoice(): void {
     window.print();
   }
 

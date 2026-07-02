@@ -16,7 +16,7 @@
 
   <div class="card notif-list-card" *ngIf="customerService.notifications().length > 0">
     <div class="notif-row" 
-         *ngFor="let notif of customerService.notifications()" 
+         *ngFor="let notif of customerService.notifications() | paginate: currentPage(): pageSize" 
          [class.unread]="!notif.leido"
          (click)="toggleNotificationRead(notif)">
       
@@ -62,5 +62,15 @@
     <p>¡Todo al día! No tienes notificaciones pendientes o recibidas en este momento.</p>
     <a routerLink="/products" class="btn-browse-shop">Ver Novedades del Catálogo</a>
   </div>
+
+  <app-pagination-controls
+    *ngIf="customerService.notifications().length > 0"
+    [totalItems]="customerService.notifications().length"
+    [currentPage]="currentPage()"
+    [pageSize]="pageSize"
+    itemLabel="notificación"
+    itemLabelPlural="notificaciones"
+    (pageChange)="currentPage.set($event)"
+  ></app-pagination-controls>
 
 </div>

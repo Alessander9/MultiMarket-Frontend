@@ -1,11 +1,13 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SellerService, SellerCustomer, SellerOrder } from '../../../services/seller.service';
+import { PaginatePipe } from '../../../shared/pipes/paginate.pipe';
+import { PaginationControlsComponent } from '../../../shared/pagination-controls/pagination-controls';
 
 @Component({
   selector: 'app-seller-customers',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PaginatePipe, PaginationControlsComponent],
   templateUrl: './customers.html',
   styleUrl: './customers.css'
 })
@@ -16,6 +18,9 @@ export class SellerCustomers implements OnInit {
   readonly selectedCustomer = signal<SellerCustomer | null>(null);
 
   readonly searchFilter = signal('');
+  readonly currentPage = signal(1);
+  readonly historyPage = signal(1);
+  readonly pageSize = 8;
 
   ngOnInit(): void {}
 
@@ -46,10 +51,19 @@ export class SellerCustomers implements OnInit {
   openDetail(customer: SellerCustomer): void {
     this.selectedCustomer.set(customer);
     this.viewState.set('detail');
+    this.historyPage.set(1);
   }
 
   closeDetail(): void {
     this.selectedCustomer.set(null);
     this.viewState.set('list');
+  }
+
+  resetPage(): void {
+    this.currentPage.set(1);
+  }
+
+  resetHistoryPage(): void {
+    this.historyPage.set(1);
   }
 }

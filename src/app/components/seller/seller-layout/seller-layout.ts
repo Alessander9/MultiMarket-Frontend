@@ -206,6 +206,13 @@ export class SellerLayout implements OnInit, OnDestroy {
     this.sellerService.markAllNotificationsAsRead();
   }
 
+  openChatConversation(conversationId: number): void {
+    this.closeAllDropdowns('messages');
+    this.router.navigate(['/seller/chat'], {
+      queryParams: { conversationId }
+    });
+  }
+
   handleSearch(event: Event): void {
     const input = event.target as HTMLInputElement;
     console.log('Buscador Global Seller:', input.value);

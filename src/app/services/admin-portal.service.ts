@@ -379,19 +379,30 @@ export class AdminPortalService {
   // ==========================================
 
   // Users CRUD
-  addUser(user: Partial<AdminUser>): void {
-    const newId = this.users().length > 0 ? Math.max(...this.users().map(u => u.id)) + 1 : 1;
-    const fullUser: AdminUser = {
-      id: newId,
-      correo: user.correo || 'anonimo@correo.com',
+  addUser(user: Partial<AdminUser> & { password?: string }): Observable<AdminUser> {
+    return this.http.post<any>(`${this.baseUrl}/usuarios`, {
+      correo: user.correo,
+      password: user.password,
       roles: user.roles || ['COMPRADOR'],
-      estado: user.estado !== undefined ? user.estado : true,
-      correoVerificado: true,
-      fechaRegistro: new Date().toISOString().split('T')[0],
-      intentosFallidos: 0,
-      bloqueado: false
-    };
-    this.users.update(list => [...list, fullUser]);
+      estado: user.estado !== undefined ? user.estado : true
+    }).pipe(
+      map(created => ({
+        id: created.id,
+        correo: created.correo,
+        roles: Array.isArray(created.roles) ? created.roles : (user.roles || ['COMPRADOR']),
+        estado: Boolean(created.estado),
+        correoVerificado: Boolean(created.correoVerificado),
+        fechaRegistro: created.fechaRegistro ?? new Date().toISOString(),
+        intentosFallidos: Number(created.intentosFallidos ?? 0),
+        bloqueado: Boolean(created.bloqueado)
+      })),
+      tap(createdUser => {
+        this.users.update(list => {
+          const filtered = list.filter(u => u.id !== createdUser.id && u.correo !== createdUser.correo);
+          return [...filtered, createdUser].sort((a, b) => a.id - b.id);
+        });
+      })
+    );
   }
 
   updateUser(id: number, updatedUser: Partial<AdminUser>): void {

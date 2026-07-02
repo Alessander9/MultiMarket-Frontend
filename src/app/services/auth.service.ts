@@ -71,6 +71,10 @@ export class AuthService {
     return this.http.get<any>(`${this.apiUrl}/profile`);
   }
 
+  updateProfile(request: any): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/profile`, request);
+  }
+
   private loadSessionFromStorage(): UserSession | null {
     const token = localStorage.getItem('token');
     const correo = localStorage.getItem('correo');
