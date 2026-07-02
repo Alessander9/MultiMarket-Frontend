@@ -251,13 +251,23 @@ export class SellerProducts implements OnInit {
     if (this.viewState() === 'create') {
       this.sellerService.createProduct(prodData).subscribe({
         next: () => {
-          this.isLoading.set(false);
-          this.showFeedback('Producto creado exitosamente.', 'success');
-          this.viewState.set('list');
+          this.sellerService.loadBackendData().subscribe({
+            next: () => {
+              this.isLoading.set(false);
+              this.showFeedback('Producto creado exitosamente.', 'success');
+              this.viewState.set('list');
+              this.currentPage.set(1);
+            },
+            error: () => {
+              this.isLoading.set(false);
+              this.showFeedback('Producto creado, pero no se pudo sincronizar la vista.', 'error');
+              this.viewState.set('list');
+            }
+          });
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.showFeedback(err.message || 'Error al crear producto.', 'error');
+          this.showFeedback(err?.error?.message || err?.message || 'Error al crear producto.', 'error');
         }
       });
     } else { // edit
@@ -265,13 +275,23 @@ export class SellerProducts implements OnInit {
       if (id) {
         this.sellerService.updateProduct(id, prodData).subscribe({
           next: () => {
-            this.isLoading.set(false);
-            this.showFeedback('Producto actualizado exitosamente.', 'success');
-            this.viewState.set('list');
+            this.sellerService.loadBackendData().subscribe({
+              next: () => {
+                this.isLoading.set(false);
+                this.showFeedback('Producto actualizado exitosamente.', 'success');
+                this.viewState.set('list');
+                this.currentPage.set(1);
+              },
+              error: () => {
+                this.isLoading.set(false);
+                this.showFeedback('Producto actualizado, pero no se pudo sincronizar la vista.', 'error');
+                this.viewState.set('list');
+              }
+            });
           },
           error: (err) => {
             this.isLoading.set(false);
-            this.showFeedback(err.message || 'Error al actualizar producto.', 'error');
+            this.showFeedback(err?.error?.message || err?.message || 'Error al actualizar producto.', 'error');
           }
         });
       }
@@ -294,9 +314,18 @@ export class SellerProducts implements OnInit {
     this.isLoading.set(true);
     this.sellerService.deleteProduct(data.id).subscribe({
       next: () => {
-        this.isLoading.set(false);
-        this.showFeedback('Producto eliminado con éxito.', 'success');
-        this.currentPage.set(1);
+        this.sellerService.loadBackendData().subscribe({
+          next: () => {
+            this.isLoading.set(false);
+            this.showFeedback('Producto eliminado con éxito.', 'success');
+            this.currentPage.set(1);
+          },
+          error: () => {
+            this.isLoading.set(false);
+            this.showFeedback('Producto eliminado, pero no se pudo sincronizar la vista.', 'error');
+            this.currentPage.set(1);
+          }
+        });
       },
       error: () => {
         this.isLoading.set(false);

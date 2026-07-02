@@ -185,6 +185,7 @@
                 *ngFor="let n of customerService.notifications()" 
                 class="dropdown-item notif-row"
                 [class.unread]="!n.leido"
+                (click)="openNotification(n, $event)"
               >
                 <div class="notif-icon-wrapper" [ngClass]="n.tipo.toLowerCase()">
                   <span class="material-symbols-outlined">
@@ -196,6 +197,9 @@
                   <p>{{ n.contenido }}</p>
                   <span class="notif-time-text">{{ n.fecha | date:'shortTime' }}</span>
                 </div>
+                <button type="button" class="notif-open-btn" *ngIf="n.tipo === 'CHAT'" (click)="openNotification(n, $event)" title="Abrir chat">
+                  <span class="material-symbols-outlined">chat</span>
+                </button>
               </div>
               <div *ngIf="customerService.notifications().length === 0" class="empty-dropdown-state">
                 <span class="material-symbols-outlined">notifications_off</span>
@@ -426,7 +430,7 @@
             </div>
           </header>
 
-          <div class="customer-chat-dock__messages" #persistentChatScroll>
+          <div class="customer-chat-dock__messages" #persistentChatScroll (scroll)="onPersistentChatScroll()">
             <div
               *ngFor="let msg of conv.mensajes"
               class="customer-chat-message"
@@ -452,6 +456,17 @@
               <p>Inicia la conversación con esta tienda.</p>
             </div>
           </div>
+
+          <button
+            type="button"
+            class="customer-chat-dock__scroll-to-latest-btn"
+            *ngIf="showScrollToBottom()"
+            (click)="scrollToLatestMessage()"
+            aria-label="Ir al último mensaje"
+          >
+            <span class="material-symbols-outlined">south</span>
+            <span>Ir al último mensaje</span>
+          </button>
 
           <footer class="customer-chat-dock__composer">
             <input

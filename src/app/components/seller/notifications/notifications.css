@@ -107,6 +107,7 @@
   border-bottom: 1px solid var(--outline-variant);
   transition: background-color 0.2s ease;
   position: relative;
+  align-items: center;
 }
 
 .notification-item-row:last-child {
@@ -118,33 +119,38 @@
 }
 
 .notif-icon-circle {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border: 1px solid transparent;
 }
 
 .notif-icon-circle.pedido {
-  background-color: rgba(167, 139, 250, 0.08);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), rgba(167, 139, 250, 0.04));
   color: var(--primary);
+  border-color: rgba(167, 139, 250, 0.12);
 }
 
 .notif-icon-circle.pago {
-  background-color: rgba(52, 211, 153, 0.08);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(52, 211, 153, 0.04));
   color: var(--tertiary);
+  border-color: rgba(52, 211, 153, 0.12);
 }
 
 .notif-icon-circle.chat {
-  background-color: rgba(52, 211, 153, 0.08);
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(52, 211, 153, 0.04));
   color: var(--tertiary);
+  border-color: rgba(52, 211, 153, 0.12);
 }
 
 .notif-icon-circle.sistema {
-  background-color: rgba(239, 68, 68, 0.08);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.04));
   color: var(--error);
+  border-color: rgba(239, 68, 68, 0.12);
 }
 
 .notif-body {
@@ -208,6 +214,29 @@
 
 .btn-check-read span {
   font-size: 16px;
+}
+
+.btn-open-chat {
+  background-color: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  color: var(--primary);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-open-chat:hover {
+  border-color: var(--primary);
+  background-color: rgba(167, 139, 250, 0.08);
+}
+
+.btn-open-chat span {
+  font-size: 15px;
 }
 
 .read-indicator-dot {

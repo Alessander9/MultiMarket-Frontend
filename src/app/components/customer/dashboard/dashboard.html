@@ -31,8 +31,12 @@
 
       <div class="status-grid">
         <div>
-          <span>Sin leer</span>
-          <strong>{{ unreadChats() + unreadNotifications() }}</strong>
+          <span>Chats nuevos</span>
+          <strong>{{ unreadChats() }}</strong>
+        </div>
+        <div>
+          <span>Alertas nuevas</span>
+          <strong>{{ unreadNotifications() }}</strong>
         </div>
         <div>
           <span>Gasto estimado</span>

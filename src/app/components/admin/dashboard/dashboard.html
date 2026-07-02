@@ -112,11 +112,11 @@
         <span class="section-heading">COMUNICACIÓN</span>
         <ul class="nav-list">
           <li class="nav-item" [class.active]="activeSection() === 'chats'" (click)="selectSection('chats')">
-            <span class="material-symbols-outlined nav-icon">chat</span>
+            <span class="material-symbols-outlined nav-icon nav-icon--comm">chat_bubble</span>
             <span class="nav-text">Chats</span>
           </li>
           <li class="nav-item" [class.active]="activeSection() === 'notificaciones'" (click)="selectSection('notificaciones')">
-            <span class="material-symbols-outlined nav-icon">notifications_active</span>
+            <span class="material-symbols-outlined nav-icon nav-icon--comm">notifications</span>
             <span class="nav-text">Notificaciones</span>
           </li>
         </ul>
@@ -127,11 +127,11 @@
         <span class="section-heading">INTEGRACIONES</span>
         <ul class="nav-list">
           <li class="nav-item" [class.active]="activeSection() === 'importaciones'" (click)="selectSection('importaciones')">
-            <span class="material-symbols-outlined nav-icon">upload_file</span>
+            <span class="material-symbols-outlined nav-icon nav-icon--io">upload</span>
             <span class="nav-text">Importaciones XML</span>
           </li>
           <li class="nav-item" [class.active]="activeSection() === 'exportaciones'" (click)="selectSection('exportaciones')">
-            <span class="material-symbols-outlined nav-icon">download_file</span>
+            <span class="material-symbols-outlined nav-icon nav-icon--io nav-icon--export">download</span>
             <span class="nav-text">Exportaciones</span>
           </li>
         </ul>
@@ -200,10 +200,54 @@
                  class="global-search-input"/>
         </div>
 
-        <button class="header-action-btn" (click)="showNotifications.set(!showNotifications())">
-          <span class="material-symbols-outlined">notifications</span>
-          <span class="notification-badge"></span>
-        </button>
+        <div class="notifications-menu-container">
+          <button class="header-action-btn" (click)="toggleNotifications()" [attr.aria-label]="'Notificaciones sin leer: ' + unreadAdminNotificationsCount()">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="notification-badge" *ngIf="unreadAdminNotificationsCount() > 0">
+              {{ unreadAdminNotificationsCount() > 99 ? '99+' : unreadAdminNotificationsCount() }}
+            </span>
+          </button>
+
+          <div *ngIf="showNotifications()" class="notifications-dropdown animate-fade-in">
+            <div class="dropdown-header notifications-dropdown__header">
+              <div>
+                <span class="dropdown-email">Centro de alertas</span>
+                <span class="dropdown-role">ADMINISTRADOR GENERAL</span>
+              </div>
+              <button class="notifications-mark-all" (click)="markAllAdminNotificationsAsRead($event)" [disabled]="unreadAdminNotificationsCount() === 0">
+                Marcar todo leído
+              </button>
+            </div>
+
+            <div class="notifications-dropdown__list">
+              <button
+                *ngFor="let notif of latestAdminNotifications()"
+                type="button"
+                class="notifications-dropdown__item"
+                [class.is-unread]="!notif.leida"
+                (click)="markAdminNotificationAsRead(notif.id)"
+              >
+                <span class="material-symbols-outlined notifications-dropdown__icon">{{ notif.tipo === 'PEDIDO' ? 'shopping_bag' : notif.tipo === 'PAGO' ? 'payments' : notif.tipo === 'CHAT' ? 'chat' : 'settings' }}</span>
+                <div class="notifications-dropdown__copy">
+                  <strong>{{ notif.titulo }}</strong>
+                  <p>{{ notif.mensaje }}</p>
+                  <span>{{ notif.fechaCreacion | date:'short' }}</span>
+                </div>
+                <span class="notifications-dropdown__state" *ngIf="!notif.leida">Nueva</span>
+              </button>
+
+              <div *ngIf="latestAdminNotifications().length === 0" class="notifications-dropdown__empty">
+                <span class="material-symbols-outlined">notifications_off</span>
+                <p>No hay notificaciones cargadas.</p>
+              </div>
+            </div>
+
+            <button type="button" class="notifications-dropdown__footer" (click)="openNotificationsSection()">
+              Ver bandeja completa
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          </div>
+        </div>
 
         <button class="header-action-btn" (click)="selectSection('configuracion')">
           <span class="material-symbols-outlined">settings</span>

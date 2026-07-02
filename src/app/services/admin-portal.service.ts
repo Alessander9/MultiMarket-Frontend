@@ -134,6 +134,7 @@ export interface AdminNotification {
   tipo: 'PEDIDO' | 'PAGO' | 'CHAT' | 'SISTEMA';
   destinatarios: 'TODOS' | 'COMPRADORES' | 'VENDEDORES';
   fechaCreacion: string;
+  leida?: boolean;
 }
 
 export interface XmlImportLog {
@@ -296,7 +297,8 @@ export class AdminPortalService {
         mensaje: notif.mensaje ?? notif.contenido ?? '',
         tipo: notif.tipo ?? 'SISTEMA',
         destinatarios: notif.destinatarios ?? 'TODOS',
-        fechaCreacion: notif.fechaCreacion ?? notif.fecha ?? new Date().toISOString().split('T')[0]
+        fechaCreacion: notif.fechaCreacion ?? notif.fecha ?? new Date().toISOString().split('T')[0],
+        leida: Boolean(notif?.leida)
       }))),
       tap(notifs => this.notifications.set(notifs))
     );
@@ -632,9 +634,22 @@ export class AdminPortalService {
       mensaje: notif.mensaje || 'Contenido de la notificación.',
       tipo: notif.tipo || 'SISTEMA',
       destinatarios: notif.destinatarios || 'TODOS',
-      fechaCreacion: new Date().toISOString().split('T')[0]
+      fechaCreacion: new Date().toISOString().split('T')[0],
+      leida: notif.leida ?? false
     };
     this.notifications.update(list => [fullNotif, ...list]);
+  }
+
+  markNotificationAsRead(id: number): void {
+    this.http.put<void>(`${this.baseUrl}/notificaciones/${id}/leer`, null).subscribe({
+      next: () => {
+        this.notifications.update(list => list.map(notif => notif.id === id ? { ...notif, leida: true } : notif));
+      }
+    });
+  }
+
+  markAllNotificationsAsRead(): void {
+    this.notifications().filter(notif => !notif.leida).forEach(notif => this.markNotificationAsRead(notif.id));
   }
 
   // Simulated XML Catalog Upload file

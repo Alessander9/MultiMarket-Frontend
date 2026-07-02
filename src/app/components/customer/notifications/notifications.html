@@ -18,7 +18,7 @@
     <div class="notif-row" 
          *ngFor="let notif of customerService.notifications() | paginate: currentPage(): pageSize" 
          [class.unread]="!notif.leido"
-         (click)="toggleNotificationRead(notif)">
+         (click)="openNotification(notif)">
       
       <!-- Icon indicator -->
       <div class="notif-icon-box" [ngClass]="getIconClass(notif.tipo)">
@@ -38,7 +38,7 @@
           <a routerLink="/orders" class="quick-link">Hacer Seguimiento de mi Orden</a>
         </div>
         <div class="notif-quick-actions" *ngIf="notif.tipo === 'CHAT'">
-          <a routerLink="/chat" class="quick-link">Ver Mensajes Recibidos</a>
+          <button type="button" class="quick-link-btn" (click)="openNotification(notif); $event.stopPropagation()">Abrir chat</button>
         </div>
       </div>
 

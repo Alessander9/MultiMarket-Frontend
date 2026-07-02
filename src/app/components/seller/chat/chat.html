@@ -60,8 +60,13 @@
       </header>
 
       <!-- Message History List -->
-      <div class="chat-messages-container" #chatScrollContainer>
-        <div class="messages-list">
+        <div class="chat-messages-container" #chatScrollContainer (scroll)="onChatScroll()">
+          <div class="messages-list">
+            <div class="chat-empty-thread" *ngIf="activeConversation()?.mensajes?.length === 0">
+              <span class="material-symbols-outlined">forum</span>
+              <h4>Este chat aún no tiene mensajes visibles</h4>
+              <p>Cuando el comprador o tú envíen mensajes, aparecerán aquí con el historial completo.</p>
+            </div>
           
           <div 
             *ngFor="let msg of activeConversation()?.mensajes" 
@@ -90,6 +95,17 @@
           </div>
 
         </div>
+
+        <button
+          type="button"
+          class="scroll-to-latest-btn"
+          *ngIf="showScrollToBottom()"
+          (click)="scrollToLatestMessage()"
+          aria-label="Ir al último mensaje"
+          title="Ir al último mensaje"
+        >
+          <span class="material-symbols-outlined">south</span>
+        </button>
       </div>
 
       <!-- Footer Message Input Controls -->

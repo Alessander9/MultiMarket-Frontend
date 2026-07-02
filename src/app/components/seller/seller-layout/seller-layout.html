@@ -134,6 +134,7 @@
                 *ngFor="let n of sellerService.notifications().slice(0, 5)" 
                 class="dropdown-item notification-item"
                 [class.item-unread]="!n.leido"
+                (click)="openNotification(n, $event)"
               >
                 <div class="notif-icon-circle" [ngClass]="n.tipo.toLowerCase()">
                   <span class="material-symbols-outlined">
@@ -182,10 +183,11 @@
           <div class="header-dropdown messages-dropdown animate-fade-in" *ngIf="showMessagesDropdown()">
             <div class="dropdown-header">
               <h3 class="dropdown-title">Mensajes de Clientes</h3>
+              <span class="dropdown-counter">{{ sellerService.unreadChatsCount() }} sin leer</span>
             </div>
             <div class="dropdown-scroll-content">
               <div 
-                *ngFor="let c of sellerService.conversations()" 
+                *ngFor="let c of recentChatPreviews()" 
                 class="dropdown-item message-item"
                 (click)="openChatConversation(c.id)"
               >
@@ -196,12 +198,13 @@
                     <span class="chat-item-time">{{ c.fechaUltimoMensaje | date:'shortTime' }}</span>
                   </div>
                   <p class="chat-item-excerpt" [class.font-bold]="c.noLeidos > 0">
-                    {{ c.ultimoMensaje }}
+                    {{ c.previewText }}
                   </p>
+                  <span class="chat-item-meta">{{ c.metaText }}</span>
                 </div>
                 <span class="unread-dot bg-emerald" *ngIf="c.noLeidos > 0"></span>
               </div>
-              <div *ngIf="sellerService.conversations().length === 0" class="dropdown-empty-state">
+              <div *ngIf="recentChatPreviews().length === 0" class="dropdown-empty-state">
                 <span class="material-symbols-outlined empty-icon">mail_lock</span>
                 <p>No hay conversaciones activas.</p>
               </div>

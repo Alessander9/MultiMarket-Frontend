@@ -1,0 +1,185 @@
+[1m[33m
+Warning: This is a simple server for use in testing or debugging Angular applications
+locally. It hasn't been reviewed for security issues.
+
+Binding this server to an open connection can result in compromising your application or
+computer. Using a different host than the one passed to the "--host" flag might result in
+websocket connection issues.
+    [39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'SellerConversation'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.ts:23:34:
+[37m      23 │ interface ChatPreviewItem extends [32mSellerConversation[37m {
+         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'id' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:192:48:
+[37m      192 │                 (click)="openChatConversation(c.[32mid[37m)"
+          ╵                                                 [32m~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'compradorAvatar' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:194:30:
+[37m      194 │ ...          <img [src]="c.[32mcompradorAvatar[37m" alt="Avatar" class="c...
+          ╵                            [32m~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'compradorNombre' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:197:56:
+[37m      197 │ ...    <span class="chat-item-sender">{{ c.[32mcompradorNombre[37m }}</span>
+          ╵                                            [32m~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'fechaUltimoMensaje' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:198:54:
+[37m      198 │ ..."chat-item-time">{{ c.[32mfechaUltimoMensaje[37m | date:'shortTime' }}...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'noLeidos' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:200:68:
+[37m      200 │ ... <p class="chat-item-excerpt" [class.font-bold]="c.[32mnoLeidos[37m > 0">
+          ╵                                                       [32m~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'noLeidos' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:205:61:
+[37m      205 │ ...span class="unread-dot bg-emerald" *ngIf="c.[32mnoLeidos[37m > 0"></span>
+          ╵                                                [32m~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'SellerConversation'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.ts:23:34:
+[37m      23 │ interface ChatPreviewItem extends [32mSellerConversation[37m {
+         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'id' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:192:48:
+[37m      192 │                 (click)="openChatConversation(c.[32mid[37m)"
+          ╵                                                 [32m~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'compradorAvatar' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:194:30:
+[37m      194 │ ...          <img [src]="c.[32mcompradorAvatar[37m" alt="Avatar" class="c...
+          ╵                            [32m~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'compradorNombre' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:197:56:
+[37m      197 │ ...    <span class="chat-item-sender">{{ c.[32mcompradorNombre[37m }}</span>
+          ╵                                            [32m~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'fechaUltimoMensaje' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:198:54:
+[37m      198 │ ..."chat-item-time">{{ c.[32mfechaUltimoMensaje[37m | date:'shortTime' }}...
+          ╵                          [32m~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'noLeidos' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:200:68:
+[37m      200 │ ... <p class="chat-item-excerpt" [class.font-bold]="c.[32mnoLeidos[37m > 0">
+          ╵                                                       [32m~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'noLeidos' does not exist on type 'ChatPreviewItem'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.html:205:61:
+[37m      205 │ ...span class="unread-dot bg-emerald" *ngIf="c.[32mnoLeidos[37m > 0"></span>
+          ╵                                                [32m~~~~~~~~[0m
+
+  Error occurs in the template of component SellerLayout.
+
+    src/app/components/seller/seller-layout/seller-layout.ts:32:15:
+[37m      32 │   templateUrl: [32m'./seller-layout.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2304: Cannot find name 'SellerConversation'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/components/seller/seller-layout/seller-layout.ts:23:34:
+[37m      23 │ interface ChatPreviewItem extends [32mSellerConversation[37m {
+         ╵                                   [32m~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m

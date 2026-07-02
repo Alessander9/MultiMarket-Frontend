@@ -37,6 +37,7 @@ export class CustomerLayout implements OnInit {
   readonly chatDraft = signal('');
   readonly currentUrl = signal('/');
   readonly cartBadgePulse = signal(false);
+  readonly showScrollToBottom = signal(false);
 
   // Search input
   readonly searchQuery = signal('');
@@ -71,6 +72,8 @@ export class CustomerLayout implements OnInit {
   readonly cartPreviewItems = computed(() => this.customerService.cart().slice(0, 4));
   private lastCartCount = 0;
   private cartBadgeTimer?: ReturnType<typeof setTimeout>;
+  private lastChatSignature = '';
+  private scrollAnimationFrame: number | null = null;
 
   // Mega menu categories
   readonly megaCategories = [
@@ -85,6 +88,7 @@ export class CustomerLayout implements OnInit {
     effect(() => {
       const conversations = this.customerService.conversations();
       const currentId = this.selectedChatConversationId();
+      const dockOpen = this.chatDockOpen();
 
       if (conversations.length === 0) {
         if (currentId !== null) {
@@ -94,7 +98,16 @@ export class CustomerLayout implements OnInit {
       }
 
       const selected = currentId ? conversations.find(conv => conv.id === currentId) : undefined;
-      const target = selected ?? conversations.find(conv => conv.noLeidos > 0) ?? conversations[0];
+
+      if (selected) {
+        return;
+      }
+
+      if (!dockOpen) {
+        return;
+      }
+
+      const target = conversations.find(conv => conv.noLeidos > 0) ?? conversations[0];
 
       if (target && target.id !== currentId) {
         this.selectedChatConversationId.set(target.id);
@@ -113,6 +126,18 @@ export class CustomerLayout implements OnInit {
         this.cartBadgeTimer = setTimeout(() => {
           this.cartBadgePulse.set(false);
         }, 420);
+      }
+    });
+
+    effect(() => {
+      const conversation = this.activeChatConversation();
+      const signature = conversation
+        ? `${conversation.id}:${conversation.mensajes.length}:${conversation.ultimoMensaje}:${conversation.fechaUltimoMensaje}`
+        : 'none';
+
+      if (signature !== this.lastChatSignature && conversation) {
+        this.lastChatSignature = signature;
+        this.scheduleScrollToBottom();
       }
     });
   }
@@ -293,16 +318,45 @@ export class CustomerLayout implements OnInit {
   }
 
   private scrollChatToBottom(): void {
-    queueMicrotask(() => {
-      try {
-        if (this.persistentChatScroll) {
-          const element = this.persistentChatScroll.nativeElement;
-          element.scrollTop = element.scrollHeight;
-        }
-      } catch {
-        // Safe fail for layout rendering timing.
-      }
+    this.scheduleScrollToBottom();
+  }
+
+  onPersistentChatScroll(): void {
+    const el = this.persistentChatScroll?.nativeElement;
+    if (!el) return;
+
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.showScrollToBottom.set(distanceFromBottom > 120);
+  }
+
+  scrollToLatestMessage(): void {
+    this.scrollChatToBottom();
+  }
+
+  private scheduleScrollToBottom(): void {
+    if (this.scrollAnimationFrame !== null) {
+      cancelAnimationFrame(this.scrollAnimationFrame);
+    }
+
+    this.scrollAnimationFrame = requestAnimationFrame(() => {
+      this.scrollAnimationFrame = null;
+      this.scrollToBottom(true);
     });
+  }
+
+  private scrollToBottom(smooth = false): void {
+    try {
+      if (this.persistentChatScroll) {
+        const element = this.persistentChatScroll.nativeElement;
+        element.scrollTo({
+          top: element.scrollHeight,
+          behavior: smooth ? 'smooth' : 'auto'
+        });
+        this.showScrollToBottom.set(false);
+      }
+    } catch {
+      // Safe fail for layout rendering timing.
+    }
   }
 
   closeAllMenus(except?: 'categories' | 'notifications' | 'profile' | 'cart'): void {
@@ -357,6 +411,26 @@ export class CustomerLayout implements OnInit {
 
   markAllNotificationsRead(): void {
     this.customerService.markNotificationsRead();
+  }
+
+  openNotification(notification: { id: number; tipo: string; titulo?: string; contenido?: string }, event?: Event): void {
+    event?.stopPropagation();
+
+    if (notification.tipo === 'CHAT') {
+      const conversationId = this.customerService.resolveConversationIdFromNotification(notification as any);
+      if (conversationId !== null) {
+        this.router.navigate(['/chat'], {
+          queryParams: { conversationId }
+        });
+      } else {
+        this.router.navigate(['/chat']);
+      }
+    } else if (notification.tipo === 'PEDIDO') {
+      this.router.navigate(['/orders']);
+    }
+
+    this.customerService.markNotificationRead(notification.id);
+    this.showNotificationsPanel.set(false);
   }
 
   logout(): void {

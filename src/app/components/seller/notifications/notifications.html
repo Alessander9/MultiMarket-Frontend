@@ -30,6 +30,7 @@
         *ngFor="let n of filteredNotifications() | paginate: currentPage(): pageSize" 
         class="notification-item-row"
         [class.unread]="!n.leido"
+        (click)="openNotification(n)"
       >
         <div class="notif-icon-circle" [ngClass]="n.tipo.toLowerCase()">
           <span class="material-symbols-outlined">
@@ -46,10 +47,13 @@
         </div>
 
         <div class="notif-actions">
-          <button *ngIf="!n.leido" class="btn-check-read" (click)="markRead(n.id)" title="Marcar como leido">
+          <button *ngIf="!n.leido" class="btn-check-read" (click)="markRead(n.id); $event.stopPropagation()" title="Marcar como leido">
             <span class="material-symbols-outlined">done</span>
           </button>
           <span class="read-indicator-dot" *ngIf="!n.leido"></span>
+          <button *ngIf="n.tipo === 'CHAT'" class="btn-open-chat" (click)="openNotification(n); $event.stopPropagation()" title="Abrir chat">
+            <span class="material-symbols-outlined">chat</span>
+          </button>
         </div>
       </div>
 

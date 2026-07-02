@@ -47,6 +47,18 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly sortBy = signal<string>('id');
   readonly sortAsc = signal<boolean>(true);
 
+  readonly adminNotificationCount = computed(() => this.portalService.notifications().length);
+  readonly adminNotificationBadgeLabel = computed(() => {
+    const count = this.adminNotificationCount();
+    return count > 99 ? '99+' : String(count);
+  });
+  readonly unreadAdminNotificationsCount = computed(() => {
+    return this.portalService.notifications().filter(notif => !notif.leida).length;
+  });
+  readonly latestAdminNotifications = computed(() => {
+    return [...this.portalService.notifications()].slice(0, 5);
+  });
+
   readonly executiveSnapshot = computed(() => ([
     { label: 'Usuarios', value: this.portalService.users().length, hint: 'Cuentas activas en plataforma', icon: 'group', tone: 'purple' },
     { label: 'Vendedores', value: this.portalService.vendors().length, hint: 'Tiendas operativas hoy', icon: 'storefront', tone: 'emerald' },
@@ -221,6 +233,32 @@ export class Dashboard implements OnInit, OnDestroy {
         this.productsVendorFilterId.set(null);
       }
     });
+  }
+
+  toggleNotifications(): void {
+    this.showNotifications.update(value => !value);
+    if (this.showProfileMenu()) {
+      this.showProfileMenu.set(false);
+    }
+  }
+
+  closeNotifications(): void {
+    this.showNotifications.set(false);
+  }
+
+  openNotificationsSection(): void {
+    this.selectSection('notificaciones');
+    this.showNotifications.set(false);
+  }
+
+  markAdminNotificationAsRead(id: number, event?: Event): void {
+    event?.stopPropagation();
+    this.portalService.markNotificationAsRead(id);
+  }
+
+  markAllAdminNotificationsAsRead(event?: Event): void {
+    event?.stopPropagation();
+    this.portalService.markAllNotificationsAsRead();
   }
 
   private refreshBackendData(): void {

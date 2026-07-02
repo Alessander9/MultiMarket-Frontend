@@ -395,6 +395,36 @@ export class SellerService {
     };
   }
 
+  private refreshNotificationsFromBackend(): void {
+    this.http.get<any[]>(`${this.baseUrl}/notificaciones`).pipe(
+      catchError(() => of([]))
+    ).subscribe({
+      next: notifications => {
+        this.notifications.set(notifications.map(notif => this.normalizeNotification(notif)));
+      }
+    });
+  }
+
+  private refreshConversationsFromBackend(): void {
+    this.http.get<any[]>(`${this.baseUrl}/chat/conversaciones`).pipe(
+      catchError(() => of([]))
+    ).subscribe({
+      next: conversations => {
+        const existing = new Map(this.conversations().map(conv => [conv.id, conv]));
+        this.conversations.set(conversations.map(conv => {
+          const normalized = this.normalizeConversation(conv);
+          const previous = existing.get(normalized.id);
+          return previous ? { ...normalized, mensajes: previous.mensajes } : normalized;
+        }));
+      }
+    });
+  }
+
+  refreshRealtimeInbox(): void {
+    this.refreshConversationsFromBackend();
+    this.refreshNotificationsFromBackend();
+  }
+
   private normalizeConversation(conv: any): SellerConversation {
     const buyerEmail = conv?.compradorCorreo ?? '';
     return {
@@ -705,14 +735,6 @@ export class SellerService {
           }
 
           // Trigger a notification for new customer messages
-          if (!isSeller) {
-            this.addNotification(
-              'CHAT',
-              `Nuevo mensaje de ${c.compradorNombre}`,
-              msg.contenido
-            );
-          }
-
           return {
             ...c,
             ultimoMensaje: msg.contenido,
@@ -780,6 +802,7 @@ export class SellerService {
     this.http.put<void>(`${this.baseUrl}/notificaciones/${id}/leer`, null).subscribe({
       next: () => {
         this.notifications.update(list => list.map(n => n.id === id ? { ...n, leido: true } : n));
+        this.refreshNotificationsFromBackend();
       }
     });
   }
